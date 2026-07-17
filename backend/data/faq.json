@@ -1,0 +1,62 @@
+[
+  {
+    "id": "faq-01",
+    "question": "Chọn dung tích tủ lạnh theo số người thế nào?",
+    "answer": "SalePilot ưu tiên nhãn 'Số người sử dụng' của từng SKU trong bảng nguồn. Hãy cho biết số người dùng thường xuyên; nếu gia đình trữ thực phẩm nhiều, có thể chọn dung tích lớn hơn trong cùng nhóm."
+  },
+  {
+    "id": "faq-02",
+    "question": "Cần đo kích thước chỗ đặt tủ lạnh ra sao?",
+    "answer": "Đo chiều ngang, cao và sâu của vị trí đặt, đồng thời chừa khoảng thoáng theo hướng dẫn của nhà sản xuất và đủ không gian mở cửa. SalePilot có thể lọc theo kích thước Ngang/Cao/Sâu trong bảng sản phẩm."
+  },
+  {
+    "id": "faq-03",
+    "question": "Ngăn đá trên, ngăn đá dưới, Side by Side và Multi Door khác nhau thế nào?",
+    "answer": "Ngăn đá trên thường gọn và dễ tiếp cận giá; ngăn đá dưới thuận tiện lấy thực phẩm ngăn lạnh; Side by Side có dung tích lớn và cửa mở hai bên; Multi Door chia nhiều vùng bảo quản. Cần đối chiếu nhu cầu, kích thước và ngân sách."
+  },
+  {
+    "id": "faq-04",
+    "question": "Giá và khuyến mãi trong SalePilot lấy từ đâu?",
+    "answer": "Giá gốc, giá khuyến mãi và quà tặng được lấy từ tab Tủ Lạnh, category_code 38 của Google Sheet đã cung cấp. SKU không có giá chỉ dùng để tra cứu thông số và không được xếp hạng mua hàng."
+  },
+  {
+    "id": "faq-05",
+    "question": "SalePilot có biết sản phẩm còn hàng không?",
+    "answer": "Không. Bảng nguồn không có cột tồn kho nên SalePilot không khẳng định còn hàng. Cần kiểm tra lại giá và khả năng giao hàng với cửa hàng trước khi chốt."
+  },
+  {
+    "id": "faq-06",
+    "question": "Tủ lạnh Inverter có tiết kiệm điện không?",
+    "answer": "SalePilot chỉ hiển thị đúng trường Công nghệ tiết kiệm điện của từng SKU. Hiệu quả thực tế còn phụ thuộc dung tích, nhiệt độ môi trường, cách sử dụng và tần suất mở cửa."
+  },
+  {
+    "id": "faq-07",
+    "question": "Nên chọn công nghệ bảo quản thực phẩm nào?",
+    "answer": "Có thể ưu tiên ngăn đông mềm khi thường xuyên dùng thịt cá ngắn ngày, ngăn rau giữ ẩm cho rau củ, hoặc ngăn chuyển đổi khi cần linh hoạt nhiệt độ. Hãy đối chiếu trường Công nghệ bảo quản thực phẩm của SKU cụ thể."
+  },
+  {
+    "id": "faq-08",
+    "question": "Tủ có lấy nước ngoài hoặc chế độ tự động không?",
+    "answer": "SalePilot lọc theo hai trường Lấy nước ngoài và Chế độ tự động trong bảng nguồn. Cần xem chi tiết SKU vì không phải mọi mẫu Side by Side hoặc Multi Door đều có các tiện ích này."
+  },
+  {
+    "id": "faq-09",
+    "question": "Bảo hành, giao hàng và lắp đặt tủ lạnh thế nào?",
+    "answer": "Các chính sách này không có trong bảng sản phẩm. SalePilot không tự suy diễn; cần xác nhận chính sách hiện hành của cửa hàng và hãng cho SKU, địa chỉ giao và thời điểm mua cụ thể."
+  },
+  {
+    "id": "faq-10",
+    "question": "Có hỗ trợ trả góp hoặc đổi trả không?",
+    "answer": "Bảng nguồn không chứa điều kiện trả góp hoặc đổi trả. Cần kiểm tra chính sách hiện hành của cửa hàng, ngân hàng và tình trạng lắp đặt trước khi quyết định."
+  },
+  {
+    "id": "faq-11",
+    "question": "Vệ sinh tủ lạnh như thế nào?",
+    "answer": "Rút điện trước khi vệ sinh, dùng khăn mềm và dung dịch phù hợp, không làm ướt linh kiện điện. Tham khảo hướng dẫn đúng model và không tự tháo hệ thống làm lạnh."
+  },
+  {
+    "id": "faq-12",
+    "question": "Vì sao một số SKU không có giá?",
+    "answer": "Tab Tủ Lạnh có cả dữ liệu thông số lịch sử và sản phẩm có giá hiện hành. SalePilot giữ các SKU thiếu giá để tra cứu nhưng chỉ đề xuất top 3 từ các SKU có giá gốc hoặc giá khuyến mãi."
+  }
+]

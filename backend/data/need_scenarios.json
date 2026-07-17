@@ -1,0 +1,55 @@
+[
+  {
+    "id": "sc-01",
+    "user": "Gia đình 4 người, dưới 15 triệu, cần tủ lạnh tiết kiệm điện",
+    "expect_slots": {
+      "household_size": 4,
+      "budget_vnd": 15000000,
+      "priority": ["tiet_kiem_dien"]
+    }
+  },
+  {
+    "id": "sc-02",
+    "user": "Nhà 5 người cần tủ Multi Door khoảng 500 lít, ngân sách 25 triệu",
+    "expect_slots": {
+      "household_size": 5,
+      "capacity_l": 500,
+      "budget_vnd": 25000000,
+      "preferred_styles": ["Multi Door"]
+    }
+  },
+  {
+    "id": "sc-03",
+    "user": "Chỗ đặt ngang tối đa 70 cm, gia đình 4 người, dưới 15 triệu",
+    "expect_slots": {
+      "household_size": 4,
+      "budget_vnd": 15000000,
+      "max_width_cm": 70
+    }
+  },
+  {
+    "id": "sc-04",
+    "user": "Bảng có biết tủ lạnh còn hàng không?",
+    "expect_slots": {
+      "intent": "faq"
+    }
+  },
+  {
+    "id": "sc-05",
+    "user": "So sánh tủ Side by Side có lấy nước ngoài cho hơn 5 người",
+    "expect_slots": {
+      "household_size": 6,
+      "preferred_styles": ["Tủ lớn - Side by Side"],
+      "priority": ["lay_nuoc_ngoai"]
+    }
+  },
+  {
+    "id": "sc-06",
+    "user": "Cần tủ ngăn đá dưới có đông mềm và giữ tươi, nhà 3 người",
+    "expect_slots": {
+      "household_size": 3,
+      "preferred_styles": ["Ngăn đá dưới"],
+      "priority": ["dong_mem", "bao_quan"]
+    }
+  }
+]
