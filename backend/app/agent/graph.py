@@ -254,6 +254,30 @@ async def _try_fast_path(
                 {"agent": "lead", "event": "fast_path", "detail": f"recommend:{rec.get('category')}"},
                 {"agent": "catalog", "event": "recommend_top3", "detail": f"{len(rec['top3'])} SP"},
             ]
+            # Consultation finished → record it on the owner dashboard as a lead
+            # (upsert per customer so repeat turns update instead of duplicating).
+            try:
+                from app.services.leads import upsert_lead_record
+
+                prof = await load_profile(channel, external_id)
+                skus = ", ".join(need.get("last_skus", [])[:3])
+                lead = await upsert_lead_record(
+                    name=customer_name,
+                    phone=str(prof.get("phone") or ""),
+                    channel=channel,
+                    external_id=external_id,
+                    interest=rec.get("category_display") or need.get("category") or "",
+                    budget_vnd=need.get("budget_vnd"),
+                    notes=f"Đã tư vấn {rec.get('category_display', '')}. Đề xuất: {skus}.".strip(),
+                    score=0.6 if prof.get("phone") else 0.5,
+                    status="qualified",
+                    conversation_id=conversation_id,
+                )
+                lead_id = lead.id
+                agents.append("crm")
+                trace.append({"agent": "crm", "event": "save_lead", "detail": f"lead#{lead.id}"})
+            except Exception:
+                pass  # never let a dashboard write break the customer reply
         else:
             return None  # no priced match — let the full graph offer to widen budget
 

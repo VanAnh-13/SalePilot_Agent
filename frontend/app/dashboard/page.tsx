@@ -28,11 +28,13 @@ export default function DashboardPage() {
   const [run, setRun] = useState<any>(null);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [auto, setAuto] = useState(true);
 
-  async function load() {
+  async function load(silent = false) {
     try {
       setErr("");
-      setLoading(true);
+      if (!silent) setLoading(true);
       const [l, c, z, m, j, r] = await Promise.all([
         fetchLeads(),
         fetchConversations(),
@@ -47,16 +49,24 @@ export default function DashboardPage() {
       setMemory(m);
       setJobs(j);
       setRun(r?.run || null);
+      setLastUpdated(new Date());
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
   useEffect(() => {
     load();
   }, []);
+
+  // Auto-refresh so a finished consultation shows up without a manual reload.
+  useEffect(() => {
+    if (!auto) return;
+    const id = setInterval(() => load(true), 7000);
+    return () => clearInterval(id);
+  }, [auto]);
 
   const stats = [
     { icon: "🧾", value: leads.length, label: "Leads" },
@@ -72,9 +82,20 @@ export default function DashboardPage() {
           <h1>Owner dashboard</h1>
           <p className="muted">Leads · memory · jobs · agent runs · Zalo</p>
         </div>
-        <button className="btn ghost sm" onClick={load} disabled={loading}>
-          {loading ? "Đang tải…" : "↻ Làm mới"}
-        </button>
+        <div className="row" style={{ gap: 12 }}>
+          {lastUpdated && (
+            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--muted)" }}>
+              {auto && <span className="live" />} Cập nhật {lastUpdated.toLocaleTimeString("vi-VN")}
+            </span>
+          )}
+          <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 13, color: "var(--muted)" }}>
+            <input type="checkbox" checked={auto} onChange={(e) => setAuto(e.target.checked)} />
+            Tự động
+          </label>
+          <button className="btn ghost sm" onClick={() => load()} disabled={loading}>
+            {loading ? "Đang tải…" : "↻ Làm mới"}
+          </button>
+        </div>
       </div>
 
       {err && <div className="error-note" style={{ margin: 0 }}>⚠️ {err}</div>}

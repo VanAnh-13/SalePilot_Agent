@@ -1059,3 +1059,109 @@ select {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ============================================================
+   Light theme — toggled via <html data-theme="light">
+   Overrides the design tokens + the few hard-coded dark surfaces.
+   ============================================================ */
+
+:root[data-theme="light"] {
+  --bg: #eef2f9;
+  --bg-2: #e6ebf5;
+  --panel: rgba(255, 255, 255, 0.92);
+  --panel-solid: #ffffff;
+  --panel-2: #eef1f8;
+  --elevated: #ffffff;
+
+  --border: rgba(15, 23, 42, 0.1);
+  --border-strong: rgba(15, 23, 42, 0.18);
+  --text: #0f1a2e;
+  --text-soft: #33415c;
+  --muted: #5f6f89;
+
+  --accent: #2563eb;
+  --accent-2: #0d9f74;
+  --accent-3: #7c3aed;
+  --brand-grad: linear-gradient(135deg, #2563eb 0%, #0d9f74 100%);
+  --brand-grad-soft: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(13, 159, 116, 0.1));
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 12px 30px -14px rgba(15, 23, 42, 0.18);
+  --shadow-lg: 0 30px 70px -30px rgba(15, 23, 42, 0.25);
+  --ring: 0 0 0 3px rgba(37, 99, 235, 0.3);
+}
+
+:root[data-theme="light"],
+:root[data-theme="light"] body {
+  background:
+    radial-gradient(1100px 620px at 8% -12%, rgba(37, 99, 235, 0.1), transparent 55%),
+    radial-gradient(900px 560px at 100% 0%, rgba(13, 159, 116, 0.1), transparent 50%),
+    radial-gradient(700px 700px at 50% 120%, rgba(124, 58, 237, 0.06), transparent 55%),
+    var(--bg);
+}
+
+:root[data-theme="light"] .nav {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.78));
+}
+:root[data-theme="light"] .nav-links,
+:root[data-theme="light"] .btn.ghost,
+:root[data-theme="light"] .chip,
+:root[data-theme="light"] .badge {
+  background: rgba(15, 23, 42, 0.05);
+}
+:root[data-theme="light"] .input {
+  background: #ffffff;
+}
+:root[data-theme="light"] .table thead th {
+  background: #eef1f8;
+}
+:root[data-theme="light"] .chat-header,
+:root[data-theme="light"] .composer,
+:root[data-theme="light"] .hero-try,
+:root[data-theme="light"] .empty {
+  background: rgba(15, 23, 42, 0.02);
+}
+:root[data-theme="light"] .md-pre {
+  background: #f1f3f9;
+}
+:root[data-theme="light"] .md-pre code {
+  color: #24304a;
+}
+:root[data-theme="light"] .md-code {
+  color: #6b21a8;
+  background: rgba(124, 58, 237, 0.1);
+  border-color: rgba(124, 58, 237, 0.25);
+}
+:root[data-theme="light"] .md-table tbody tr:nth-child(even) {
+  background: rgba(15, 23, 42, 0.03);
+}
+
+/* Theme toggle button (in the nav) */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 11px;
+  border: 1px solid var(--border-strong);
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 17px;
+  line-height: 1;
+  transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+}
+.theme-toggle:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.theme-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}

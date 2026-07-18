@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const links = [
   { href: "/", label: "Trang chủ" },
@@ -24,15 +25,18 @@ export function Nav() {
           </span>
         </span>
       </Link>
-      <div className="nav-links">
-        {links.map((l) => {
-          const active = l.href === "/" ? path === "/" : path.startsWith(l.href);
-          return (
-            <Link key={l.href} href={l.href} className={`nav-link ${active ? "active" : ""}`}>
-              {l.label}
-            </Link>
-          );
-        })}
+      <div className="nav-right">
+        <div className="nav-links">
+          {links.map((l) => {
+            const active = l.href === "/" ? path === "/" : path.startsWith(l.href);
+            return (
+              <Link key={l.href} href={l.href} className={`nav-link ${active ? "active" : ""}`}>
+                {l.label}
+              </Link>
+            );
+          })}
+        </div>
+        <ThemeToggle />
       </div>
     </nav>
   );
