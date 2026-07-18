@@ -11,6 +11,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var t=localStorage.getItem('salepilot_theme')||'dark';document.documentElement.dataset.theme=t;}catch(e){}",
+          }}
+        />
+      </head>
       <body>
         <div className="site">
           <div className="container site-main">
