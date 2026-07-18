@@ -64,6 +64,11 @@ def create_app() -> FastAPI:
     app.include_router(runs_router)
     app.include_router(jobs_router)
 
+    @app.get("/")
+    async def ping():
+        """Lightweight liveness probe — no DB/catalog access, trả lời tức thì."""
+        return {"ping": "pong", "ok": True}
+
     @app.get("/health")
     async def health():
         from app.catalog import repository as catalog_repository
