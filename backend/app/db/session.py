@@ -6,7 +6,27 @@ from app.config import get_settings
 from app.models.base import Base
 
 settings = get_settings()
-engine = create_async_engine(settings.database_url, echo=False)
+
+
+def _async_connect_args(url: str) -> dict:
+    """Enable TLS for a remote managed Postgres (e.g. Neon) on the asyncpg driver.
+
+    Local dev DBs (docker `postgres` service / localhost) don't serve TLS, so we
+    only attach an SSL context when the host is clearly remote. asyncpg needs an
+    SSLContext (it ignores libpq's `sslmode=` query param).
+    """
+    if not url.startswith("postgresql+asyncpg://"):
+        return {}
+    if any(h in url for h in ("@postgres", "localhost", "127.0.0.1")):
+        return {}
+    import ssl
+
+    return {"ssl": ssl.create_default_context()}
+
+
+engine = create_async_engine(
+    settings.database_url, echo=False, connect_args=_async_connect_args(settings.database_url)
+)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 

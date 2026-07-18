@@ -55,25 +55,19 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    # DB connection (DATABASE_URL / POSTGRES_DSN / MONGODB_URI) now comes from
+    # .env → points at cloud (Neon Postgres + MongoDB Atlas). Only non-secret
+    # runtime knobs are set here. To go back to local DBs, restore those vars.
     environment:
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-salepilot}:${POSTGRES_PASSWORD:-salepilot}@postgres:5432/${POSTGRES_DB:-salepilot}
-      POSTGRES_DSN: postgresql+psycopg2://${POSTGRES_USER:-salepilot}:${POSTGRES_PASSWORD:-salepilot}@postgres:5432/${POSTGRES_DB:-salepilot}
       CATALOG_BACKEND: postgres
       CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
       CHROMA_PATH: ./data/chroma
-      MONGODB_URI: mongodb://${MONGO_ROOT_USER:-salepilot}:${MONGO_ROOT_PASSWORD:-salepilot}@mongo:27017/${MONGO_DB:-salepilot}?authSource=admin
-      MONGODB_DB: ${MONGO_DB:-salepilot}
     volumes:
       - ./backend/data:/app/data
     # Lets OPENAI_BASE_URL point at an OpenAI-compatible server on the host
     # (e.g. http://host.docker.internal:11434/v1 for local Ollama/vLLM/LM Studio).
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    depends_on:
-      mongo:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
     restart: unless-stopped
 
   frontend:
