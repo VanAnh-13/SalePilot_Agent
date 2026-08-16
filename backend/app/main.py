@@ -14,6 +14,9 @@ from app.api.outbox import router as outbox_router
 from app.api.products import router as products_router
 from app.api.runs import router as runs_router
 from app.channels.zalo.webhook import router as zalo_router
+# catalog_repository (imported at module top): verified no import cycle —
+# app.catalog.repository only imports config + stdlib.
+from app.catalog import repository as catalog_repository
 from app.config import get_settings
 from app.db.session import init_db
 from app.services.scheduler import scheduler_loop
@@ -25,8 +28,6 @@ async def lifespan(_app: FastAPI):
     Path("data/trajectories").mkdir(parents=True, exist_ok=True)
     await init_db()
     # Warm the catalog cache (MongoDB primary, snapshot fallback) off the event loop.
-    from app.catalog import repository as catalog_repository
-
     count = await asyncio.to_thread(catalog_repository.load)
     print(f"[catalog] loaded {count} products from {catalog_repository.source()}")
     stop = asyncio.Event()
@@ -74,8 +75,6 @@ def create_app() -> FastAPI:
 
     @app.get("/health")
     async def health():
-        from app.catalog import repository as catalog_repository
-
         catalog_identity = catalog_repository.catalog_identity()
         category_count = len(catalog_repository.category_counts())
         return {

@@ -7,10 +7,10 @@ import re
 from typing import Any
 
 from app.agent.catalog_queries import (
-    _fmt_num,
-    _fmt_price,
-    _fmt_sold,
-    _summary,
+    fmt_num,
+    fmt_price,
+    fmt_sold,
+    summarize_product,
     compare,
     product_public,
 )
@@ -42,7 +42,7 @@ __all__ = [
 # Need extraction — universal budget/brand + per-category slots & priorities.
 # --------------------------------------------------------------------------- #
 
-def _extract_budget(text: str) -> int | None:
+def extract_budget(text: str) -> int | None:
     low = text.casefold()
     if m := re.search(
             r"(?:dưới|duoi|tối đa|toi da|khoảng|khoang|tầm|tam|budget|ngân sách|ngan sach)\s*(\d+(?:[.,]\d+)?)\s*(?:triệu|trieu|tr)\b",
@@ -83,7 +83,7 @@ def extract_need_from_text(text: str, category: str | int | None = None) -> dict
     if cat:
         need["category"] = cat.slug
 
-    budget = _extract_budget(raw)
+    budget = extract_budget(raw)
     if budget is not None:
         need["budget_vnd"] = budget
 
@@ -425,7 +425,7 @@ def _why(public: dict[str, Any], need: dict[str, Any], cat: Category, ctx: dict[
             if public.get(f"{slot.range_key}_min") is not None:
                 bits.append(f"phù hợp {slot.label}")
         elif slot.spec_key and public.get(slot.spec_key) is not None:
-            bits.append(_fmt_num(public[slot.spec_key], slot.unit))
+            bits.append(fmt_num(public[slot.spec_key], slot.unit))
     for prio in ctx["prio_objs"]:
         contribution = _apply_priority(prio, public, ctx, need)
         if contribution > 0 and prio.mode in {"bool", "present", "text"}:
@@ -436,11 +436,11 @@ def _why(public: dict[str, Any], need: dict[str, Any], cat: Category, ctx: dict[
     if public.get("price_sale_vnd") and public.get("price_original_vnd"):
         gap = int(public["price_original_vnd"]) - int(public["price_sale_vnd"])
         if gap > 0:
-            bits.append(f"giảm {_fmt_price(gap)}")
+            bits.append(f"giảm {fmt_price(gap)}")
     if public.get("rating"):
         bits.append(f"{public['rating']}★")
     if public.get("sold"):
-        bits.append(f"đã bán {_fmt_sold(public['sold'])}")
+        bits.append(f"đã bán {fmt_sold(public['sold'])}")
     return "; ".join(dict.fromkeys(bits))
 
 
@@ -493,7 +493,7 @@ def recommend_top3(need: dict[str, Any]) -> dict[str, Any]:
     scored.sort(key=lambda item: (-item[0], int(item[1].get("price_vnd") or 10 ** 15)))
 
     def _add(product: dict[str, Any], score: float) -> None:
-        public = _summary(product)
+        public = summarize_product(product)
         public["match_score"] = round(score, 2)
         public["why"] = _why(product_public(product), need, cat, ctx)
         top.append(public)

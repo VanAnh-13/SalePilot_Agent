@@ -11,7 +11,7 @@ from app.agent.catalog_queries import (
     search,
 )
 from app.agent.recommendation import (
-    _extract_budget,
+    extract_budget,
     extract_need_from_text,
     merge_needs,
     pending_slots,
@@ -27,6 +27,7 @@ from app.catalog.registry import (
 
 __all__ = [
     "search",
+    "extract_budget",
     "compare",
     "recommend_top3",
     "recommendation_need",

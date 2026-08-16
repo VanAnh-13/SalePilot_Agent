@@ -8,29 +8,45 @@ import {
   fetchLeads,
   fetchMemory,
   fetchZaloOutbox,
+  resolveConversation,
+  takeoverConversation,
+  type AgentRun,
+  type Conversation,
+  type Job,
+  type Lead,
+  type MemoryItem,
+  type ZaloOutboxItem,
 } from "@/lib/api";
 import { IconAlert, IconBrain, IconChat, IconClock, IconRefresh, IconUsers } from "@/components/Icons";
-
-function statusPill(status?: string) {
-  const s = (status || "").toLowerCase();
-  if (["won", "done", "completed", "success", "qualified", "active"].some((k) => s.includes(k)))
-    return "green";
-  if (["pending", "new", "open", "queued", "running"].some((k) => s.includes(k))) return "amber";
-  if (["lost", "failed", "error", "escalated"].some((k) => s.includes(k))) return "red";
-  return "blue";
-}
+import { ConversationsTable } from "@/components/dashboard/ConversationsTable";
+import { LeadsTable } from "@/components/dashboard/LeadsTable";
+import { statusPillClass } from "@/components/dashboard/shared";
 
 export default function DashboardPage() {
-  const [leads, setLeads] = useState<any[]>([]);
-  const [convs, setConvs] = useState<any[]>([]);
-  const [zalo, setZalo] = useState<any[]>([]);
-  const [memory, setMemory] = useState<any[]>([]);
-  const [jobs, setJobs] = useState<any[]>([]);
-  const [run, setRun] = useState<any>(null);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [convs, setConvs] = useState<Conversation[]>([]);
+  const [zalo, setZalo] = useState<ZaloOutboxItem[]>([]);
+  const [memory, setMemory] = useState<MemoryItem[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [run, setRun] = useState<AgentRun | null>(null);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [auto, setAuto] = useState(true);
+  const [busyConv, setBusyConv] = useState<number | null>(null);
+
+  async function handleConversationAction(conv: Conversation, action: "takeover" | "resolve") {
+    setBusyConv(conv.id);
+    try {
+      if (action === "takeover") await takeoverConversation(conv);
+      else await resolveConversation(conv);
+      await load(true);
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusyConv(null);
+    }
+  }
 
   async function load(silent = false) {
     try {
@@ -55,7 +71,7 @@ export default function DashboardPage() {
       setZalo(val(results[2], []));
       setMemory(val(results[3], []));
       setJobs(val(results[4], []));
-      setRun(val(results[5], null)?.run || null);
+      setRun(val(results[5], null));
       setLastUpdated(new Date());
       if (errors.length) setErr(errors.join(" | "));
     } catch (e: unknown) {
@@ -131,47 +147,7 @@ export default function DashboardPage() {
         <h2 className="card-title">
           <span className="dot" /> Leads ({leads.length})
         </h2>
-        <div className="table-wrap" style={{ marginTop: 14 }}>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Tên</th>
-                <th>SĐT</th>
-                <th>Kênh</th>
-                <th>Quan tâm</th>
-                <th>Ngân sách</th>
-                <th>Trạng thái</th>
-                <th>Điểm</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leads.map((l) => (
-                <tr key={l.id}>
-                  <td>{l.id}</td>
-                  <td>{l.name || "—"}</td>
-                  <td>{l.phone || "—"}</td>
-                  <td>{l.channel || "—"}</td>
-                  <td>{l.interest || "—"}</td>
-                  <td>{l.budget_vnd ? `${Number(l.budget_vnd).toLocaleString("vi-VN")}đ` : "—"}</td>
-                  <td>
-                    <span className={`pill ${statusPill(l.status)}`}>{l.status || "—"}</span>
-                  </td>
-                  <td>{l.score ?? "—"}</td>
-                </tr>
-              ))}
-              {!leads.length && (
-                <tr>
-                  <td colSpan={8}>
-                    <div className="empty" style={{ border: "none", background: "none" }}>
-                      Chưa có lead nào.
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <LeadsTable leads={leads} />
       </section>
 
       <div className="grid2">
@@ -187,9 +163,9 @@ export default function DashboardPage() {
                 </div>
                 <div className="detail">
                   {m.profile?.phone && <div>SĐT: {m.profile.phone}</div>}
-                  {m.profile?.interests?.length > 0 && (
-                    <div>Quan tâm: {(m.profile.interests || []).join(", ")}</div>
-                  )}
+                  {m.profile?.interests?.length ? (
+                    <div>Quan tâm: {m.profile.interests.join(", ")}</div>
+                  ) : null}
                   {!m.profile?.phone && !m.profile?.interests?.length && (
                     <span className="muted">{m.summary || "—"}</span>
                   )}
@@ -208,7 +184,7 @@ export default function DashboardPage() {
             {jobs.map((j) => (
               <div key={j.id} className="trace-item">
                 <div className="meta">
-                  #{j.id} · <span className={`pill ${statusPill(j.status)}`}>{j.status}</span>
+                  #{j.id} · <span className={`pill ${statusPillClass(j.status)}`}>{j.status}</span>
                 </div>
                 <div className="detail">{j.result || j.payload}</div>
               </div>
@@ -223,45 +199,11 @@ export default function DashboardPage() {
           <h2 className="card-title">
             <span className="dot" /> Conversations
           </h2>
-          <div className="table-wrap" style={{ marginTop: 14 }}>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Kênh</th>
-                  <th>Khách</th>
-                  <th>Trạng thái</th>
-                  <th>Cần người?</th>
-                </tr>
-              </thead>
-              <tbody>
-                {convs.map((c) => (
-                  <tr key={c.id}>
-                    <td>{c.id}</td>
-                    <td>{c.channel}</td>
-                    <td>{c.customer_name || "—"}</td>
-                    <td>
-                      <span className={`pill ${statusPill(c.status)}`}>{c.status || "—"}</span>
-                    </td>
-                    <td>
-                      <span className={`pill ${c.needs_human ? "red" : "green"}`}>
-                        {c.needs_human ? "Cần" : "Không"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-                {!convs.length && (
-                  <tr>
-                    <td colSpan={5}>
-                      <div className="empty" style={{ border: "none", background: "none" }}>
-                        Chưa có hội thoại.
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <ConversationsTable
+            convs={convs}
+            onAction={handleConversationAction}
+            busyId={busyConv}
+          />
         </section>
 
         <section className="card">

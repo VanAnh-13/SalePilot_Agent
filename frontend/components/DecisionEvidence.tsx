@@ -77,7 +77,7 @@ export function DecisionEvidence({
     );
   }
 
-  const items = decision.top3 || [];
+  const items = (decision.top3 || []).slice(0, 3);
   const hardViolation = items.some((item) =>
     (item.constraints || []).some(
       (constraint) => constraint.hardness === "hard" && constraint.status === "violated",

@@ -1,6 +1,6 @@
 import asyncio
 import json
-import re
+import logging
 from collections.abc import AsyncIterator
 from time import perf_counter
 from typing import Any
@@ -9,13 +9,17 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langgraph.graph import END, StateGraph
 from langgraph.prebuilt import ToolNode
 
-from app.agent.catalog_domain import (
-    detect_category,
-    extract_need_from_text,
-    merge_needs,
-    resolve_followup_answer,
-)
 from app.agent.consultation import consult
+from app.agent.intent import (
+    COMPARE_KEYWORDS,
+    ESCALATION_KEYWORDS,
+    FAQ_KEYWORDS,
+    fill_budget_from_profile,
+    format_need_more,
+    has_intent,
+    merge_turn_need,
+    phone_in_text,
+)
 from app.agent.lead_tools import LEAD_TOOLS
 from app.agent.run_bag import get_run_bag, reset_run_bag
 from app.agent.llm import get_chat_model, has_llm_key
@@ -34,6 +38,9 @@ from app.agent.tools.runtime import ToolContext, get_ctx, set_ctx
 from app.agent.trajectory.export import save_trajectory
 from app.config import get_settings
 from app.observability.metrics import record_run
+from app.services.leads import upsert_lead_record
+
+logger = logging.getLogger(__name__)
 
 
 def _record_route(result: dict[str, Any], route: str, started: float) -> dict[str, Any]:
@@ -151,29 +158,47 @@ def _system_with_memory(base: str, memory_summary: str) -> str:
 # leaving a phone, comparison, no category) falls through to the full graph.
 # --------------------------------------------------------------------------- #
 
-_FAQ_KW = (
-    "bảo hành", "bao hanh", "giao hàng", "giao hang", "lắp đặt", "lap dat",
-    "trả góp", "tra gop", "đổi trả", "doi tra", "chính sách", "chinh sach",
-    "vệ sinh", "khui hộp", "khui hop", "hoá đơn", "hóa đơn",
-)
-_ESC_KW = ("gặp người", "gap nguoi", "tư vấn viên", "tu van vien", "nhân viên", "nhan vien", "khiếu nại", "khieu nai")
-_CMP_KW = ("so sánh", "so sanh", "compare", "đối chiếu", "doi chieu")
-_PHONE_RE = re.compile(r"0\d{8,10}")
-
-
 def _looks_like_recommend(user_text: str, need: dict) -> bool:
-    t = (user_text or "").lower()
-    if _PHONE_RE.search(t.replace(" ", "").replace(".", "")):
+    if phone_in_text(user_text):
         return False
-    if any(k in t for k in _FAQ_KW) or any(k in t for k in _ESC_KW) or any(k in t for k in _CMP_KW):
+    if (
+        has_intent(user_text, FAQ_KEYWORDS)
+        or has_intent(user_text, ESCALATION_KEYWORDS)
+        or has_intent(user_text, COMPARE_KEYWORDS)
+    ):
         return False
     return bool(need.get("category"))
 
 
-def _format_need_more(rec: dict[str, Any]) -> str:
-    display = (rec.get("category_display") or "sản phẩm").lower()
-    asks = rec.get("ask") or []
-    return f"Để gợi ý {display} sát nhu cầu, em cần thêm:\n" + "\n".join(f"- {a}" for a in asks)
+async def _save_consultation_lead(
+    *,
+    customer_name: str,
+    channel: str,
+    external_id: str,
+    conversation_id: int | None,
+    need: dict[str, Any],
+    rec: dict[str, Any],
+) -> dict[str, Any]:
+    """Upsert the finished consultation onto the owner dashboard.
+
+    A CRM write must never break the customer reply: failures are logged
+    and reported back as an empty result.
+    """
+    prof = await load_profile(channel, external_id)
+    skus = ", ".join(need.get("last_skus", [])[:3])
+    lead = await upsert_lead_record(
+        name=customer_name,
+        phone=str(prof.get("phone") or ""),
+        channel=channel,
+        external_id=external_id,
+        interest=rec.get("category_display") or need.get("category") or "",
+        budget_vnd=need.get("budget_vnd"),
+        notes=f"Đã tư vấn {rec.get('category_display', '')}. Đề xuất: {skus}.".strip(),
+        score=0.6 if prof.get("phone") else 0.5,
+        status="qualified",
+        conversation_id=conversation_id,
+    )
+    return {"lead_id": lead.id, "summary": f"lead#{lead.id}"}
 
 
 async def _phrase_recommendation(user_text: str, rec: dict[str, Any]) -> str:
@@ -207,24 +232,8 @@ async def _try_fast_path(
 ) -> dict[str, Any] | None:
     try:
         stored = await load_need(channel, external_id)
-        # Interpret this turn under the category already in play, so a short slot
-        # answer on a follow-up turn ("9kg", "5 người") is captured even when the
-        # user doesn't repeat the product name. A freshly named category wins.
-        detected = detect_category(user_text)
-        ctx_category = (detected.slug if detected else None) or stored.get("category")
-        fresh = extract_need_from_text(user_text, ctx_category)
-        need = merge_needs(stored, fresh)
-        # A short follow-up ("50", "phòng ngủ", "9") answers the slot we just
-        # asked about — unless the user switched category this turn.
-        switching = bool(
-            detected and stored.get("category") and detected.slug != stored.get("category")
-        )
-        if not switching:
-            need = resolve_followup_answer(need, stored, user_text)
-        if need.get("budget_vnd") is None:
-            prof = await load_profile(channel, external_id)
-            if prof.get("budget_vnd"):
-                need["budget_vnd"] = int(prof["budget_vnd"])
+        need, _ = await merge_turn_need(user_text, stored)
+        await fill_budget_from_profile(need, channel=channel, external_id=external_id)
         if not _looks_like_recommend(user_text, need):
             return None
 
@@ -240,7 +249,7 @@ async def _try_fast_path(
 
         tools_used: list[str] = []
         if rec.get("need_more"):
-            reply = _format_need_more(rec)
+            reply = format_need_more(rec)
             agents = ["lead"]
             trace = [{"agent": "lead", "event": "fast_path", "detail": f"ask:{rec.get('category')}"}]
         elif rec.get("ok") and rec.get("top3"):
@@ -268,27 +277,25 @@ async def _try_fast_path(
             # Consultation finished → record it on the owner dashboard as a lead
             # (upsert per customer so repeat turns update instead of duplicating).
             try:
-                from app.services.leads import upsert_lead_record
-
-                prof = await load_profile(channel, external_id)
-                skus = ", ".join(need.get("last_skus", [])[:3])
-                lead = await upsert_lead_record(
-                    name=customer_name,
-                    phone=str(prof.get("phone") or ""),
+                crm = await _save_consultation_lead(
+                    customer_name=customer_name,
                     channel=channel,
                     external_id=external_id,
-                    interest=rec.get("category_display") or need.get("category") or "",
-                    budget_vnd=need.get("budget_vnd"),
-                    notes=f"Đã tư vấn {rec.get('category_display', '')}. Đề xuất: {skus}.".strip(),
-                    score=0.6 if prof.get("phone") else 0.5,
-                    status="qualified",
                     conversation_id=conversation_id,
+                    need=need,
+                    rec=rec,
                 )
-                lead_id = lead.id
+                lead_id = crm["lead_id"]
                 agents.append("crm")
-                trace.append({"agent": "crm", "event": "save_lead", "detail": f"lead#{lead.id}"})
+                trace.append({"agent": "crm", "event": "save_lead", "detail": crm["summary"]})
             except Exception:
-                pass  # never let a dashboard write break the customer reply
+                # never let a dashboard write break the customer reply
+                logger.warning(
+                    "fast-path lead upsert failed (channel=%s external_id=%s)",
+                    channel,
+                    external_id,
+                    exc_info=True,
+                )
         else:
             return None  # no priced match — let the full graph offer to widen budget
 
@@ -320,7 +327,80 @@ async def _try_fast_path(
             "decision": decision,
         }
     except Exception:
+        logger.warning(
+            "fast-path failed, falling back to full graph (channel=%s external_id=%s)",
+            channel,
+            external_id,
+            exc_info=True,
+        )
         return None  # any hiccup → fall back to the full graph
+
+
+_LLM_ERROR_REPLY = (
+    "Xin lỗi, hiện em chưa kết nối được trợ lý AI (mạng/LLM đang bận). "
+    "Anh/chị mô tả nhu cầu kèm ngân sách giúp em nhé "
+    "(vd: “tủ lạnh cho 4 người dưới 15 triệu”, “máy lạnh phòng 20m² tầm 12 triệu”) "
+    "— em sẽ gợi ý sản phẩm ngay, hoặc để lại SĐT để tư vấn viên gọi lại ạ."
+)
+_NO_FINAL_REPLY = (
+    "Em xin lỗi, hệ thống multi-agent chưa chốt được câu trả lời. "
+    "Bạn thử hỏi lại giúp em nhé."
+)
+
+
+async def _run_offline_route(
+    user_text: str,
+    *,
+    channel: str,
+    external_id: str,
+    conversation_id: int | None,
+    lead_id: int | None,
+    customer_name: str,
+) -> dict[str, Any]:
+    """Serve via the rule-based offline path and persist its trajectory."""
+    result = await run_offline_multi_agent(
+        user_text,
+        channel=channel,
+        external_id=external_id,
+        conversation_id=conversation_id,
+        lead_id=lead_id,
+        customer_name=customer_name,
+    )
+    memory_after = await load_profile(channel, external_id)
+    run_id = await save_trajectory(
+        channel=channel,
+        external_id=external_id,
+        conversation_id=conversation_id,
+        user_text=user_text,
+        reply=result["reply"],
+        trace=result.get("trace") or [],
+        agents=result.get("used_agents") or [],
+        tools=result.get("used_tools") or [],
+        memory=memory_after,
+        skills=[],
+        decision=result.get("decision"),
+    )
+    result["run_id"] = run_id
+    result["memory"] = memory_after
+    result["memory_summary"] = await get_memory_summary(channel, external_id)
+    return result
+
+
+def _build_graph_messages(
+    system_prompt: str,
+    history: list[dict[str, str]] | None,
+    user_text: str,
+) -> list:
+    messages: list = [SystemMessage(content=system_prompt)]
+    for h in history or []:
+        role = h.get("role", "user")
+        content = h.get("content", "")
+        if role == "assistant":
+            messages.append(AIMessage(content=content))
+        else:
+            messages.append(HumanMessage(content=content))
+    messages.append(HumanMessage(content=user_text))
+    return messages
 
 
 async def run_agent(
@@ -339,7 +419,7 @@ async def run_agent(
     await maybe_extract_from_text(channel, external_id, user_text)
 
     if not has_llm_key():
-        result = await run_offline_multi_agent(
+        result = await _run_offline_route(
             user_text,
             channel=channel,
             external_id=external_id,
@@ -347,23 +427,6 @@ async def run_agent(
             lead_id=lead_id,
             customer_name=customer_name,
         )
-        memory_after = await load_profile(channel, external_id)
-        run_id = await save_trajectory(
-            channel=channel,
-            external_id=external_id,
-            conversation_id=conversation_id,
-            user_text=user_text,
-            reply=result["reply"],
-            trace=result.get("trace") or [],
-            agents=result.get("used_agents") or [],
-            tools=result.get("used_tools") or [],
-            memory=memory_after,
-            skills=[],
-            decision=result.get("decision"),
-        )
-        result["run_id"] = run_id
-        result["memory"] = memory_after
-        result["memory_summary"] = await get_memory_summary(channel, external_id)
         return _record_route(result, "offline", started)
 
     # Fast-path (B): clear recommend intent → deterministic engine + 1 LLM call.
@@ -390,15 +453,7 @@ async def run_agent(
     )
 
     sys = _system_with_memory(lead_system_prompt(), memory_summary)
-    messages: list = [SystemMessage(content=sys)]
-    for h in history or []:
-        role = h.get("role", "user")
-        content = h.get("content", "")
-        if role == "assistant":
-            messages.append(AIMessage(content=content))
-        else:
-            messages.append(HumanMessage(content=content))
-    messages.append(HumanMessage(content=user_text))
+    messages = _build_graph_messages(sys, history, user_text)
 
     graph = get_graph()
     llm_error: Exception | None = None
@@ -437,17 +492,9 @@ async def run_agent(
             bag["trace"].append(
                 {"agent": "lead", "event": "llm_error", "detail": type(llm_error).__name__}
             )
-            reply = (
-                "Xin lỗi, hiện em chưa kết nối được trợ lý AI (mạng/LLM đang bận). "
-                "Anh/chị mô tả nhu cầu kèm ngân sách giúp em nhé "
-                "(vd: “tủ lạnh cho 4 người dưới 15 triệu”, “máy lạnh phòng 20m² tầm 12 triệu”) "
-                "— em sẽ gợi ý sản phẩm ngay, hoặc để lại SĐT để tư vấn viên gọi lại ạ."
-            )
+            reply = _LLM_ERROR_REPLY
         else:
-            reply = (
-                "Em xin lỗi, hệ thống multi-agent chưa chốt được câu trả lời. "
-                "Bạn thử hỏi lại giúp em nhé."
-            )
+            reply = _NO_FINAL_REPLY
 
     agents_used = sorted({r["agent"] for r in bag["results"] if r.get("agent")})
     used_agents = ["lead", *agents_used]

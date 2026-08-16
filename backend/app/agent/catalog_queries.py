@@ -10,19 +10,19 @@ from app.catalog import repository
 from app.catalog.registry import Category, get_category
 
 
-def _fmt_price(value: int | float | None) -> str:
+def fmt_price(value: int | float | None) -> str:
     if value is None:
         return "Chưa có giá"
     return f"{int(value):,}".replace(",", ".") + "đ"
 
 
-def _fmt_num(value: Any, unit: str = "") -> str:
+def fmt_num(value: Any, unit: str = "") -> str:
     if isinstance(value, float) and value.is_integer():
         value = int(value)
     return f"{value} {unit}".strip() if unit else str(value)
 
 
-def _fmt_sold(value: Any) -> str:
+def fmt_sold(value: Any) -> str:
     try:
         number = int(value)
     except (TypeError, ValueError):
@@ -57,14 +57,14 @@ def product_public(product: dict[str, Any]) -> dict[str, Any]:
         "name": product.get("name") or "",
         "description": product.get("description") or "",
         "price_vnd": product.get("price_vnd"),
-        "price_display": _fmt_price(product.get("price_vnd")),
+        "price_display": fmt_price(product.get("price_vnd")),
         "price_original_vnd": product.get("price_original_vnd"),
         "price_sale_vnd": product.get("price_sale_vnd"),
         "has_current_price": bool(product.get("has_current_price")),
         "gift_promotion": product.get("gift_promotion"),
         "rating": product.get("rating"),
         "sold": product.get("sold"),
-        "sold_display": _fmt_sold(product.get("sold")) if product.get("sold") else "",
+        "sold_display": fmt_sold(product.get("sold")) if product.get("sold") else "",
         "warranty": product.get("warranty"),
         "accessories": product.get("accessories"),
         "color": product.get("color"),
@@ -78,7 +78,7 @@ def product_public(product: dict[str, Any]) -> dict[str, Any]:
     return public
 
 
-def _summary(product: dict[str, Any]) -> dict[str, Any]:
+def summarize_product(product: dict[str, Any]) -> dict[str, Any]:
     public = product_public(product)
     public.pop("specs", None)
     return public
@@ -189,7 +189,7 @@ def search(
         )
     )
     selected = scored if limit is None else scored[: max(1, min(limit, 100))]
-    return [_summary(product) for _, _, product in selected]
+    return [summarize_product(product) for _, _, product in selected]
 
 
 def compare(skus: list[str]) -> dict[str, Any]:
@@ -222,7 +222,7 @@ def compare(skus: list[str]) -> dict[str, Any]:
             - int(item["price_sale_vnd"]),
         )
         gap = int(best["price_original_vnd"]) - int(best["price_sale_vnd"])
-        tradeoffs.append(f"Giảm giá nhiều nhất: {best['name']} ({_fmt_price(gap)}).")
+        tradeoffs.append(f"Giảm giá nhiều nhất: {best['name']} ({fmt_price(gap)}).")
 
     rated = [item for item in items if item.get("rating")]
     if rated:
@@ -233,7 +233,7 @@ def compare(skus: list[str]) -> dict[str, Any]:
     if best_sellers:
         best = max(best_sellers, key=lambda item: int(item["sold"]))
         tradeoffs.append(
-            f"Bán chạy nhất: {best['name']} (đã bán {_fmt_sold(best['sold'])})."
+            f"Bán chạy nhất: {best['name']} (đã bán {fmt_sold(best['sold'])})."
         )
 
     return {
@@ -264,9 +264,9 @@ def _tradeoff_lines(
             key=lambda item: float(item[tradeoff.spec_key]),
         )
         value = (
-            _fmt_price(pick[tradeoff.spec_key])
+            fmt_price(pick[tradeoff.spec_key])
             if tradeoff.fmt == "price"
-            else _fmt_num(pick[tradeoff.spec_key], tradeoff.unit)
+            else fmt_num(pick[tradeoff.spec_key], tradeoff.unit)
         )
         lines.append(f"{tradeoff.label}: {pick['name']} ({value}).")
     return lines

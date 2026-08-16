@@ -200,9 +200,9 @@ async def maybe_extract_from_text(channel: str, external_id: str, text: str) -> 
     if category:
         interest = category.display.lower()
     # Reuse the robust budget parser (avoids matching "20m2" as 20 triệu).
-    from app.agent.catalog_domain import _extract_budget
+    from app.agent.catalog_domain import extract_budget
 
-    budget = _extract_budget(text)
+    budget = extract_budget(text)
 
     if not phone_m and not interest and budget is None:
         return await load_profile(channel, external_id)

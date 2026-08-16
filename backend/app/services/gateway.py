@@ -6,6 +6,12 @@ from typing import Any
 
 from app.agent.graph import run_agent
 from app.services.conversation import append_message, get_or_create_conversation, recent_history
+from app.services.escalation import is_taken_over
+
+TAKEOVER_REPLY = (
+    "Hội thoại đang được tư vấn viên tiếp nhận. "
+    "Tin nhắn của anh/chị đã được ghi lại và sẽ có người phản hồi ạ."
+)
 
 
 async def ingest_message(
@@ -25,6 +31,25 @@ async def ingest_message(
     )
     conv_id = conv.id
     await append_message(conv_id, "user", text)
+
+    # Human takeover: after escalation the bot must stay silent. The message
+    # above is still stored so the human advisor sees what the customer said.
+    if await is_taken_over(channel, external_id):
+        await append_message(conv_id, "assistant", TAKEOVER_REPLY, meta={"takeover": True})
+        return {
+            "reply": TAKEOVER_REPLY,
+            "used_tools": [],
+            "used_agents": ["lead"],
+            "trace": [{"agent": "lead", "event": "human_takeover", "detail": "bot im lặng"}],
+            "subagent_results": [],
+            "needs_human": True,
+            "lead_id": conv.lead_id,
+            "conversation_id": conv_id,
+            "run_id": None,
+            "active_skills": [],
+            "decision": None,
+        }
+
     history = await recent_history(conv_id)
 
     result = await run_agent(

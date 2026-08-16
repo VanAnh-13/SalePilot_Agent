@@ -3,14 +3,13 @@ import hmac
 import json
 
 from fastapi import APIRouter, Header, HTTPException, Request
-from sqlalchemy import select
 
 from app.channels.zalo.client import get_zalo_client
 from app.channels.zalo.mapper import event_to_agent_input
 from app.channels.zalo.schemas import ZaloEvent, ZaloWebhookResponse
 from app.config import get_settings
-from app.db.session import async_session
-from app.models.entities import Conversation, OutboxMessage, ProcessedEvent
+from app.services import zalo_events
+from app.services.escalation import is_taken_over
 from app.services.gateway import ingest_message
 
 router = APIRouter(prefix="/webhooks/zalo", tags=["zalo"])
@@ -63,12 +62,8 @@ async def zalo_webhook(
     mapped = event_to_agent_input(event)
     event_id = mapped["event_id"]
 
-    async with async_session() as session:
-        existing = (
-            await session.execute(select(ProcessedEvent).where(ProcessedEvent.event_id == event_id))
-        ).scalar_one_or_none()
-        if existing:
-            return ZaloWebhookResponse(ok=True, event_id=event_id, skipped=True, reason="duplicate")
+    if await zalo_events.was_event_processed(event_id):
+        return ZaloWebhookResponse(ok=True, event_id=event_id, skipped=True, reason="duplicate")
 
     if event.event_name not in ("user_send_text", "user_send_image", "follow"):
         return ZaloWebhookResponse(ok=True, event_id=event_id, skipped=True, reason=f"ignored:{event.event_name}")
@@ -86,35 +81,23 @@ async def zalo_webhook(
         )
         client = get_zalo_client()
         await client.send_text(mapped["external_id"], reply)
-        async with async_session() as session:
-            session.add(ProcessedEvent(event_id=event_id))
-            session.add(
-                OutboxMessage(
-                    channel="zalo",
-                    user_id=mapped["external_id"],
-                    direction="inbound",
-                    content="[follow]",
-                    status="received",
-                )
-            )
-            await session.commit()
+        await zalo_events.record_inbound_message(mapped["external_id"], "[follow]")
+        await zalo_events.mark_event_processed(event_id)
         return ZaloWebhookResponse(ok=True, event_id=event_id, reply=reply)
 
     text = mapped["text"]
     if not text:
         return ZaloWebhookResponse(ok=True, event_id=event_id, skipped=True, reason="empty_text")
 
-    async with async_session() as session:
-        session.add(
-            OutboxMessage(
-                channel="zalo",
-                user_id=mapped["external_id"],
-                direction="inbound",
-                content=text,
-                status="received",
-            )
+    await zalo_events.record_inbound_message(mapped["external_id"], text)
+
+    # Human takeover: stay completely silent on Zalo (no auto-reply at all)
+    # until the owner hands the conversation back to the bot.
+    if await is_taken_over("zalo", mapped["external_id"]):
+        await zalo_events.mark_event_processed(event_id)
+        return ZaloWebhookResponse(
+            ok=True, event_id=event_id, skipped=True, reason="human_takeover"
         )
-        await session.commit()
 
     # Unified channel bus
     result = await ingest_message(
@@ -126,19 +109,12 @@ async def zalo_webhook(
     reply = result["reply"]
 
     if result.get("needs_human") and result.get("conversation_id"):
-        async with async_session() as session:
-            c = await session.get(Conversation, result["conversation_id"])
-            if c:
-                c.needs_human = True
-                c.status = "escalated"
-                await session.commit()
+        await zalo_events.mark_conversation_escalated(result["conversation_id"])
 
     client = get_zalo_client()
     await client.send_text(mapped["external_id"], reply)
 
-    async with async_session() as session:
-        session.add(ProcessedEvent(event_id=event_id))
-        await session.commit()
+    await zalo_events.mark_event_processed(event_id)
 
     return ZaloWebhookResponse(
         ok=True,

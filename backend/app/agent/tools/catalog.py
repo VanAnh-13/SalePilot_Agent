@@ -6,7 +6,7 @@ from app.agent.catalog_domain import (
     compare,
     get_by_sku,
     recommendation_need,
-    recommend_top3 as rank_top3,
+    recommend_top3 as recommend_top3_engine,  # aliased: the @tool below owns the name
     search,
 )
 from app.agent.decision import build_decision
@@ -129,7 +129,7 @@ async def recommend_top3(
         force=force,
         free_text=free_text,
     )
-    recommendation = rank_top3(need)
+    recommendation = recommend_top3_engine(need)
     try:
         decision = build_decision(need, recommendation)
         get_run_bag()["decision"] = decision

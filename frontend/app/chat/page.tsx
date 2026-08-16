@@ -6,12 +6,13 @@ import { Markdown } from "@/components/Markdown";
 import { IconAlert, IconBot, IconSend, IconUser } from "@/components/Icons";
 import { chatOnce, type DecisionContract, type TraceStep } from "@/lib/api";
 
-type Msg = { role: "user" | "assistant"; content: string };
+type Msg = { id: string; role: "user" | "assistant"; content: string };
 
 const LS_ID = "salepilot_external_id";
 const LS_MSGS = "salepilot_msgs";
 
 const GREETING: Msg = {
+  id: "greeting",
   role: "assistant",
   content:
     "Chào bạn! Em là **SalePilot-R** — hệ hỗ trợ quyết định điện máy theo nhu cầu thật " +
@@ -65,7 +66,9 @@ export default function ChatPage() {
     try {
       const raw = localStorage.getItem(LS_MSGS);
       const parsed = raw ? (JSON.parse(raw) as Msg[]) : null;
-      if (Array.isArray(parsed) && parsed.length) setMsgs(parsed);
+      // Older saved histories have no id — backfill so list keys stay stable.
+      if (Array.isArray(parsed) && parsed.length)
+        setMsgs(parsed.map((m, i) => ({ ...m, id: m.id || `restored-${i}` })));
     } catch {}
     setLoaded(true);
   }, []);
@@ -107,11 +110,11 @@ export default function ChatPage() {
     setInput("");
     setError("");
     setDecision(null);
-    setMsgs((m) => [...m, { role: "user", content: text }]);
+      setMsgs((m) => [...m, { id: crypto.randomUUID(), role: "user", content: text }]);
     setLoading(true);
     try {
       const res = await chatOnce(text, externalId);
-      setMsgs((m) => [...m, { role: "assistant", content: res.reply }]);
+      setMsgs((m) => [...m, { id: crypto.randomUUID(), role: "assistant", content: res.reply }]);
       setTrace(res.trace || []);
       setAgents(res.used_agents || []);
       setMemoryHit(res.memory_summary || "");
@@ -122,7 +125,11 @@ export default function ChatPage() {
       setError(msg);
       setMsgs((m) => [
         ...m,
-        { role: "assistant", content: "Lỗi gọi API. Kiểm tra backend `:8000` và CORS." },
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: "Lỗi gọi API. Kiểm tra kết nối backend và CORS.",
+        },
       ]);
     } finally {
       setLoading(false);
@@ -171,8 +178,8 @@ export default function ChatPage() {
         </div>
 
         <div className="chat-log" ref={logRef}>
-          {msgs.map((m, i) => (
-            <div key={i} className={`msg ${m.role === "user" ? "user" : "bot"}`}>
+          {msgs.map((m) => (
+            <div key={m.id} className={`msg ${m.role === "user" ? "user" : "bot"}`}>
               <span className="msg-avatar" aria-hidden>
                 {m.role === "user" ? <IconUser width={16} height={16} /> : <IconBot width={16} height={16} />}
               </span>

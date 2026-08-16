@@ -4,20 +4,19 @@ from __future__ import annotations
 
 import asyncio
 import json
-import re
 from typing import Any
 
-from app.agent.catalog_queries import compare
 from app.agent.consultation import ConsultationResult, consult
+from app.agent.catalog_domain import compare, extract_need_from_text
+from app.agent.intent import fill_budget_from_profile, format_need_more, merge_turn_need
+from app.agent.offline_routing import read_turn_signals
 from app.agent.memory.store import (
     get_memory_summary,
     load_need,
-    load_profile,
     maybe_extract_from_text,
     save_need,
 )
 from app.agent.run_bag import get_run_bag, reset_run_bag
-from app.agent.recommendation import extract_need_from_text, merge_needs
 from app.agent.tools.crm import create_lead, escalate_to_human
 from app.agent.tools.knowledge import search_knowledge
 from app.agent.tools.runtime import ToolContext, get_ctx, note_tool, set_ctx
@@ -25,7 +24,6 @@ from app.catalog.registry import (
     CATEGORIES,
     detect_category,
     detect_negated_categories,
-    detect_unsupported,
 )
 
 
@@ -36,11 +34,7 @@ def _trace(agent: str, event: str, detail: str = "") -> None:
 def _format_top3(rec: dict[str, Any]) -> str:
     display = rec.get("category_display") or "sản phẩm"
     if rec.get("need_more"):
-        asks = rec.get("ask") or []
-        return (
-            f"Để gợi ý {display.lower()} sát nhu cầu, em cần thêm:\n"
-            + "\n".join(f"- {a}" for a in asks)
-        )
+        return format_need_more(rec)
     if not rec.get("ok"):
         return (
             str(rec.get("message") or "Không tìm thấy mẫu phù hợp với các giới hạn đã chọn.")
@@ -89,15 +83,6 @@ def _format_compare(cmp: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def _has_need_signal(need: dict[str, Any]) -> bool:
-    """True when the need profile carries any slot beyond the raw text."""
-    return any(
-        value not in (None, "", [])
-        for key, value in need.items()
-        if key not in {"raw", "category", "priority"}
-    ) or bool(need.get("priority"))
-
-
 def _catalog_welcome() -> str:
     categories = ", ".join(category.display.lower() for category in CATEGORIES)
     return (
@@ -131,7 +116,6 @@ async def run_offline_multi_agent(
         )
     )
     bag = get_run_bag()
-    t = user_text.lower()
     parts: list[str] = []
     agents: list[str] = []
 
@@ -141,28 +125,6 @@ async def run_offline_multi_agent(
         _trace("lead", "memory", mem[:200])
 
     _trace("lead", "start", "offline multi-category advisor")
-
-    stock_question = any(
-        k in t for k in ("còn hàng", "con hang", "tồn kho", "ton kho", "khả năng giao hàng")
-    )
-    need_faq = stock_question or any(
-        k in t
-        for k in (
-            "bảo hành",
-            "bao hanh",
-            "lắp",
-            "giao",
-            "ship",
-            "trả góp",
-            "đổi",
-            "trả",
-            "vệ sinh",
-            "đổi cũ",
-        )
-    )
-    need_escalate = any(k in t for k in ("gặp người", "tư vấn viên", "nhân viên", "khiếu nại"))
-    phone_m = re.search(r"0\d{8,10}", user_text.replace(" ", "").replace(".", ""))
-    need_crm = bool(phone_m) or any(k in t for k in ("gọi lại", "để lại sđt", "liên hệ em"))
 
     # Multi-turn: load accumulated need first so a follow-up like "RAM 16 GB"
     # can extract category-specific slots without re-naming the product family.
@@ -175,53 +137,28 @@ async def run_offline_multi_agent(
         }
         await save_need(channel, external_id, stored_need)
     category = detect_category(user_text)
+    merged_need, _ = await merge_turn_need(
+        user_text, stored_need, resolve_followup=False
+    )
+    await fill_budget_from_profile(merged_need, channel=channel, external_id=external_id)
+    # The turn's fresh extraction feeds the routing policy below.
     extract_category = category.slug if category else stored_need.get("category")
     extracted_need = extract_need_from_text(user_text, category=extract_category)
-    merged_need = merge_needs(stored_need, extracted_need)
-    # Budget mentioned in an earlier turn lives in the memory profile — reuse it.
-    if merged_need.get("budget_vnd") is None:
-        profile = await load_profile(channel, external_id)
-        if profile.get("budget_vnd"):
-            merged_need["budget_vnd"] = int(profile["budget_vnd"])
 
-    # Honest guardrail: the sheet does not cover every product people ask for.
-    unsupported = None
-    if not category and not merged_need.get("category"):
-        unsupported = detect_unsupported(user_text)
-
-    # Compare intent: "so sánh 358683 với 360309" or "so sánh 2 mẫu vừa gợi ý".
-    compare_intent = any(k in t for k in ("so sánh", "so sanh", "compare", "đối chiếu", "so kèo"))
-    skus_in_text = re.findall(r"\b\d{4,7}\b", user_text)
-
-    generic_intent = any(
-        k in t
-        for k in ("gợi ý", "so sánh", "nên mua", "tư vấn", "top", "rẻ", "tiết kiệm", "triệu", "mua")
+    # Pure routing policy: intent flags, product/compare routing, guardrails.
+    signals = read_turn_signals(
+        user_text,
+        stored_need=stored_need,
+        extracted_need=extracted_need,
+        merged_need=merged_need,
+        detected=category,
     )
-    follow_up = bool(stored_need.get("category")) and _has_need_signal(extracted_need)
-    need_product = (
-        bool(category)
-        or follow_up
-        or (_has_need_signal(extracted_need) and generic_intent)
-    )
-    if stock_question and not _has_need_signal(extracted_need):
-        need_product = False
-    if unsupported:
-        need_product = False
 
-    # Resolve a compare request to concrete SKUs (from the message, else the
-    # last top-3 we recommended to this customer). Compare replaces recommend.
-    compare_skus = skus_in_text[:5] if compare_intent else []
-    if compare_intent and len(compare_skus) < 2:
-        compare_skus = list(stored_need.get("last_skus") or [])[:5]
-    do_compare_now = compare_intent and len(compare_skus) >= 2
-    if do_compare_now:
-        need_product = False
-
-    if need_product and merged_need.get("category"):
+    if signals.need_product and merged_need.get("category"):
         await save_need(channel, external_id, merged_need)
 
-    if unsupported:
-        term, suggestion = unsupported
+    if signals.unsupported:
+        term, suggestion = signals.unsupported
         supported_list = ", ".join(c.display for c in CATEGORIES)
         lines = [
             f"Em xin lỗi, hiện bảng dữ liệu của em **chưa có ngành hàng {term}** "
@@ -235,10 +172,10 @@ async def run_offline_multi_agent(
         _trace("lead", "guardrail", f"unsupported:{term}")
 
     async def do_knowledge() -> str | None:
-        if not need_faq:
+        if not signals.need_faq:
             return None
         _trace("lead", "delegate", "→ knowledge")
-        if stock_question:
+        if signals.stock_question:
             # Catalog has no realtime inventory column; answer honestly instead of
             # ranking an unrelated policy chunk that happened to match keywords.
             summary = (
@@ -275,11 +212,11 @@ async def run_offline_multi_agent(
         return summary
 
     async def do_compare() -> str | None:
-        if not do_compare_now:
+        if not signals.do_compare_now:
             return None
         _trace("lead", "delegate", "→ catalog (compare)")
         note_tool("compare_products")
-        cmp = compare(compare_skus)
+        cmp = compare(signals.compare_skus)
         bag["results"].append(
             {
                 "agent": "catalog",
@@ -296,7 +233,7 @@ async def run_offline_multi_agent(
 
     async def do_catalog() -> str | None:
         nonlocal consultation_result
-        if not need_product:
+        if not signals.need_product:
             return None
         _trace("lead", "delegate", f"→ catalog ({merged_need.get('category') or 'auto'})")
         note_tool("recommend_top3")
@@ -328,8 +265,8 @@ async def run_offline_multi_agent(
     if kn_s:
         parts.append(kn_s)
 
-    if need_crm:
-        phone = phone_m.group(0) if phone_m else ""
+    if signals.need_crm:
+        phone = signals.phone or ""
         _trace("lead", "delegate", "→ crm")
         raw = await create_lead.ainvoke(
             {
@@ -347,7 +284,7 @@ async def run_offline_multi_agent(
         agents.append("crm")
         parts.append("Em đã ghi nhận thông tin liên hệ. Tư vấn viên có thể gọi lại trong giờ hành chính ạ.")
 
-    if need_escalate:
+    if signals.need_escalate:
         raw = await escalate_to_human.ainvoke(
             {"reason": "Khách yêu cầu gặp người", "summary": user_text[:300]}
         )
@@ -360,7 +297,7 @@ async def run_offline_multi_agent(
     if not parts:
         parts.append(_catalog_welcome())
 
-    if mem and need_product:
+    if mem and signals.need_product:
         parts.insert(0, f"(Em nhớ: {mem})")
 
     reply = "\n\n".join(parts)

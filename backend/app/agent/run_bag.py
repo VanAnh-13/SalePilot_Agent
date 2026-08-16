@@ -5,16 +5,6 @@ from __future__ import annotations
 from contextvars import ContextVar
 from typing import Any
 
-_EMPTY = {
-    "results": [],
-    "trace": [],
-    "final": None,
-    "decision": None,
-    "delegates": 0,
-    "active_skills": [],
-    "skill_bodies": {},
-}
-
 _run_bag_var: ContextVar[dict[str, Any] | None] = ContextVar("salepilot_run_bag", default=None)
 
 

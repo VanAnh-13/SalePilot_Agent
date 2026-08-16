@@ -1,4 +1,11 @@
 import type { Metadata } from "next";
+// Import order matters: same cascade as the former single globals.css
+// (tokens/shared → landing → chat → dashboard → markdown → theme overrides).
+import "./styles/base.css";
+import "./styles/landing.css";
+import "./styles/chat.css";
+import "./styles/dashboard.css";
+import "./styles/markdown.css";
 import "./globals.css";
 import { Nav } from "@/components/Nav";
 

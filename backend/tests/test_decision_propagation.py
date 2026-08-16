@@ -52,7 +52,7 @@ class DecisionPropagationTests(unittest.IsolatedAsyncioTestCase):
             patch("app.agent.offline.maybe_extract_from_text", new=AsyncMock()),
             patch("app.agent.offline.get_memory_summary", new=AsyncMock(return_value="")),
             patch("app.agent.offline.load_need", new=AsyncMock(return_value={})),
-            patch("app.agent.offline.load_profile", new=AsyncMock(return_value={})),
+            patch("app.agent.intent.load_profile", new=AsyncMock(return_value={})),
             patch("app.agent.offline.save_need", new=AsyncMock()),
             patch.object(
                 consultation,

@@ -103,6 +103,16 @@ RECORDED_PROTECTED_APPROVALS = {
         "backend/app/db/sync.py",
         "backend/app/models/entities.py",
     },
+    # 2026-08-16: owner approved hoisting the two deferred catalog.repository
+    # imports in backend/app/main.py to module top (verified: no import cycle).
+    # Owner's exact words: "Phê duyệt, làm đi" (approved, do it), via the
+    # AskUserQuestion confirmation during the 2026-08-16 refactor series.
+    # This script itself is listed because recording the approval requires
+    # editing this dict (same mechanism audit-fix-001 used above).
+    "refactor-main-imports-001": {
+        "backend/app/main.py",
+        "scripts/validate_agent_scope.py",
+    },
 }
 
 
