@@ -727,3 +727,10 @@
 - Test notes: deterministic offline fake EF satisfies the chromadb 1.x EmbeddingFunction protocol (embed_query returns a LIST of embeddings — caught via direct similarity assertions after the first run silently fell back to lexical). Suite slower (~38s) due to real chromadb PersistentClient in tmp dirs.
 - Verification: backend 108/108 PASS; scripts/verify.sh PASS; scope guard PASS.
 - Remaining from roadmap: real Zalo OA client (external), live e2e streaming with the owner key.
+
+### Session 033 — Relicense: MIT → CC BY-NC 4.0 (owner decision)
+
+- Date: 2026-08-16. Owner asked to "add a license"; LICENSE (MIT) already existed, owner then chose to switch to CC BY-NC 4.0.
+- LICENSE now contains the official CC plain-text legal code downloaded from creativecommons.org (never hand-write legal text). README license section rewritten (code+docs = CC BY-NC 4.0, attribution + non-commercial; DMX data rights excluded, still Dataset Card + manifest). backend/pyproject.toml declares LicenseRef-CC-BY-NC-4.0.
+- Note: CC licenses are not OSI open-source licenses (NC restriction) — consistent with the repo's research-prototype positioning and the forbidden commercial-claims list in tasks/plan.md.
+- Verification: scope guard check-files PASS; backend 108/108 PASS; verify.sh PASS.

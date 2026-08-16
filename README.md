@@ -160,4 +160,6 @@ Theo CFP (xác nhận trực tiếp từ rivf2026.org ngày **2026-08-01**): pap
 
 ## License
 
-MIT cho phần code trong repository. Quyền với catalog, policy corpus, benchmark derivative và experiment output được quản lý riêng trong [Dataset Card](docs/DATASET_CARD.md) và `experiments/manifest.json`.
+**[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)** cho code và tài liệu trong repository (xem [LICENSE](LICENSE)) — được phép sử dụng, chỉnh sửa và chia sẻ với điều kiện ghi công (attribution) và **chỉ cho mục đích phi thương mại**; dùng thương mại cần sự cho phép riêng bằng văn bản của chủ sở hữu.
+
+Quyền với catalog (dữ liệu crawl DMX), policy corpus, benchmark derivative và experiment output **không** bao gồm trong license này và được quản lý riêng trong [Dataset Card](docs/DATASET_CARD.md) và `experiments/manifest.json`.

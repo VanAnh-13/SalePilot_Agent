@@ -2013,6 +2013,48 @@
         }
       ],
       "notes": "Continuation 2026-08-16 on owner request. Default chroma EF (English MiniLM) is weak on pure Vietnamese — documented; CHROMA_EMBEDDING_MODEL allows a multilingual sentence-transformers model once installed. Collection uses cosine space."
+    },
+    {
+      "id": "license-cc-by-nc-001",
+      "priority": 3,
+      "area": "documentation",
+      "title": "Relicense SalePilot from MIT to CC BY-NC 4.0 (owner decision)",
+      "user_visible_behavior": "The repository license is CC BY-NC 4.0: code and docs are free to use non-commercially with attribution; commercial use requires separate permission. DMX-derived data rights remain governed separately by the Dataset Card and experiments manifest.",
+      "status": "passing",
+      "allowed_files": [
+        "LICENSE",
+        "README.md",
+        "backend/pyproject.toml"
+      ],
+      "approved_protected_files": [],
+      "verification": [
+        "LICENSE contains the official Creative Commons plain-text legal code (downloaded from creativecommons.org, not hand-written).",
+        "README license section matches; backend/pyproject.toml declares the license.",
+        "Scope guard check-files passes; backend suite unaffected."
+      ],
+      "evidence": [
+        "LICENSE replaced with the OFFICIAL Creative Commons plain-text legal code (downloaded from creativecommons.org/licenses/by-nc/4.0/legalcode.txt — not hand-written).",
+        "README License section updated: CC BY-NC 4.0 for code and docs (attribution + non-commercial; commercial use needs written permission), DMX-derived data rights explicitly excluded and still governed by the Dataset Card + experiments manifest.",
+        "backend/pyproject.toml: description + license = LicenseRef-CC-BY-NC-4.0. frontend/package.json (protected) intentionally left untouched — root LICENSE governs; a one-line cosmetic field there is not worth a protected-file approval."
+      ],
+      "test_evidence": [
+        {
+          "command": "python scripts/validate_agent_scope.py --feature-id license-cc-by-nc-001 --check-files LICENSE README.md backend/pyproject.toml",
+          "result": "passed",
+          "date": "2026-08-16"
+        },
+        {
+          "command": "backend/.venv/Scripts/python.exe -X utf8 -m unittest discover -s tests (from backend)",
+          "result": "passed",
+          "date": "2026-08-16"
+        },
+        {
+          "command": "PYTHONUTF8=1 scripts/verify.sh",
+          "result": "passed",
+          "date": "2026-08-16"
+        }
+      ],
+      "notes": "2026-08-16 owner chose CC BY-NC 4.0 over keeping MIT. frontend/package.json (protected) intentionally left without a license field — root LICENSE governs; adding it would need separate protected-file approval for a one-line cosmetic change."
     }
   ]
 }
