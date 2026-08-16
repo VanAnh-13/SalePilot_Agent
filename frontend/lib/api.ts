@@ -82,6 +82,64 @@ export async function chatOnce(message: string, externalId: string) {
   return (await res.json()) as ChatDone;
 }
 
+// --- Streaming (/chat/stream SSE) ---
+export type StreamEvent =
+  | { type: "memory"; summary: string }
+  | (TraceStep & { type: "trace" })
+  | { type: "token"; content: string }
+  | ({ type: "done" } & ChatDone);
+
+export type StreamDone = Extract<StreamEvent, { type: "done" }>;
+
+/**
+ * Consume the SSE stream, invoking onEvent per parsed event.
+ * Throws before the first event when the endpoint is unreachable so the
+ * caller can fall back to the batch POST; mid-stream errors are surfaced
+ * after whatever events were already delivered.
+ */
+export async function streamChat(
+  message: string,
+  externalId: string,
+  onEvent: (ev: StreamEvent) => void,
+): Promise<StreamDone> {
+  const res = await fetch(`${API_URL}/chat/stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message,
+      external_id: externalId,
+      customer_name: "Khách web",
+      channel: "web",
+    }),
+  });
+  if (!res.ok || !res.body) throw new Error(await res.text().catch(() => res.statusText));
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let done: StreamDone | null = null;
+
+  for (;;) {
+    const { value, done: closed } = await reader.read();
+    if (closed) break;
+    buffer += decoder.decode(value, { stream: true });
+    // SSE frames are separated by a blank line.
+    let sep: number;
+    while ((sep = buffer.indexOf("\n\n")) !== -1) {
+      const frame = buffer.slice(0, sep);
+      buffer = buffer.slice(sep + 2);
+      for (const line of frame.split("\n")) {
+        if (!line.startsWith("data: ")) continue;
+        const ev = JSON.parse(line.slice(6)) as StreamEvent;
+        if (ev.type === "done") done = ev as StreamDone;
+        onEvent(ev);
+      }
+    }
+  }
+  if (!done) throw new Error("Stream ended without a done event");
+  return done;
+}
+
 // --- Admin endpoints routed through server-side BFF ---
 // ADMIN_API_KEY stays on the server; the browser never sees it.
 async function adminFetch<T>(path: string): Promise<T> {

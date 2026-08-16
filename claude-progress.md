@@ -710,3 +710,12 @@
 - Final verification: backend 90/90 PASS; scripts/verify.sh PASS; scope guard check-session + plain PASS; WIP=0.
 - Still open (feature work, needs owner decision): Chroma embeddings at query time, real Zalo OA client, provider failover across OpenAI<->Anthropic (retry exists, cross-provider failover not built), skills auto-activation.
 - Live e2e with the owner's LLM key (real streaming latency) not exercised in tests — hermetic fake-model coverage only; verify manually when the key is active.
+
+### Session 031 — Continuation: streaming UI, provider failover, skill auto-activation
+
+- Date: 2026-08-16. Owner goal "continue implement" — the remaining roadmap items from Session 030.
+- fe-streaming-001 — frontend now consumes /chat/stream SSE: lib/api.ts streamChat (typed StreamEvent/StreamDone, incremental frame parsing, throws pre-first-event so callers can fall back); chat page renders a live growing assistant bubble per token (typing indicator hidden once streaming starts), memory event updates live, done finalizes panels. Batch POST fallback when streaming is unavailable; mid-stream loss keeps partial reply + disconnect note.
+- llm-failover-001 — with BOTH provider keys set, get_chat_model returns _FailoverModel(primary, secondary): ainvoke/ainvoke hard failure of the primary logs a warning and retries once on the other provider; bind_tools passes through both; single-key setups unchanged. (SDK retries still handle transient errors inside each provider.)
+- skills-auto-activate-001 — skills/matcher.py pure lexical matcher (unigram + adjacent-bigram overlap on each skill's own frontmatter, diacritics folded, no per-skill keyword lists); graph._auto_activate_skills loads up to 2 matching skills into the run bag on both LLM routes with trace 'auto:<name>'; AUTO_ACTIVATE_SKILLS=false disables. Probed against real Vietnamese phrasings before wiring.
+- Verification: backend 103/103 PASS; scripts/verify.sh PASS; frontend tsc + build PASS (fe-streaming slice); scope guard check-session + plain PASS; WIP=0.
+- Remaining roadmap (needs owner/external): Chroma embeddings at query time (needs embedding model decision), real Zalo OA client (blocked on OA approval), live streaming e2e with the real key.

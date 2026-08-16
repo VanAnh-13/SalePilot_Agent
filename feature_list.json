@@ -1861,6 +1861,120 @@
         }
       ],
       "notes": "Owner feedback 2026-08-16: 'không được hard code, dirty code'. Fixes duplication introduced by S3/S6 before closing them."
+    },
+    {
+      "id": "fe-streaming-001",
+      "priority": 3,
+      "area": "frontend",
+      "title": "Chat UI consumes the real SSE stream (/chat/stream)",
+      "user_visible_behavior": "Assistant reply renders progressively token-by-token as the model produces it (typing indicator replaced by live text); falls back to the batch POST when streaming is unavailable.",
+      "status": "passing",
+      "allowed_files": [
+        "frontend/lib/api.ts",
+        "frontend/app/chat/page.tsx"
+      ],
+      "approved_protected_files": [],
+      "verification": [
+        "npx tsc --noEmit passes in frontend/.",
+        "npm run build passes in frontend/."
+      ],
+      "evidence": [
+        "lib/api.ts: streamChat consumes /chat/stream SSE (ReadableStream + incremental frame parsing), typed StreamEvent/StreamDone, throws before first event when unreachable so callers can fall back.",
+        "chat/page.tsx send(): live assistant bubble grows per token (typing indicator hidden once streaming starts); memory event updates the hit line; done event finalizes trace/agents/run/decision. Fallback to batch chatOnly when streaming fails before any event; mid-stream loss keeps the partial reply with a disconnect note."
+      ],
+      "test_evidence": [
+        {
+          "command": "npx tsc --noEmit (from frontend/)",
+          "result": "passed",
+          "date": "2026-08-16"
+        },
+        {
+          "command": "npm run build (from frontend/)",
+          "result": "passed",
+          "date": "2026-08-16"
+        }
+      ],
+      "notes": "Continuation slice 2026-08-16: makes backend real-streaming (real-streaming-001) user-visible."
+    },
+    {
+      "id": "llm-failover-001",
+      "priority": 3,
+      "area": "backend-agent",
+      "title": "Cross-provider failover when both keys are configured",
+      "user_visible_behavior": "With both an OpenAI-compatible and an Anthropic key set, a hard failure of the primary provider degrades to the other provider instead of the canned error reply.",
+      "status": "passing",
+      "allowed_files": [
+        "backend/app/agent/llm.py",
+        "backend/tests/test_llm_failover.py"
+      ],
+      "approved_protected_files": [],
+      "verification": [
+        "Full backend unittest suite passes from backend/.",
+        "scripts/verify.sh passes.",
+        "Unit tests: primary failure falls to secondary; healthy primary never calls secondary; bind_tools passes through."
+      ],
+      "evidence": [
+        "llm.py: get_chat_model builds both providers (_build_provider_model); when BOTH keys are configured it returns _FailoverModel(primary, secondary) — ainvoke/ainvoke fall to the other provider on a hard failure (SDK-level retries already handle transient errors inside each provider). Single key behaves exactly as before.",
+        "bind_tools passes through to both providers so tool-calling works through the wrapper.",
+        "tests/test_llm_failover.py: 5 tests — failover path, healthy primary untouched, bind_tools passthrough, both-keys wrapping, single-key plain model."
+      ],
+      "test_evidence": [
+        {
+          "command": "backend/.venv/Scripts/python.exe -X utf8 -m unittest discover -s tests (from backend)",
+          "result": "passed",
+          "date": "2026-08-16"
+        },
+        {
+          "command": "PYTHONUTF8=1 scripts/verify.sh",
+          "result": "passed",
+          "date": "2026-08-16"
+        }
+      ],
+      "notes": "Continuation slice 2026-08-16. Failover is per-call hard failure only (provider-level retries still handled by each SDK)."
+    },
+    {
+      "id": "skills-auto-activate-001",
+      "priority": 3,
+      "area": "backend-agent",
+      "title": "Auto-activate matching skills from the user message (data-driven matcher)",
+      "user_visible_behavior": "On the LLM route, skills whose frontmatter name/description lexically match the customer's message are loaded into the run automatically (max 2/turn, trace skill:auto) instead of relying on the model remembering to call activate_skill; disabled via AUTO_ACTIVATE_SKILLS=false.",
+      "status": "passing",
+      "allowed_files": [
+        "backend/app/agent/skills/matcher.py",
+        "backend/app/agent/graph.py",
+        "backend/app/config.py",
+        "backend/tests/test_skills_auto.py"
+      ],
+      "approved_protected_files": [],
+      "verification": [
+        "Full backend unittest suite passes from backend/.",
+        "scripts/verify.sh passes.",
+        "Matcher unit tests: compare/escalation/lead messages match the right skills, unrelated text matches none."
+      ],
+      "evidence": [
+        "skills/matcher.py: pure lexical matcher — unigrams + adjacent bigrams over each skill's own frontmatter name/description, diacritics folded (so 'so sanh' matches 'so sánh'), Vietnamese stopwords only; NO per-skill hardcoded keyword lists (owner's no-hardcode rule). Max 2 skills/turn.",
+        "graph.py _auto_activate_skills: on both LLM routes (batch + streaming) matching skills are loaded into the run bag (body cap 8000 like activate_skill) with trace detail 'auto:<name>'; the model can still call activate_skill — ids make it idempotent.",
+        "config.py auto_activate_skills flag (default on). Probed live messages before wiring: compare/escalation/lead-contact cases match; plain recommend/greeting/policy questions match none.",
+        "tests/test_skills_auto.py: 8 tests (matcher cases incl. diacritics + max-2 cap; bag loading + trace; no-match; flag off via env + cache_clear)."
+      ],
+      "test_evidence": [
+        {
+          "command": "backend/.venv/Scripts/python.exe -X utf8 -m unittest discover -s tests (from backend)",
+          "result": "passed",
+          "date": "2026-08-16"
+        },
+        {
+          "command": "PYTHONUTF8=1 scripts/verify.sh",
+          "result": "passed",
+          "date": "2026-08-16"
+        },
+        {
+          "command": "npx tsc --noEmit (from frontend/)",
+          "result": "passed",
+          "date": "2026-08-16"
+        }
+      ],
+      "notes": "Continuation slice 2026-08-16. Keywords derive from SKILL.md frontmatter itself — no per-skill hardcoded lists (owner's no-hardcode rule)."
     }
   ]
 }

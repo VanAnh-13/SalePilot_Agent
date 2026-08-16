@@ -32,6 +32,8 @@ from app.agent.memory.store import (
 )
 from app.agent.offline import _format_top3, run_offline_multi_agent
 from app.agent.prompts import lead_system_prompt
+from app.agent.skills.loader import load_skill_body
+from app.agent.skills.matcher import match_skills
 from app.agent.skills.writer import maybe_write_skill_from_run
 from app.agent.state import AgentState
 from app.agent.tools.runtime import ToolContext, get_ctx, set_ctx
@@ -149,6 +151,22 @@ def _system_with_memory(base: str, memory_summary: str) -> str:
     if not memory_summary:
         return base
     return base + f"\n\n[Customer memory]\n{memory_summary}\nDùng remember_customer để cập nhật khi có fact mới."
+
+
+def _auto_activate_skills(user_text: str) -> None:
+    """Load lexically matching skills into the run bag (data-driven matcher)."""
+    if not get_settings().auto_activate_skills:
+        return
+    bag = get_run_bag()
+    for name in match_skills(user_text):
+        body = load_skill_body(name)
+        if not body:
+            continue
+        active = bag.setdefault("active_skills", [])
+        if name not in active:
+            active.append(name)
+        bag.setdefault("skill_bodies", {})[name] = body[:8000]
+        bag["trace"].append({"agent": "lead", "event": "skill", "detail": f"auto:{name}"})
 
 
 # --------------------------------------------------------------------------- #
@@ -565,6 +583,7 @@ async def run_agent(
         lead_id=lead_id,
         customer_name=customer_name,
     )
+    _auto_activate_skills(user_text)
 
     sys = _system_with_memory(lead_system_prompt(), memory_summary)
     messages = _build_graph_messages(sys, history, user_text)
@@ -689,6 +708,7 @@ async def run_agent_stream(
         lead_id=lead_id,
         customer_name=customer_name,
     )
+    _auto_activate_skills(user_text)
     sys = _system_with_memory(lead_system_prompt(), memory_summary)
     messages = _build_graph_messages(sys, history, user_text)
     state = _graph_state(

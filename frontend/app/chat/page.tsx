@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { DecisionEvidence } from "@/components/DecisionEvidence";
 import { Markdown } from "@/components/Markdown";
 import { IconAlert, IconBot, IconSend, IconUser } from "@/components/Icons";
-import { chatOnce, type DecisionContract, type TraceStep } from "@/lib/api";
+import { chatOnce, streamChat, type DecisionContract, type TraceStep } from "@/lib/api";
 
 type Msg = { id: string; role: "user" | "assistant"; content: string };
 
@@ -46,6 +46,7 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
+  const [streamStarted, setStreamStarted] = useState(false);
 
   const logRef = useRef<HTMLDivElement>(null);
 
@@ -110,27 +111,70 @@ export default function ChatPage() {
     setInput("");
     setError("");
     setDecision(null);
-      setMsgs((m) => [...m, { id: crypto.randomUUID(), role: "user", content: text }]);
+    setStreamStarted(false);
+    setMsgs((m) => [...m, { id: crypto.randomUUID(), role: "user", content: text }]);
     setLoading(true);
+
+    // Live assistant bubble that grows as tokens stream in.
+    const replyId = crypto.randomUUID();
+    let received = false;
+    let streamed = "";
+    let bubbleCreated = false;
+    const appendAssistant = (content: string) =>
+      setMsgs((m) => [...m, { id: replyId, role: "assistant", content }]);
+    const updateAssistant = (content: string) =>
+      setMsgs((m) => m.map((msg) => (msg.id === replyId ? { ...msg, content } : msg)));
+
+    const applyDone = (done: {
+      trace?: TraceStep[];
+      used_agents?: string[];
+      memory_summary?: string | null;
+      run_id?: string | null;
+      decision?: DecisionContract | null;
+    }) => {
+      setTrace(done.trace || []);
+      setAgents(done.used_agents || []);
+      setMemoryHit(done.memory_summary || "");
+      setRunId(done.run_id || "");
+      setDecision(done.decision || null);
+    };
+
     try {
-      const res = await chatOnce(text, externalId);
-      setMsgs((m) => [...m, { id: crypto.randomUUID(), role: "assistant", content: res.reply }]);
-      setTrace(res.trace || []);
-      setAgents(res.used_agents || []);
-      setMemoryHit(res.memory_summary || "");
-      setRunId(res.run_id || "");
-      setDecision(res.decision || null);
+      const done = await streamChat(text, externalId, (ev) => {
+        received = true;
+        if (ev.type === "token") {
+          streamed += ev.content;
+          if (bubbleCreated) updateAssistant(streamed);
+          else {
+            appendAssistant(streamed);
+            bubbleCreated = true;
+          }
+          setStreamStarted(true);
+        } else if (ev.type === "memory") {
+          setMemoryHit(ev.summary);
+        }
+      });
+      if (!streamed) appendAssistant(done.reply);
+      applyDone(done);
     } catch (e: unknown) {
+      // Streaming unavailable before anything arrived → batch POST fallback.
+      if (!received) {
+        try {
+          const res = await chatOnce(text, externalId);
+          appendAssistant(res.reply);
+          applyDone(res);
+          return;
+        } catch {
+          /* fall through to the error bubble */
+        }
+      } else if (streamed) {
+        updateAssistant(streamed + "\n\n_(Mất kết nối giữa chừng — phản hồi có thể chưa đầy đủ)_");
+      }
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg);
-      setMsgs((m) => [
-        ...m,
-        {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: "Lỗi gọi API. Kiểm tra kết nối backend và CORS.",
-        },
-      ]);
+      if (!streamed) {
+        appendAssistant("Lỗi gọi API. Kiểm tra kết nối backend và CORS.");
+      }
     } finally {
       setLoading(false);
     }
@@ -188,7 +232,7 @@ export default function ChatPage() {
               </div>
             </div>
           ))}
-          {loading && (
+          {loading && !streamStarted && (
             <div className="msg bot">
               <span className="msg-avatar" aria-hidden>
                 <IconBot width={16} height={16} />

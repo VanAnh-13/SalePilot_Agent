@@ -1,6 +1,12 @@
+import logging
+
 from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import AIMessage
+from langchain_core.outputs import ChatGeneration, ChatResult
 
 from app.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 # Sensible current defaults used only when MODEL_NAME doesn't match the resolved
 # provider (e.g. LLM_PROVIDER=anthropic but MODEL_NAME left as an OpenAI id).
@@ -48,9 +54,9 @@ def _pick_model(provider: str, model_name: str) -> str:
     return name if (name and not is_claude) else _DEFAULT_MODEL["openai"]
 
 
-def get_chat_model() -> BaseChatModel:
+def _build_provider_model(provider: str) -> BaseChatModel:
+    """Construct one provider's model, or the offline _FallbackModel."""
     settings = get_settings()
-    provider = _resolve_provider()
 
     if provider == "anthropic":
         if not settings.anthropic_api_key:
@@ -89,6 +95,55 @@ def get_chat_model() -> BaseChatModel:
     else:
         kwargs["model"] = _pick_model("openai", settings.model_name)
     return ChatOpenAI(**kwargs)
+
+
+class _FailoverModel(BaseChatModel):
+    """Try the primary provider; on a hard failure, use the secondary.
+
+    Each inner model already retries transient errors at the SDK level, so
+    this wrapper only catches exhausted failures.
+    """
+
+    primary: BaseChatModel
+    secondary: BaseChatModel
+
+    @property
+    def _llm_type(self) -> str:
+        return "failover"
+
+    def bind_tools(self, tools, **kwargs):
+        return _FailoverModel(
+            primary=self.primary.bind_tools(tools, **kwargs),
+            secondary=self.secondary.bind_tools(tools, **kwargs),
+        )
+
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+        try:
+            ai = self.primary.invoke(messages, stop=stop)
+        except Exception:
+            logger.warning("primary LLM failed, failing over", exc_info=True)
+            ai = self.secondary.invoke(messages, stop=stop)
+        return ChatResult(generations=[ChatGeneration(message=ai)])
+
+    async def _agenerate(self, messages, stop=None, run_manager=None, **kwargs):
+        try:
+            ai = await self.primary.ainvoke(messages, stop=stop)
+        except Exception:
+            logger.warning("primary LLM failed, failing over", exc_info=True)
+            ai = await self.secondary.ainvoke(messages, stop=stop)
+        return ChatResult(generations=[ChatGeneration(message=ai)])
+
+
+def get_chat_model() -> BaseChatModel:
+    provider = _resolve_provider()
+    other = "anthropic" if provider == "openai" else "openai"
+    primary = _build_provider_model(provider)
+    secondary = _build_provider_model(other)
+    if isinstance(primary, _FallbackModel):
+        return secondary
+    if isinstance(secondary, _FallbackModel):
+        return primary
+    return _FailoverModel(primary=primary, secondary=secondary)
 
 
 class _FallbackModel(BaseChatModel):

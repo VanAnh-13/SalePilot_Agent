@@ -86,6 +86,10 @@ class Settings(BaseSettings):
     # Rolling LLM conversation summary stored in customer memory (needs an LLM
     # key; silently skipped offline). Turn off to keep profile-only memory.
     memory_summary_enabled: bool = True
+    # Auto-activate SKILL.md packages whose frontmatter lexically matches the
+    # user message (max 2/turn), instead of waiting for the model to call
+    # activate_skill.
+    auto_activate_skills: bool = True
 
     @property
     def cors_origin_list(self) -> list[str]:
