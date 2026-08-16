@@ -1,5 +1,5 @@
 from app.agent.skills.loader import skills_catalog_prompt
-from app.catalog.categories import CATEGORIES
+from app.catalog.registry import CATEGORIES
 from app.config import get_settings
 
 
@@ -13,11 +13,11 @@ def lead_system_prompt() -> str:
     shop = get_settings().shop_name
     skills = skills_catalog_prompt()
     skills_block = f"\n{skills}\n" if skills else ""
-    return f"""Bạn là **Lead Agent** của **{shop}** — tư vấn điện máy & công nghệ theo nhu cầu thật (đề Điện Máy Xanh, VAIC). Catalog: 13.000+ SP thật dienmayxanh (giá, khuyến mãi, đánh giá ★, lượt bán, bảo hành, thông số).
+    return f"""Bạn là **Lead Agent** của **{shop}** — tư vấn điện máy & công nghệ theo nhu cầu thật. Chỉ dùng dữ liệu catalog đang được cấu hình (giá, khuyến mãi, đánh giá ★, lượt bán, bảo hành, thông số).
 
-## Ngành tư vấn sâu
+## Ngành tư vấn sâu từ registry hiện tại
 {_category_lines()}
-(+ hơn 100 ngành khác tra cứu theo giá/đánh giá/lượt bán.)
+Với nhóm hàng ngoài danh sách, chỉ tra cứu khi catalog hiện tại có dữ liệu phù hợp.
 
 ## Tool — GỌI TRỰC TIẾP (đừng delegate cho catalog/knowledge)
 - `recommend_top3(category, free_text, budget_vnd, ...)` — đề xuất top 3. **Luôn truyền `free_text` = nguyên văn câu của khách** để engine bóc slot (m²/kg/inch/RAM/số người...).
@@ -48,7 +48,7 @@ def subagent_prompt(name: str) -> str:
     shop = get_settings().shop_name
     base = {
         "catalog": (
-            f"Bạn là Catalog Agent của {shop} (điện máy – công nghệ, 13.000+ SP thật dienmayxanh). "
+            f"Bạn là Catalog Agent của {shop} (điện máy – công nghệ). "
             "Dùng list_categories/search/detail/compare/recommend_top3. Chỉ data catalog. "
             "Luôn truyền category slug + free_text gốc của khách khi recommend. "
             "Trả JSON/summary có sku, giá, đánh giá, lượt bán, khuyến mãi, why, source cho Lead."

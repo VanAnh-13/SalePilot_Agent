@@ -1,0 +1,282 @@
+[
+  {
+    "input": "giao liền hả chị",
+    "expected_tool": "search_product_dmx_v3",
+    "source": "dmx_0001"
+  },
+  {
+    "input": "0935395467",
+    "expected_tool": "get-time-delivery-dmx",
+    "source": "dmx_0001"
+  },
+  {
+    "input": "10h cũng được chị",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0001"
+  },
+  {
+    "input": "ạ em cảm ơn,ok giao luôn chị",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0001"
+  },
+  {
+    "input": "Phường PHú Diễn, Hà Nội",
+    "expected_tool": "search_product_dmx_v3",
+    "source": "dmx_0002"
+  },
+  {
+    "input": "Địa chỉ : tòa A6 An Bình city, phường Phú Diễn, Hà Nội",
+    "expected_tool": "get-time-delivery-dmx",
+    "source": "dmx_0002"
+  },
+  {
+    "input": "thứ 2 lúc 20 h",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0002"
+  },
+  {
+    "input": "đúng",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0002"
+  },
+  {
+    "input": "RS70F65Q3TSV và HRSN9563DWDXVN",
+    "expected_tool": "compare-search",
+    "source": "dmx_0003"
+  },
+  {
+    "input": "gaming",
+    "expected_tool": "search_product_dmx_v3",
+    "source": "dmx_0003"
+  },
+  {
+    "input": "xác nhận",
+    "expected_tool": "get-time-delivery-dmx",
+    "source": "dmx_0003"
+  },
+  {
+    "input": "1",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0003"
+  },
+  {
+    "input": "ok",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0003"
+  },
+  {
+    "input": "0978666234",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0003"
+  },
+  {
+    "input": "ok",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0003"
+  },
+  {
+    "input": "THanh toán khi nhận hàng",
+    "expected_tool": "payment_process",
+    "source": "dmx_0003"
+  },
+  {
+    "input": "có loại máy giặt caper nào 12kg5 không ạ",
+    "expected_tool": "search_product_dmx_v3",
+    "source": "dmx_0004"
+  },
+  {
+    "input": "vậy nếu em mua con này bên mình có giao vào ngày chủ nhật không ạ",
+    "expected_tool": "get-time-delivery-dmx",
+    "source": "dmx_0004"
+  },
+  {
+    "input": "vậy em chốt con này ạ, nhờ shop hỗ trợ em đặt hàng nha",
+    "expected_tool": "check_infor_customer",
+    "source": "dmx_0004"
+  },
+  {
+    "input": "0393434155, số 53 đường 99 ấp giữa, xã củ chi",
+    "expected_tool": "get-time-delivery-dmx",
+    "source": "dmx_0004"
+  },
+  {
+    "input": "dạ em muốn giao vào chủ nhật ạ",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0004"
+  },
+  {
+    "input": "ok",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0004"
+  },
+  {
+    "input": "Máy tính bảng OPPO Pad Neo",
+    "expected_tool": "search_product_dmx_v3",
+    "source": "dmx_0005"
+  },
+  {
+    "input": "đặt hàng có giao liền trong hôm nay k ạ",
+    "expected_tool": "get-time-delivery-dmx",
+    "source": "dmx_0005"
+  },
+  {
+    "input": "1",
+    "expected_tool": "check_infor_customer",
+    "source": "dmx_0005"
+  },
+  {
+    "input": "ấp thạnh an, xã thạnh hóa, tỉnh Tây ninh",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0005"
+  },
+  {
+    "input": "ok",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0005"
+  },
+  {
+    "input": "sạc dự phòng xmobie<br>",
+    "expected_tool": "search_product_dmx_v3",
+    "source": "dmx_0006"
+  },
+  {
+    "input": "cái đang còn 500k. nhận ngay tại quách điêu<br>",
+    "expected_tool": "get-time-delivery-dmx",
+    "source": "dmx_0006"
+  },
+  {
+    "input": "Tên ITTESST 0965168347",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0006"
+  },
+  {
+    "input": "oke",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0006"
+  },
+  {
+    "input": "Thiết bị mạng mới 2026",
+    "expected_tool": "search_product_dmx_v3",
+    "source": "dmx_0006"
+  },
+  {
+    "input": "mình ở tỉnh Hưng Yên xã Hoàng Hoa thám thôn Cao đông nhé",
+    "expected_tool": "search_product_dmx_v3",
+    "source": "dmx_0007"
+  },
+  {
+    "input": "mình cũng ko bt nữa bạn cứ cho mình tham khảo mẫu máy với giá tiền đó nhé",
+    "expected_tool": "search_product_dmx_v3",
+    "source": "dmx_0007"
+  },
+  {
+    "input": "học sinh ạ",
+    "expected_tool": "search_product_dmx_v3",
+    "source": "dmx_0007"
+  },
+  {
+    "input": "vậy có loại 4GB ko ạ",
+    "expected_tool": "search_product_dmx_v3",
+    "source": "dmx_0007"
+  },
+  {
+    "input": "đặt hàng giúp mình với nhé",
+    "expected_tool": "check_infor_customer",
+    "source": "dmx_0007"
+  },
+  {
+    "input": "địa chỉ tỉnh Hưng Yên xã Hoàng Hoa thám thôn Cao đông nhé",
+    "expected_tool": "get-time-delivery-dmx",
+    "source": "dmx_0007"
+  },
+  {
+    "input": "cho mình lựa chọn 3 ,",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0007"
+  },
+  {
+    "input": "ok nhé cảm ơn bạn rất nhiều",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0007"
+  },
+  {
+    "input": "Máy lạnh Nagakawa Inverter 1 HP NIS-C09R2T62",
+    "expected_tool": "search_product_dmx_v3",
+    "source": "dmx_0008"
+  },
+  {
+    "input": "chi ơ thanh thới an tỉnh sóc trăng có giao hàng nhanh trong ngay không?",
+    "expected_tool": "search_product_dmx_v3",
+    "source": "dmx_0008"
+  },
+  {
+    "input": "Âp đầy hương 2, xã thạnh thới an huyen tran đe tinh soc trang",
+    "expected_tool": "get-time-delivery-dmx",
+    "source": "dmx_0008"
+  },
+  {
+    "input": "2. Goi an tam su dung",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0008"
+  },
+  {
+    "input": "ok",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0008"
+  },
+  {
+    "input": "mình muốn mua máy giặt Caspe 7,5 kg",
+    "expected_tool": "search_product_dmx_v3",
+    "source": "dmx_0009"
+  },
+  {
+    "input": "Trần Thị Hương",
+    "expected_tool": "get-time-delivery-dmx",
+    "source": "dmx_0009"
+  },
+  {
+    "input": "1 Giao từ 10h - 12h, Thứ 4 (22/07).",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0009"
+  },
+  {
+    "input": "đúng",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0009"
+  },
+  {
+    "input": "ok",
+    "expected_tool": "search_product_dmx_v3",
+    "source": "dmx_0010"
+  },
+  {
+    "input": "sinh viên",
+    "expected_tool": "search_product_dmx_v3",
+    "source": "dmx_0010"
+  },
+  {
+    "input": "giá 14.000.000",
+    "expected_tool": "search_product_dmx_v3",
+    "source": "dmx_0010"
+  },
+  {
+    "input": "đúng",
+    "expected_tool": "get-time-delivery-dmx",
+    "source": "dmx_0010"
+  },
+  {
+    "input": "1",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0010"
+  },
+  {
+    "input": "ok",
+    "expected_tool": "create_order_dmx",
+    "source": "dmx_0010"
+  },
+  {
+    "input": "thanh toán Trả Chậm",
+    "expected_tool": "installment-links",
+    "source": "dmx_0010"
+  }
+]

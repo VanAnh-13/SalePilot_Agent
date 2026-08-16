@@ -9,6 +9,7 @@ import {
   fetchMemory,
   fetchZaloOutbox,
 } from "@/lib/api";
+import { IconAlert, IconBrain, IconChat, IconClock, IconRefresh, IconUsers } from "@/components/Icons";
 
 function statusPill(status?: string) {
   const s = (status || "").toLowerCase();
@@ -35,7 +36,7 @@ export default function DashboardPage() {
     try {
       setErr("");
       if (!silent) setLoading(true);
-      const [l, c, z, m, j, r] = await Promise.all([
+      const results = await Promise.allSettled([
         fetchLeads(),
         fetchConversations(),
         fetchZaloOutbox(),
@@ -43,13 +44,20 @@ export default function DashboardPage() {
         fetchJobs(),
         fetchLatestRun(),
       ]);
-      setLeads(l);
-      setConvs(c);
-      setZalo(z);
-      setMemory(m);
-      setJobs(j);
-      setRun(r?.run || null);
+      const errors: string[] = [];
+      const val = <T,>(r: PromiseSettledResult<T>, fallback: T): T => {
+        if (r.status === "fulfilled") return r.value;
+        errors.push(r.reason instanceof Error ? r.reason.message : String(r.reason));
+        return fallback;
+      };
+      setLeads(val(results[0], []));
+      setConvs(val(results[1], []));
+      setZalo(val(results[2], []));
+      setMemory(val(results[3], []));
+      setJobs(val(results[4], []));
+      setRun(val(results[5], null)?.run || null);
       setLastUpdated(new Date());
+      if (errors.length) setErr(errors.join(" | "));
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -69,10 +77,10 @@ export default function DashboardPage() {
   }, [auto]);
 
   const stats = [
-    { icon: "🧾", value: leads.length, label: "Leads" },
-    { icon: "💬", value: convs.length, label: "Cuộc hội thoại" },
-    { icon: "🧠", value: memory.length, label: "Hồ sơ ghi nhớ" },
-    { icon: "⏱️", value: jobs.length, label: "Jobs đã lên lịch" },
+    { icon: IconUsers, color: "blue", value: leads.length, label: "Leads" },
+    { icon: IconChat, color: "green", value: convs.length, label: "Cuộc hội thoại" },
+    { icon: IconBrain, color: "purple", value: memory.length, label: "Hồ sơ ghi nhớ" },
+    { icon: IconClock, color: "amber", value: jobs.length, label: "Jobs đã lên lịch" },
   ];
 
   return (
@@ -93,20 +101,25 @@ export default function DashboardPage() {
             Tự động
           </label>
           <button className="btn ghost sm" onClick={() => load()} disabled={loading}>
-            {loading ? "Đang tải…" : "↻ Làm mới"}
+            <IconRefresh width={14} height={14} /> {loading ? "Đang tải…" : "Làm mới"}
           </button>
         </div>
       </div>
 
-      {err && <div className="error-note" style={{ margin: 0 }}>⚠️ {err}</div>}
+      {err && (
+        <div className="error-note" style={{ margin: 0 }}>
+          <IconAlert width={16} height={16} />
+          {err}
+        </div>
+      )}
 
       <section className="stat-grid">
         {stats.map((s) => (
-          <div key={s.label} className="card stat-card">
+          <div key={s.label} className="card stat-card card-hover">
             <div className="top">
               <span className="label">{s.label}</span>
-              <span className="icon" aria-hidden>
-                {s.icon}
+              <span className={`icon-badge sm ${s.color}`} aria-hidden>
+                <s.icon width={17} height={17} />
               </span>
             </div>
             <div className="value">{s.value}</div>

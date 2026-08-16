@@ -1,0 +1,13 @@
+{
+  "//": "Root-level scripts (scripts/*.py) import from backend/app/* via sys.path.insert() at runtime (see e.g. scripts/run_llm_baseline.py). That works fine, but a static type checker can't see a runtime sys.path mutation, so without this file every such import was flagged as an unresolved-import error. extraPaths tells Pyright/Pylance/basedpyright where to actually find that package. This file has no effect on how the code runs.",
+  "extraPaths": ["backend"],
+  "typeCheckingMode": "standard",
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.venv",
+    "frontend",
+    "mcp",
+    "backend/.venv"
+  ]
+}

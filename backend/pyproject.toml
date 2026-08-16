@@ -1,0 +1,19 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.34.2",
+]
+
+[tool.pyright]
+# Without this section, this file's mere existence makes Pyright/basedpyright
+# treat backend/ as a separate analysis root that does not inherit the repo
+# root's pyrightconfig.json, so every file under backend/ silently fell back
+# to a much stricter default (hundreds of Any/Unknown-propagation warnings
+# that don't reflect real bugs, e.g. backend/app/channels/zalo/webhook.py had
+# 27, backend/scripts/etl_to_postgres.py had 43). "standard" matches the repo
+# root's setting and is Pyright's own recommended default for most projects.
+typeCheckingMode = "standard"

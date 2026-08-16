@@ -1,5 +1,6 @@
 from collections.abc import AsyncGenerator
 
+from sqlalchemy import inspect, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.config import get_settings
@@ -38,11 +39,18 @@ engine = create_async_engine(
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
+def _ensure_catalog_columns(sync_conn) -> None:
+    columns = {column["name"] for column in inspect(sync_conn).get_columns("products")}
+    if "source_row" not in columns:
+        sync_conn.execute(text("ALTER TABLE products ADD COLUMN source_row INTEGER"))
+
+
 async def init_db() -> None:
     import app.models.entities  # noqa: F401 — register all tables on Base.metadata
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(_ensure_catalog_columns)
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

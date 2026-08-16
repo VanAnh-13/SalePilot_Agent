@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     chroma_path: str = "./data/chroma"
     mcp_write_token: str = ""
+    # Admin API protection — set to a strong random token in production.
+    # Empty string means admin endpoints will return 403 to all callers.
+    admin_api_key: str = ""
 
     # Catalog source priority: Postgres primary, MongoDB secondary, JSON snapshot last.
     catalog_backend: str = "postgres"  # postgres | mongodb | snapshot
@@ -48,12 +51,20 @@ class Settings(BaseSettings):
     # When both databases are unreachable the repository falls back to this snapshot.
     catalog_snapshot: str = "./data/catalog_snapshot.json"
 
+    # Path to the DMX crawl data directory (products_detail.json + policy .md files).
+    # Set this in .env or via the DMX_SRC_DIR environment variable.
+    # Scripts that need raw DMX data read this value; no path is hardcoded in code.
+    dmx_src_dir: str = ""
+
+
     zalo_enabled: bool = True
     zalo_client: str = "mock"
     zalo_oa_access_token: str = ""
     zalo_oa_secret: str = ""
     zalo_webhook_secret: str = ""
-    zalo_verify_mode: str = "off"
+    # Default: strict — rejects any webhook payload without a valid HMAC-SHA256
+    # signature.  Set to "off" only in development / mock environments.
+    zalo_verify_mode: str = "strict"
 
     shop_name: str = "SalePilot Điện Máy"
     # Default category slug used when the user's intent is ambiguous.
@@ -62,7 +73,9 @@ class Settings(BaseSettings):
     memory_enabled: bool = True
     auto_skill_write: bool = False
     sandbox_enabled: bool = True
-    web_fetch_enabled: bool = True
+    # Disabled by default to prevent SSRF in shared/production deployments.
+    # Enable explicitly in .env when the fetch tool is needed.
+    web_fetch_enabled: bool = False
     scheduler_enabled: bool = True
     max_subagents_per_turn: int = 3
     trajectory_enabled: bool = True

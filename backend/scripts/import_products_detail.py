@@ -10,9 +10,13 @@ offline fallback. SKUs no longer present in the source are pruned, so this
 fully replaces the previous placeholder catalog.
 
 Usage (from backend/):
-    python -m scripts.import_products_detail --json /home/hoang/Downloads/Data/products_detail.json
-    python -m scripts.import_products_detail --snapshot-only      # no Mongo needed
-    python -m scripts.import_products_detail --skip-existing       # keep DB docs, add only new SKUs
+    python -m scripts.import_products_detail --src /path/to/dmx_data
+    python -m scripts.import_products_detail --src /path/to/dmx_data --snapshot-only
+    python -m scripts.import_products_detail --src /path/to/dmx_data --skip-existing
+
+Source resolution (highest priority first):
+    1. --src CLI argument
+    2. DMX_SRC_DIR in .env or environment
 """
 
 from __future__ import annotations
@@ -24,11 +28,12 @@ from pathlib import Path
 from typing import Any
 
 from app.catalog import repository
-from app.catalog.categories import BY_CODE, Category, make_generic, normalize_product
+from app.catalog.crawl_categories import BY_CODE, Category, make_generic, normalize_product
 from app.config import get_settings
+from scripts.shared import resolve_dmx_src
 
-DEFAULT_JSON = Path("/home/hoang/Downloads/Data/products_detail.json")
-SOURCE = "products_detail.json"
+_SOURCE_FILENAME = "products_detail.json"
+SOURCE = _SOURCE_FILENAME
 
 
 def _resolve_category(product: dict[str, Any]) -> Category:
@@ -51,7 +56,7 @@ def build_catalog(json_path: Path) -> tuple[list[dict[str, Any]], dict[str, Any]
     per_cat: Counter[str] = Counter()
     deep_slugs: set[str] = set()
 
-    for item in raw:
+    for source_row, item in enumerate(raw, start=1):
         sku = str(item.get("product_id") or "").strip()
         name = str(item.get("tên sản phẩm") or "").strip()
         if not sku or not name:
@@ -61,7 +66,7 @@ def build_catalog(json_path: Path) -> tuple[list[dict[str, Any]], dict[str, Any]
             skipped_dupes += 1
             continue
         cat = _resolve_category(item)
-        doc = normalize_product(cat, item, SOURCE)
+        doc = normalize_product(cat, item, SOURCE, source_row=source_row)
         seen_skus.add(sku)
         products.append(doc)
         per_cat[cat.display] += 1
@@ -115,17 +120,28 @@ def write_mongo(products: list[dict[str, Any]], *, skip_existing: bool = False) 
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--json", type=Path, default=DEFAULT_JSON)
+    parser = argparse.ArgumentParser(
+        description="Import DMX products_detail.json into MongoDB + JSON snapshot.",
+        epilog="Source resolution: --src flag > DMX_SRC_DIR in .env > error",
+    )
+    parser.add_argument(
+        "--src",
+        type=Path,
+        default=None,
+        metavar="DIR",
+        help="Directory containing products_detail.json. Falls back to DMX_SRC_DIR in .env.",
+    )
     parser.add_argument("--snapshot-only", action="store_true", help="Skip MongoDB write")
-    parser.add_argument("--skip-existing", action="store_true",
-                        help="Insert only SKUs not already in MongoDB (do not overwrite/prune)")
+    parser.add_argument(
+        "--skip-existing",
+        action="store_true",
+        help="Insert only SKUs not already in MongoDB (do not overwrite/prune)",
+    )
     args = parser.parse_args()
 
-    if not args.json.exists():
-        raise SystemExit(f"JSON not found: {args.json}")
+    json_path = resolve_dmx_src(args.src, filename=_SOURCE_FILENAME)
 
-    products, stats = build_catalog(args.json)
+    products, stats = build_catalog(json_path)
     if not products:
         raise SystemExit("No products parsed — check the JSON structure.")
 

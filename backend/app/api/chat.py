@@ -16,7 +16,9 @@ class ChatRequest(BaseModel):
     external_id: str = ""
     customer_name: str = "Khách"
     channel: str = "web"
-    conversation_id: int | None = None
+    # conversation_id is intentionally NOT accepted from the client.
+    # The server always derives it from (channel, external_id) to prevent
+    # cross-user session hijacking (IDOR).
 
 
 class ChatResponse(BaseModel):
@@ -28,9 +30,11 @@ class ChatResponse(BaseModel):
     trace: list[dict] = Field(default_factory=list)
     needs_human: bool = False
     run_id: str | None = None
-    memory: dict | None = None
-    memory_summary: str | None = None
+    # memory and memory_summary intentionally excluded from the public
+    # chat response to prevent PII leakage (phone, name, interests).
+    # Admins can inspect customer memory via the auth-gated /memory endpoint.
     active_skills: list[str] = Field(default_factory=list)
+    decision: dict | None = None
 
 
 @router.post("", response_model=ChatResponse)
@@ -42,7 +46,6 @@ async def chat(req: ChatRequest) -> ChatResponse:
         external_id=external_id,
         text=req.message,
         customer_name=req.customer_name,
-        conversation_id=req.conversation_id,
     )
     return ChatResponse(
         reply=result["reply"],
@@ -53,9 +56,8 @@ async def chat(req: ChatRequest) -> ChatResponse:
         trace=result.get("trace") or [],
         needs_human=bool(result.get("needs_human")),
         run_id=result.get("run_id"),
-        memory=result.get("memory"),
-        memory_summary=result.get("memory_summary"),
         active_skills=result.get("active_skills") or [],
+        decision=result.get("decision"),
     )
 
 
@@ -70,7 +72,7 @@ async def chat_stream(req: ChatRequest):
         external_id=external_id,
         customer_name=req.customer_name,
     )
-    conv_id = req.conversation_id or conv.id
+    conv_id = conv.id
     await append_message(conv_id, "user", req.message)
     history = await recent_history(conv_id)
 
@@ -96,6 +98,7 @@ async def chat_stream(req: ChatRequest):
                     "lead_id": ev.get("lead_id"),
                     "run_id": ev.get("run_id"),
                     "conversation_id": conv_id,
+                    "decision": ev.get("decision"),
                 }
                 ev = {**ev, "conversation_id": conv_id}
             yield f"data: {json.dumps(ev, ensure_ascii=False)}\n\n"

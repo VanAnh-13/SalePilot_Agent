@@ -52,34 +52,117 @@ def _load_products() -> list[dict]:
     return _product_cache
 
 
-def _score(query: str, text: str) -> float:
-    q = query.lower().strip()
-    t = text.lower()
-    if not q:
-        return 0.0
-    score = 0.0
-    for token in q.replace("?", " ").split():
-        if len(token) < 2:
-            continue
-        if token in t:
-            score += 1.0
-    if q in t:
-        score += 2.0
-    return score
+# ---------------------------------------------------------------------------
+# Scoring — isolated in one place (SRP).  Callers pass context; Scorer
+# applies lexical + metadata boosts without knowing about retrieval logic.
+# ---------------------------------------------------------------------------
+
+# Metadata field → query signal terms → score boost
+# Declared as data so new domains only add entries here (OCP).
+_METADATA_BOOSTS: list[tuple[str, list[str], float]] = [
+    ("policy_type", ["bảo hành", "bao hanh", "bảo hành"], 1.5),
+    ("policy_type", ["đổi trả", "doi tra", "hoàn tiền"], 1.5),
+    ("policy_type", ["giao hàng", "giao hang", "ship", "vận chuyển"], 1.5),
+    ("policy_type", ["lắp đặt", "lap dat", "lắp ráp"], 1.5),
+    ("product_groups", ["điện thoại", "dien thoai", "iphone", "samsung"], 1.0),
+    ("product_groups", ["laptop", "macbook", "máy tính xách tay"], 1.0),
+    ("product_groups", ["tủ lạnh", "tu lanh"], 1.0),
+    ("product_groups", ["máy lạnh", "may lanh", "điều hòa"], 1.0),
+    ("product_groups", ["máy giặt", "may giat"], 1.0),
+    ("product_groups", ["tivi", "ti vi", "tv"], 1.0),
+]
+
+
+class Scorer:
+    """Compute relevance score for a FAQ chunk given a query.
+
+    Single responsibility: scoring only.
+    Combines lexical token overlap with optional metadata boosts.
+    """
+
+    def score(self, query: str, chunk: dict) -> float:
+        q = query.lower().strip()
+        text = (
+            (chunk.get("question") or "")
+            + " "
+            + (chunk.get("answer") or "")
+        ).lower()
+
+        if not q:
+            return 0.0
+
+        # Lexical: token overlap
+        lexical = 0.0
+        for token in q.replace("?", " ").split():
+            if len(token) < 2:
+                continue
+            if token in text:
+                lexical += 1.0
+        if q in text:
+            lexical += 2.0
+
+        if lexical == 0.0:
+            return 0.0
+
+        # Metadata boost: multiply lexical by boost factor when query matches
+        boost = 1.0
+        for meta_field, signals, factor in _METADATA_BOOSTS:
+            field_values = chunk.get(meta_field) or []
+            if not isinstance(field_values, list):
+                continue
+            if any(sig in q for sig in signals) and field_values:
+                boost = max(boost, factor)
+
+        return lexical * boost
+
+
+_scorer = Scorer()
 
 
 async def search_faq(query: str, k: int = 3) -> list[dict]:
-    """Simple lexical retrieval — works offline without Chroma/embeddings."""
+    """Metadata-aware lexical retrieval — works offline without Chroma/embeddings."""
     faqs = _load_faq()
-    ranked = sorted(
-        faqs,
-        key=lambda f: _score(query, f.get("question", "") + " " + f.get("answer", "")),
-        reverse=True,
-    )
-    hits = [f for f in ranked if _score(query, f.get("question", "") + " " + f.get("answer", "")) > 0]
+    scored = [(f, _scorer.score(query, f)) for f in faqs]
+    ranked = sorted(scored, key=lambda x: -x[1])
+    hits = [(f, s) for f, s in ranked if s > 0]
     return [
-        {"id": h.get("id"), "question": h.get("question"), "answer": h.get("answer")}
-        for h in hits[:k]
+        {"id": f.get("id"), "question": f.get("question"), "answer": f.get("answer")}
+        for f, _ in hits[:k]
+    ]
+
+
+async def search_policy(
+    query: str,
+    policy_type: str | None = None,
+    product_group: str | None = None,
+    k: int = 3,
+) -> list[dict]:
+    """Targeted policy retrieval with optional metadata pre-filtering.
+
+    When ``policy_type`` or ``product_group`` are provided, only chunks
+    matching those metadata tags are considered — this avoids cross-domain
+    noise (e.g., a warranty query about TVs should not return phone policies).
+    """
+    faqs = _load_faq()
+
+    def _matches_filters(chunk: dict) -> bool:
+        if policy_type:
+            types = chunk.get("policy_type") or []
+            if policy_type not in types:
+                return False
+        if product_group:
+            groups = chunk.get("product_groups") or []
+            if product_group not in groups:
+                return False
+        return True
+
+    candidates = [f for f in faqs if _matches_filters(f)] or faqs
+    scored = [(f, _scorer.score(query, f)) for f in candidates]
+    ranked = sorted(scored, key=lambda x: -x[1])
+    hits = [(f, s) for f, s in ranked if s > 0]
+    return [
+        {"id": f.get("id"), "question": f.get("question"), "answer": f.get("answer")}
+        for f, _ in hits[:k]
     ]
 
 

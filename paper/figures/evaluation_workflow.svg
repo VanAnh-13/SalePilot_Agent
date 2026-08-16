@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="700" viewBox="0 0 1500 700">
+  <defs>
+    <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 Z" fill="#2d3748" filter="url(#rough)"/>
+    </marker>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&amp;display=swap');
+      text { font-family: 'Segoe Print', 'Comic Neue', 'Comic Sans MS', cursive, sans-serif; }
+      .title { font-size: 34px; font-weight: 700; fill: #1a202c; }
+      .subtitle { font-size: 21px; fill: #4a5568; }
+      .lane { font-size: 22px; font-weight: 700; fill: #2d3748; letter-spacing: 1.5px; }
+      .boxTitle { font-size: 24px; font-weight: 700; fill: #1a202c; }
+      .body { font-size: 20px; fill: #2d3748; }
+      .strong { font-size: 21px; font-weight: 700; fill: #1a202c; }
+      .edge { stroke: #2d3748; stroke-width: 3; fill: none; marker-end: url(#arrow); filter: url(#rough); }
+      .box { filter: url(#rough); stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+  </defs>
+
+  <rect width="1500" height="700" fill="#fcfbf9"/>
+
+  <text class="title" x="50" y="52">Executable Evaluation Workflow</text>
+  <text class="subtitle" x="50" y="85">✏️ Every comparator consumes the same validated fixtures &amp; manifest verification</text>
+
+  <!-- Col 1: Frozen Inputs -->
+  <text class="lane" x="50" y="130">FROZEN INPUTS</text>
+  <rect class="box" x="50" y="148" width="310" height="490" rx="18" fill="#e0f2fe" stroke="#0284c7" stroke-width="3"/>
+  <text class="boxTitle" x="75" y="195">Sealed Benchmark Set</text>
+  <text class="body" x="75" y="235">• 20 Vietnamese dev episodes</text>
+  <text class="body" x="75" y="270">• Labeled expected actions</text>
+  <text class="body" x="75" y="305">• Hard constraint annotations</text>
+
+  <line x1="75" y1="335" x2="335" y2="335" stroke="#7dd3fc" stroke-width="2" filter="url(#rough)"/>
+
+  <text class="boxTitle" x="75" y="375">DMX Product Snapshot</text>
+  <text class="body" x="75" y="415">• 70 engineering fixture SKUs</text>
+  <text class="body" x="75" y="450">• 14 normalized categories</text>
+  <text class="body" x="75" y="485">• Manifest JSON SHA-256</text>
+  <text class="body" x="75" y="520">• Strict schema validation</text>
+
+  <!-- Col 2: Validate + Replay -->
+  <text class="lane" x="400" y="130">VALIDATE &amp; REPLAY</text>
+  <rect class="box" x="400" y="148" width="310" height="490" rx="18" fill="#f1f5f9" stroke="#475569" stroke-width="3"/>
+  <text class="boxTitle" x="425" y="195">Manifest Loader</text>
+  <text class="body" x="425" y="235">• Check snapshot hash</text>
+  <text class="body" x="425" y="270">• Verify category counts</text>
+  <text class="body" x="425" y="305">• Check SKU uniqueness</text>
+
+  <line x1="425" y1="335" x2="685" y2="335" stroke="#cbd5e1" stroke-width="2" filter="url(#rough)"/>
+
+  <text class="strong" x="425" y="375">Open-Loop Replay</text>
+  <text class="body" x="425" y="415">• Feed multi-turn dialogue</text>
+  <text class="body" x="425" y="450">• Extract final turn decision</text>
+  <text class="body" x="425" y="485">• Record latency &amp; output</text>
+
+  <path class="edge" d="M 360 393 L 395 393"/>
+
+  <!-- Col 3: Comparators -->
+  <text class="lane" x="750" y="130">4 COMPARATORS</text>
+  
+  <rect class="box" x="750" y="148" width="360" height="110" rx="16" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+  <text class="boxTitle" x="775" y="190">S_hybrid_constraint</text>
+  <text class="body" x="775" y="228">Typed state + constraint ranker</text>
+
+  <rect class="box" x="750" y="275" width="360" height="110" rx="16" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+  <text class="boxTitle" x="775" y="317">B1_lexical_filter</text>
+  <text class="body" x="775" y="355">Lexical filter + constraint ranker</text>
+
+  <rect class="box" x="750" y="402" width="360" height="110" rx="16" fill="#fef9c3" stroke="#ca8a04" stroke-width="3"/>
+  <text class="boxTitle" x="775" y="444">B0_price_popularity</text>
+  <text class="body" x="775" y="482">Price-popularity, no constraints</text>
+
+  <rect class="box" x="750" y="528" width="360" height="110" rx="16" fill="#faf5ff" stroke="#a855f7" stroke-width="3"/>
+  <text class="boxTitle" x="775" y="570">B2_llm_single_agent</text>
+  <text class="body" x="775" y="608">Meta muse-spark-1.1 LLM</text>
+
+  <path class="edge" d="M 710 393 C 730 393 730 203 745 203"/>
+  <path class="edge" d="M 710 393 C 730 393 730 330 745 330"/>
+  <path class="edge" d="M 710 393 C 730 393 730 457 745 457"/>
+  <path class="edge" d="M 710 393 C 730 393 730 583 745 583"/>
+
+  <!-- Col 4: Metrics Report -->
+  <text class="lane" x="1150" y="130">REPORT &amp; SCOPE</text>
+  <rect class="box" x="1150" y="148" width="300" height="490" rx="18" fill="#ffffff" stroke="#1a202c" stroke-width="3"/>
+  <text class="boxTitle" x="1175" y="195">Scored Metrics</text>
+  <text class="body" x="1175" y="238">1. Category Accuracy</text>
+  <text class="body" x="1175" y="278">2. 3-Way Action Acc.</text>
+  <text class="body" x="1175" y="318">3. Slot Micro-F1</text>
+  <text class="body" x="1175" y="358">4. Hard Violations Rate</text>
+
+  <line x1="1175" y1="390" x2="1425" y2="390" stroke="#e2e8f0" stroke-width="2" filter="url(#rough)"/>
+
+  <text class="strong" x="1175" y="430">Evidence Artifacts</text>
+  <text class="body" x="1175" y="470">• Scores JSON summary</text>
+  <text class="body" x="1175" y="510">• Public LLM pin report</text>
+  <text class="body" x="1175" y="550">• Validity scope gate</text>
+
+  <path class="edge" d="M 1110 203 L 1145 203"/>
+  <path class="edge" d="M 1110 330 L 1145 330"/>
+  <path class="edge" d="M 1110 457 L 1145 457"/>
+  <path class="edge" d="M 1110 583 L 1145 583"/>
+</svg>

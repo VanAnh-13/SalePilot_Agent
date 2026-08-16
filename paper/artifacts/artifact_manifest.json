@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "created_at": "2026-07-21T20:49:13+07:00",
+  "staleness_notice": "This manifest was generated for the legacy 8-scenario/24-product synthetic evaluation archive (2026-07-21). It covers the runnable ZIP snapshot only. The current working tree has diverged: 28 of 32 file hashes in this manifest do not match the current source. The current sealed experiment is in experiments/results/ (predictions, scores, bootstrap, chain-of-custody). Do not use this manifest to verify current source files.",
+  "evidence_scope": "same-team functional repeatability only (legacy synthetic evaluation; see staleness_notice)",
+  "research_snapshot": {
+    "snapshot_policy": "anonymous file-level digests; repository identity metadata omitted",
+    "note": "The runnable archive freezes the exact included evaluator and decision-code files by individual digest."
+  },
+  "paper": {
+    "pages": 6,
+    "paper_size": "A4 (595.28 x 841.89 pt)",
+    "pdf_version": "1.6",
+    "encrypted": false,
+    "fonts_embedded": true,
+    "citations": 26,
+    "embedded_workflow_figures": 3,
+    "supplemental_workflow_figures": 1
+  },
+  "verification": {
+    "full_repository_verify": "PASS: 11 public API, 10 privacy/memory, 16 decision/skill, 11 core/safety, 11 evaluation, MCP contract, frontend URL safety",
+    "deterministic_evaluator_regenerated": true,
+    "latex_undefined_references": 0,
+    "latex_overfull_boxes": 0
+  },
+  "sha256": {
+    "paper/main.pdf": "27975ad9ae070d16f313a173b9aa5bbad9e3b3039bce3f70588bb8907d655b36",
+    "paper/main.tex": "a95e32129bb1f75a50edc6a8cb923bb83e493685f538201277d7dcfbdad99cba",
+    "paper/ref.bib": "0c58a78130368a18a0c04a50dc640e26b381d32808ee2c90846de744e1dd3bb1",
+    "paper/SOURCE_LEDGER.md": "a2fef6859d0097be36107ee9f8097bc3439c2118731ec8a4da5cc984f80f54e1",
+    "paper/ARTIFACT_README.md": "9d460d5f0603caaee4eb629b6a53a28bdfafa10b9909c989811dce8f32463755",
+    "paper/artifacts/evaluation_deterministic.json": "2bd6c27f47f1cd64b6b2f0b9953df84d736b0c9101fd1b64ce86aead7cb551bc",
+    "paper/artifacts/evaluation_deterministic.md": "fbefae730d201cac6e31f63a7a60c915b69422a66d47aaae213a7597534d3f22",
+    "paper/artifacts/evaluation_timed.json": "497805d32c8d5556651aea1fba9e8a2a4e3738f4646f5de97c009183e9db6b7a",
+    "paper/artifacts/evaluation_timed.md": "a2c1de40e011be03ba111913aedbdba195ab201a013f15ddf93eb1cd450a5e52",
+    "backend/evaluation/data/scenarios_v1.jsonl": "2e69892d8e127bc4e73747d545bb973425be950844315f9907f03ef9c8f8dda0",
+    "backend/evaluation/data/scenarios_v1.manifest.json": "2891a0ac1495ed101943d36ebe28ef9dca4932f8a7b81293d8eebcc9fbc04796",
+    "backend/evaluation/data/catalog_synthetic_v1.json": "f3d5803344c320f5c6e1cb52c586f1d9c93af0015c1d57194aa77059b8817b4e",
+    "backend/evaluation/data/catalog_synthetic_v1.manifest.json": "9ff14807e4a9d33c6a0db3a618815ee8f5e151623c9efbac55a16c2e34508d4d",
+    "backend/evaluation/cli.py": "054713f3c33758894448bf9071c5315e7216e9277abf774db1be767d8abcd360",
+    "backend/evaluation/runner.py": "48c5776511650e68a755adfe33e2160218d18de86d9fb72763871ab90819f2ca",
+    "backend/evaluation/systems.py": "6edad848c5e2ddd46d97d5b5f65471120520d9f688afdc8f36027bd26fdd2f00",
+    "backend/evaluation/metrics.py": "ad034e6a874ef48f28625a572691b7272ab82e7f3b877b4b3b6009a669126ab3",
+    "backend/evaluation/schema.py": "bd5bc804b30ad7b1d10452141bf9f88bef20746c1089b4c6626748e502a8f8ec",
+    "backend/evaluation/dataset.py": "f44fee1c952b33aea34da3e0993a9f4ec6826c85fb7d8b1cd8cb788e2a0cecdb",
+    "backend/app/agent/catalog_domain.py": "c6df709683df09daf28ec5e7d541c35046f9adf4d9de32795daa5bbc9e864b6c",
+    "backend/app/catalog/categories.py": "db6a6090b8c307b556abbb357501d0d04f2e901efebaa84a1f84da63318bc662",
+    "backend/app/catalog/repository.py": "27df913abf9f2cf25673ca179ffc274588187ebcd01fa8d844ca3582c914284d",
+    "backend/tests/test_evaluation.py": "577ec7291e6ab2a2d1406c7933e349fcf8e00f375b3c6c9c93048d63fe2c7078",
+    "backend/requirements.txt": "ad8d88cf2909c16ccc2f698260b85866b92f0f21ebbbff38b7ae8fbd7039a27c",
+    "paper/figures/system_architecture.svg": "1c63e24607131a9ac89f950c03a2b71ae08d79e02214d69855f9e80f196995cd",
+    "paper/figures/system_architecture.png": "599f70affb451d607e459b04fb77c17dd2473f80037c35c912241decc4adcd3f",
+    "paper/figures/request_workflow.svg": "5df86b1eecfcd2b7f38652e1eeffe1fcfbbdd57829faf63ebe5a9fef95615ea0",
+    "paper/figures/request_workflow.png": "6316f286779007e9f581cbb931ac21d298b818411176ea12a6060211cfc53dea",
+    "paper/figures/evaluation_workflow.svg": "89b57f05c87a5a0f7c9d714fce35145faece67242467833bd8652cb1bac90a8f",
+    "paper/figures/evaluation_workflow.png": "97f2045e30eeefb470ec8c6d02d310fad72fdb6d4a1f2f68d4fa8c8fb394b29c",
+    "paper/figures/ranking_decision_workflow.svg": "47a28180af12adc7c0e90af1ef258363cb0371bd84e9b82f17baae16d6a07fed",
+    "paper/figures/ranking_decision_workflow.png": "3d4aadba9fb309d5840167e6ef266f51f6a09e93763677d0ba3cb201e3125711"
+  }
+}

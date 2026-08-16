@@ -21,7 +21,7 @@ import re
 from app.agent.catalog_domain import compare, extract_need_from_text, recommend_top3
 from app.agent.skills.loader import list_skills
 from app.catalog import repository
-from app.catalog.categories import detect_category, detect_unsupported
+from app.catalog.crawl_categories import detect_category, detect_unsupported
 
 # The agent surface the CoT scripts are allowed to reference.
 VALID_AGENTS = {"lead", "catalog", "knowledge", "crm", "order", "escalation"}

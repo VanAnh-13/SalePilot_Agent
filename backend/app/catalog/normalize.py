@@ -77,6 +77,22 @@ def yes_no(value: Any) -> bool | None:
     return None
 
 
+def dimension_cm(value: Any, axis: str) -> float | None:
+    """Extract one labeled dimension from a combined Vietnamese dimension cell."""
+    text = (clean(value) or "").casefold()
+    aliases = {
+        "width": ("ngang", "rộng", "rong"),
+        "height": ("cao",),
+        "depth": ("sâu", "sau"),
+    }
+    labels = aliases.get(axis, ())
+    if not text or not labels:
+        return None
+    pattern = rf"(?:{'|'.join(re.escape(label) for label in labels)})\s*(\d+(?:[.,]\d+)?)\s*cm"
+    match = re.search(pattern, text)
+    return float(match.group(1).replace(",", ".")) if match else None
+
+
 def price(value: Any) -> int | None:
     """Parse a VND price cell into a plain integer (or ``None``)."""
     text = clean(value)

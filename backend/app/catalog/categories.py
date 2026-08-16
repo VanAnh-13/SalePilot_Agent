@@ -1,191 +1,25 @@
-"""Declarative per-category rules ("rule sâu cho từng ngành").
+"""Canonical workbook category registry (Spec_cate_gia / 14 ngành).
 
-Rewritten for the real dienmayxanh.com crawl (``products_detail.json``): a
-product carries a free-form ``spec_product`` dict whose Vietnamese keys differ
-per category, plus prices, promotion, rating and units-sold. Each
-:class:`Category` encodes everything the generic ranking engine needs to advise
-on one product family: how to detect it from Vietnamese chat, which
-``spec_product`` keys become normalized specs, which need slots to collect (and
-how to ask for them), which buyer priorities map to which specs, and which
-trade-off axes to surface.
-
-The registry deeply configures the requirement's headline families (điện thoại,
-laptop, tivi, loa/tai nghe, máy lạnh, tủ lạnh, máy giặt, máy hút bụi). Every
-other category in the crawl is still importable and advisable through a
-*generic* :class:`Category` built on the fly from the catalog data (ranked by
-budget fit + rating + units sold), so SalePilot degrades gracefully instead of
-refusing the ~110 long-tail families.
+Runtime detection, need slots, priorities and trade-offs for the RIVF
+experiment path. Crawl-specific normalization lives in ``crawl_categories``.
 """
 
 from __future__ import annotations
 
-import re
-import unicodedata
-from dataclasses import dataclass
 from typing import Any
 
 from app.catalog import normalize as N
-
-
-# --------------------------------------------------------------------------- #
-# Dataclasses (unchanged public shape).
-# --------------------------------------------------------------------------- #
-
-@dataclass(frozen=True)
-class Spec:
-    """One normalized field derived from a ``spec_product`` key.
-
-    mode:
-      num/min/max/int — numeric (first / smallest / largest / rounded token)
-      gb              — numeric GB, auto-scaling ``TB``/``Tera`` to GB
-      text            — cleaned string
-      yesno           — Có/Không boolean
-      present         — True if the cell is non-empty and not negative
-      flag:<token>    — True if <token> appears and "không" does not
-    """
-
-    key: str
-    col: str
-    mode: str = "num"
-    unit: str = ""
-
-
-@dataclass(frozen=True)
-class RangeSpec:
-    """Derives ``<key>_min`` / ``<key>_max`` from one ``spec_product`` key."""
-
-    key: str
-    col: str
-    kind: str  # "people" | "area"
-
-
-@dataclass(frozen=True)
-class Slot:
-    """A need the agent collects and scores against."""
-
-    key: str
-    label: str
-    question: str = ""
-    kind: str = "proximity"  # proximity | max_constraint | min_constraint | range_fit
-    spec_key: str = ""
-    range_key: str = ""
-    unit: str = ""
-    weight: float = 5.0
-    extract: tuple[str, ...] = ()
-    mult: float = 1.0
-    primary: bool = False
-
-
-@dataclass(frozen=True)
-class Priority:
-    """A buyer preference keyword mapped onto a spec."""
-
-    key: str
-    aliases: tuple[str, ...]
-    mode: str = "bool"  # bool | text | present | max_spec | min_spec | cheap
-    spec_key: str = ""
-    value: str = ""
-    weight: float = 3.0
-
-
-@dataclass(frozen=True)
-class Tradeoff:
-    label: str
-    spec_key: str
-    mode: str  # "min" | "max"
-    unit: str = ""
-    fmt: str = "num"  # "num" | "price"
-
-
-@dataclass(frozen=True)
-class Category:
-    code: int
-    slug: str
-    display: str
-    sheet: str
-    aliases: tuple[str, ...]
-    specs: tuple[Spec, ...] = ()
-    ranges: tuple[RangeSpec, ...] = ()
-    name_specs: tuple[str, ...] = ()
-    desc_specs: tuple[str, ...] = ()
-    slots: tuple[Slot, ...] = ()
-    priorities: tuple[Priority, ...] = ()
-    tradeoffs: tuple[Tradeoff, ...] = ()
-    generic: bool = False
-
-    def spec_unit(self, key: str) -> str:
-        for spec in self.specs:
-            if spec.key == key:
-                return spec.unit
-        for slot in self.slots:
-            if slot.spec_key == key and slot.unit:
-                return slot.unit
-        return ""
-
-
-# --------------------------------------------------------------------------- #
-# Text helpers.
-# --------------------------------------------------------------------------- #
-
-def _unaccent(text: str) -> str:
-    text = text.replace("đ", "d").replace("Đ", "D")
-    nfkd = unicodedata.normalize("NFD", text)
-    return "".join(c for c in nfkd if unicodedata.category(c) != "Mn")
-
-
-def slugify(text: str) -> str:
-    base = _unaccent(str(text or "")).casefold()
-    base = re.sub(r"[^a-z0-9]+", "_", base).strip("_")
-    return base or "khac"
-
-
-# --------------------------------------------------------------------------- #
-# Normalization: raw crawl product -> normalized product document.
-# --------------------------------------------------------------------------- #
-
-_NEGATIVE = {"không", "khong", "không có", "khong co", "n/a", "na", "-", "hãng không công bố"}
-
-
-def _price(value: Any) -> int | None:
-    """Prices arrive as floats/ints/strings; 0 and blanks mean "no price"."""
-    if value is None or value == "":
-        return None
-    try:
-        result = int(round(float(value)))
-    except (TypeError, ValueError):
-        return N.price(value)
-    return result or None
-
-
-def _rating(value: Any) -> float | None:
-    text = N.clean(value)
-    if not text:
-        return None
-    num = N.number(text)
-    if num is None or num <= 0:
-        return None
-    return round(float(num), 1)
-
-
-def _sold(value: Any) -> int | None:
-    """``"14,5k"`` -> ``14500`` ; ``"1,2tr"`` -> ``1_200_000`` ; ``"999"`` -> ``999``."""
-    text = (N.clean(value) or "").casefold().replace(" ", "")
-    if not text:
-        return None
-    m = re.match(r"([\d.,]+)\s*(k|tr|triệu|trieu)?", text)
-    if not m:
-        return None
-    number = m.group(1).replace(".", "").replace(",", ".")
-    try:
-        base = float(number)
-    except ValueError:
-        return None
-    suffix = m.group(2)
-    if suffix == "k":
-        base *= 1_000
-    elif suffix in {"tr", "triệu", "trieu"}:
-        base *= 1_000_000
-    return int(round(base)) or None
+from app.catalog.category_model import (
+    Category,
+    CategoryRegistry,
+    Priority,
+    RangeSpec,
+    Slot,
+    Spec,
+    Tradeoff,
+    make_generic,
+    slugify,
+)
 
 
 def _apply_spec(spec: Spec, raw: Any) -> Any:
@@ -197,22 +31,23 @@ def _apply_spec(spec: Spec, raw: Any) -> Any:
         if spec.mode == "int":
             return N.integer(raw)
         return N.number(raw)
-    if spec.mode == "gb":
-        # Scale by the unit of the FIRST capacity token only, so a note like
-        # "512 GB SSD (… tối đa 2 TB)" reads as 512 GB, not 2 TB.
-        m = re.search(r"(\d+(?:[.,]\d+)?)\s*(tb|gb)", str(raw or ""), re.IGNORECASE)
-        if not m:
-            return N.number(raw)
-        val = float(m.group(1).replace(",", "."))
-        return val * 1024 if m.group(2).lower() == "tb" else val
     if spec.mode == "text":
         text = N.clean(raw)
-        return None if (text or "").casefold() in _NEGATIVE else text
+        return None if not text else text
     if spec.mode == "yesno":
         return N.yes_no(raw)
     if spec.mode == "present":
-        text = N.clean(raw)
-        return bool(text and text.casefold() not in _NEGATIVE)
+        parsed = N.yes_no(raw)
+        if parsed is not None:
+            return parsed
+        text = (N.clean(raw) or "").casefold()
+        if not text:
+            return None
+        # Descriptive feature cells are present unless they explicitly negate
+        # the feature. This keeps "Không" from becoming True due to truthiness.
+        if text.startswith(("không", "khong", "no", "chưa", "chua")):
+            return False
+        return True
     if spec.mode.startswith("flag:"):
         token = spec.mode.split(":", 1)[1].casefold()
         text = (N.clean(raw) or "").casefold()
@@ -220,525 +55,303 @@ def _apply_spec(spec: Spec, raw: Any) -> Any:
     return N.clean(raw)
 
 
-def normalize_product(cat: Category, product: dict[str, Any], source: str = "products_detail.json") -> dict[str, Any]:
-    """Build a normalized, MongoDB-ready document from one crawl product."""
-    original = _price(product.get("Giá gốc"))
-    sale = _price(product.get("Giá khuyến mãi"))
+def normalize_workbook_product(
+    cat: Category,
+    row: dict[str, Any],
+    source_row: int,
+    source: str,
+) -> dict[str, Any]:
+    """Normalize one flat workbook row into the engine document shape."""
+    original = N.price(row.get("giá gốc") or row.get("Giá gốc"))
+    sale = N.price(row.get("giá khuyến mãi") or row.get("Giá khuyến mãi"))
     current = sale or original
+    sku = str(row.get("sku") or row.get("SKU") or "").strip()
+    model = str(row.get("model_code") or row.get("model") or "").strip()
 
-    spec_product = product.get("spec_product") or {}
     raw_specs = {
-        str(col): value
-        for col, raw_value in spec_product.items()
-        if (value := N.clean(raw_value)) is not None
+        str(k): v
+        for k, raw in row.items()
+        if not str(k).startswith("__") and (v := N.clean(raw)) is not None
     }
-
     norm: dict[str, Any] = {}
     for spec in cat.specs:
-        value = _apply_spec(spec, spec_product.get(spec.col))
+        value = _apply_spec(spec, row.get(spec.col))
         if value is not None and value != "":
             norm[spec.key] = value
     for rng in cat.ranges:
-        raw = spec_product.get(rng.col)
-        if rng.kind == "people":
-            low, high = N.people_range(raw)
-        else:
-            low, high = N.area_range(raw)
+        raw = row.get(rng.col)
+        low, high = N.people_range(raw) if rng.kind == "people" else N.area_range(raw)
         if low is not None:
             norm[f"{rng.key}_min"] = low
         if high is not None:
             norm[f"{rng.key}_max"] = high
 
-    category_code = int(product.get("category_id") or cat.code)
+    brand = N.clean(row.get("brand") or row.get("Brand") or row.get("hãng"))
+    name_bits = [cat.display]
+    if brand:
+        name_bits.append(brand)
+    for key in cat.name_specs:
+        if norm.get(key) not in (None, ""):
+            unit = cat.spec_unit(key)
+            val = norm[key]
+            if isinstance(val, float) and val.is_integer():
+                val = int(val)
+            name_bits.append(f"{val}{(' ' + unit) if unit else ''}".strip())
+    if model:
+        name_bits.append(f"(model {model})")
+    name = " ".join(name_bits)
+
     doc: dict[str, Any] = {
-        "sku": str(product.get("product_id") or "").strip(),
-        "model_code": str(product.get("productcode") or "").strip(),
-        "product_id_web": str(product.get("product_id") or "").strip(),
-        "category_code": category_code,
+        "sku": sku,
+        "model_code": model,
+        "product_id_web": sku,
+        "category_code": cat.code,
         "category": cat.slug,
         "category_display": cat.display,
-        "brand": N.clean(product.get("brand")),
+        "brand": brand,
         "brand_id": None,
         "price_original_vnd": original,
         "price_sale_vnd": sale,
         "price_vnd": current,
         "has_current_price": current is not None,
-        "gift_promotion": N.clean(product.get("promotion")),
-        "outstanding": N.clean(product.get("outstanding")),
-        "rating": _rating(product.get("rating_vote")),
-        "sold": _sold(product.get("quantity_sold")),
-        "warranty": N.clean(product.get("chính sách bảo hành")),
-        "accessories": N.clean(product.get("Phụ kiện đi kèm")),
-        "color": N.clean(product.get("màu sắc")),
-        "image_url": N.clean(product.get("url_image")),
-        "url": N.clean(product.get("url")),
-        "online_only": bool(product.get("onlineSaleOnly")),
+        "gift_promotion": N.clean(row.get("quà tặng") or row.get("gift_promotion")),
+        "outstanding": None,
+        "rating": None,
+        "sold": None,
+        "warranty": N.clean(row.get("bảo hành")),
+        "accessories": None,
+        "color": N.clean(row.get("màu sắc") or row.get("color")),
+        "image_url": None,
+        "url": None,
+        "online_only": False,
+        "name": name,
+        "description": " | ".join(f"{k}: {v}" for k, v in list(raw_specs.items())[:8])[:600],
         "norm": norm,
         "specs": raw_specs,
         "source": source,
+        "source_row": int(source_row),
     }
-    doc["name"] = N.clean(product.get("tên sản phẩm")) or _build_name(cat, doc)
-    doc["description"] = _build_description(cat, doc)
-    doc["search_text"] = _build_search_text(cat, doc)
+    search_bits = [cat.display, cat.slug, brand or "", name, model, *[str(v) for v in raw_specs.values()]]
+    doc["search_text"] = " ".join(search_bits).casefold()
     return doc
 
 
-def _fmt_spec_value(cat: Category, key: str, value: Any) -> str:
-    unit = cat.spec_unit(key)
-    if isinstance(value, float) and value.is_integer():
-        value = int(value)
-    return f"{value} {unit}".strip() if unit else str(value)
+# Backward-compatible name used by crawl importer via crawl_categories.
+def normalize_product(cat: Category, product: dict[str, Any], source: str = "products_detail.json") -> dict[str, Any]:
+    from app.catalog.crawl_categories import normalize_product as crawl_normalize
 
+    return crawl_normalize(cat, product, source)
 
-def _build_name(cat: Category, doc: dict[str, Any]) -> str:
-    parts = [cat.display]
-    if doc.get("brand"):
-        parts.append(str(doc["brand"]))
-    for key in cat.name_specs:
-        value = doc["norm"].get(key)
-        if value not in (None, ""):
-            parts.append(_fmt_spec_value(cat, key, value))
-    model = doc.get("model_code")
-    if model:
-        parts.append(f"(model {model})")
-    return " ".join(parts)
-
-
-def _build_description(cat: Category, doc: dict[str, Any]) -> str:
-    bits = []
-    for key in cat.desc_specs:
-        value = doc["specs"].get(key)
-        if value and isinstance(value, str):
-            bits.append(f"{key}: {value}")
-    return " | ".join(bits)[:600]
-
-
-def _build_search_text(cat: Category, doc: dict[str, Any]) -> str:
-    chunks = [cat.display, cat.slug, str(doc.get("brand") or ""), doc.get("name", "")]
-    chunks.extend(str(v) for v in doc["specs"].values())
-    for spec in cat.specs:
-        if doc["norm"].get(spec.key) is True:
-            chunks.append(spec.col)
-    return " ".join(chunks).casefold()
-
-
-# --------------------------------------------------------------------------- #
-# The registry — deep rules for the headline families.
-# Category codes are the real dienmayxanh category_id values so that
-# ``category_code`` on a stored document always equals ``Category.code``.
-# --------------------------------------------------------------------------- #
 
 CATEGORIES: tuple[Category, ...] = (
-    # ---- Điện thoại -------------------------------------------------------- #
     Category(
-        code=42, slug="dien_thoai", display="Điện thoại", sheet="Điện thoại",
-        aliases=("điện thoại", "dien thoai", "smartphone", "iphone", "galaxy",
-                 "điện thoai", "smart phone", "đt di động"),
+        code=38, slug="tu_lanh", display="Tủ lạnh", sheet="Tủ Lạnh",
+        aliases=("tủ lạnh", "tu lanh", "side by side", "multi door", "ngăn đá", "ngan da"),
         specs=(
-            Spec("ram_gb", "RAM", "num", "GB"),
-            Spec("storage_gb", "Dung lượng lưu trữ", "gb", "GB"),
-            Spec("screen_inch", "Màn hình rộng", "num", '"'),
-            Spec("battery_mah", "Dung lượng pin", "num", "mAh"),
-            Spec("charge_w", "Hỗ trợ sạc tối đa", "num", "W"),
-            Spec("screen_tech", "Công nghệ màn hình", "text"),
-            Spec("chip", "Chip xử lý (CPU)", "text"),
-            Spec("has_5g", "Mạng di động", "flag:5g"),
+            Spec("usable_capacity_l", "Dung tích sử dụng", "int", "lít"),
+            Spec("width_cm", "Ngang", "num", "cm"),
+            Spec("height_cm", "Cao", "num", "cm"),
+            Spec("depth_cm", "Sâu", "num", "cm"),
+            Spec("style", "Kiểu dáng", "text"),
+            Spec("has_energy_saving", "Công nghệ tiết kiệm điện", "flag:inverter"),
+            Spec("external_water", "Lấy nước ngoài", "yesno"),
         ),
-        desc_specs=("Chip xử lý (CPU)", "RAM", "Dung lượng lưu trữ", "Dung lượng pin", "Công nghệ màn hình"),
-        slots=(
-            Slot("storage_gb", "bộ nhớ (GB)",
-                 question="Anh/chị cần bộ nhớ khoảng bao nhiêu GB ạ (128/256/512)?",
-                 kind="min_constraint", spec_key="storage_gb", unit="GB",
-                 extract=(r"(\d+)\s*gb",)),
-        ),
-        priorities=(
-            Priority("pin_trau", ("pin trâu", "pin khỏe", "pin lâu", "pin tốt", "trâu bò"), "max_spec", "battery_mah", weight=4.0),
-            Priority("choi_game", ("chơi game", "gaming", "chiến game", "game nặng", "cấu hình cao", "mạnh"), "max_spec", "ram_gb", weight=4.0),
-            Priority("bo_nho_lon", ("bộ nhớ lớn", "nhiều bộ nhớ", "lưu nhiều", "dung lượng lớn"), "max_spec", "storage_gb", weight=3.0),
-            Priority("sac_nhanh", ("sạc nhanh", "sac nhanh", "sạc siêu nhanh"), "max_spec", "charge_w", weight=2.0),
-            Priority("5g", ("5g", "mạng 5g"), "bool", "has_5g", weight=2.0),
-            Priority("gia_re", ("giá rẻ", "gia re", "rẻ", "tiết kiệm", "bình dân"), "cheap", weight=4.0),
-        ),
-        tradeoffs=(
-            Tradeoff("Pin lớn nhất", "battery_mah", "max", "mAh"),
-            Tradeoff("RAM cao nhất", "ram_gb", "max", "GB"),
-            Tradeoff("Bộ nhớ lớn nhất", "storage_gb", "max", "GB"),
-            Tradeoff("Sạc nhanh nhất", "charge_w", "max", "W"),
-            Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price"),
-        ),
-    ),
-    # ---- Laptop ------------------------------------------------------------ #
-    Category(
-        code=44, slug="laptop", display="Laptop", sheet="Laptop",
-        aliases=("laptop", "lap top", "máy tính xách tay", "may tinh xach tay",
-                 "macbook", "notebook", "lap"),
-        specs=(
-            Spec("ram_gb", "RAM", "num", "GB"),
-            Spec("storage_gb", "Ổ cứng", "gb", "GB"),
-            Spec("screen_inch", "Kích thước màn hình", "num", '"'),
-            Spec("cpu", "Công nghệ CPU", "text"),
-            Spec("gpu", "Card màn hình", "text"),
-            Spec("has_dgpu", "Card màn hình", "flag:rời"),
-            Spec("refresh_hz", "Tần số quét", "num", "Hz"),
-            Spec("battery_wh", "Thông tin Pin", "max", "Wh"),
-            Spec("os", "Hệ điều hành", "text"),
-        ),
-        desc_specs=("Công nghệ CPU", "RAM", "Ổ cứng", "Card màn hình", "Kích thước màn hình", "Hệ điều hành"),
-        slots=(
-            Slot("ram_gb", "RAM (GB)",
-                 question="Anh/chị cần RAM khoảng bao nhiêu ạ (8/16/32GB)?",
-                 kind="min_constraint", spec_key="ram_gb", unit="GB",
-                 extract=(r"ram\s*(\d+)",)),
-        ),
-        priorities=(
-            Priority("do_hoa_game", ("gaming", "chơi game", "game", "đồ họa", "do hoa", "render", "dựng phim", "chỉnh sửa video"), "bool", "has_dgpu", weight=5.0),
-            Priority("ram_cao", ("đa nhiệm", "da nhiem", "ram cao", "nhiều ram", "nặng"), "max_spec", "ram_gb", weight=3.0),
-            Priority("luu_tru_lon", ("ổ cứng lớn", "nhiều dung lượng", "ssd lớn", "lưu nhiều"), "max_spec", "storage_gb", weight=2.0),
-            Priority("pin_trau", ("pin trâu", "pin lâu", "pin khỏe", "dùng lâu"), "max_spec", "battery_wh", weight=3.0),
-            Priority("van_phong", ("văn phòng", "van phong", "học tập", "sinh viên", "word", "excel", "cơ bản"), "cheap", weight=3.0),
-            Priority("gia_re", ("giá rẻ", "gia re", "rẻ", "tiết kiệm", "bình dân"), "cheap", weight=4.0),
-        ),
-        tradeoffs=(
-            Tradeoff("RAM cao nhất", "ram_gb", "max", "GB"),
-            Tradeoff("Ổ cứng lớn nhất", "storage_gb", "max", "GB"),
-            Tradeoff("Màn hình lớn nhất", "screen_inch", "max", '"'),
-            Tradeoff("Pin lớn nhất", "battery_wh", "max", "Wh"),
-            Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price"),
-        ),
-    ),
-    # ---- Tivi -------------------------------------------------------------- #
-    Category(
-        code=1942, slug="tivi", display="Tivi", sheet="Tivi",
-        aliases=("tivi", "ti vi", "smart tivi", "android tivi", "google tivi", "màn hình tivi", "tv"),
-        specs=(
-            Spec("screen_inch", "Kích cỡ màn hình", "num", "inch"),
-            Spec("resolution", "Độ phân giải", "text"),
-            Spec("panel", "Loại màn hình", "text"),
-            Spec("tv_type", "Loại Tivi", "text"),
-            Spec("refresh_hz", "Tần số quét thực", "max", "Hz"),
-            Spec("speaker_w", "Tổng công suất loa", "num", "W"),
-            Spec("os", "Hệ điều hành", "text"),
-            Spec("is_4k", "Độ phân giải", "flag:4k"),
-            Spec("is_oled", "Loại màn hình", "flag:oled"),
-            Spec("is_qled", "Loại màn hình", "flag:qled"),
-        ),
-        desc_specs=("Loại Tivi", "Kích cỡ màn hình", "Độ phân giải", "Loại màn hình", "Hệ điều hành"),
-        slots=(
-            Slot("screen_inch", "kích thước màn hình (inch)",
-                 question="Anh/chị muốn tivi khoảng bao nhiêu inch ạ (43/55/65...) hoặc phòng rộng bao nhiêu?",
-                 kind="proximity", spec_key="screen_inch", unit="inch", weight=5.0,
-                 extract=(r"(\d+)\s*inch", r"(\d+)\s*['\"]", r"tivi\s*(\d{2})\b"), primary=True),
-        ),
-        priorities=(
-            Priority("4k", ("4k", "ultra hd", "nét", "sắc nét"), "bool", "is_4k", weight=3.0),
-            Priority("oled", ("oled",), "bool", "is_oled", weight=3.0),
-            Priority("qled", ("qled",), "bool", "is_qled", weight=3.0),
-            Priority("man_lon", ("màn lớn", "man lon", "màn to", "rạp phim", "xem phim"), "max_spec", "screen_inch", weight=3.0),
-            Priority("muot", ("mượt", "muot", "120hz", "thể thao", "chơi game"), "max_spec", "refresh_hz", weight=2.0),
-            Priority("gia_re", ("giá rẻ", "gia re", "rẻ", "tiết kiệm", "bình dân"), "cheap", weight=4.0),
-        ),
-        tradeoffs=(
-            Tradeoff("Màn hình lớn nhất", "screen_inch", "max", "inch"),
-            Tradeoff("Tần số quét cao nhất", "refresh_hz", "max", "Hz"),
-            Tradeoff("Loa to nhất", "speaker_w", "max", "W"),
-            Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price"),
-        ),
-    ),
-    # ---- Loa, Tai nghe ----------------------------------------------------- #
-    Category(
-        code=13698, slug="tai_nghe", display="Loa, Tai nghe", sheet="Loa, Tai nghe",
-        aliases=("tai nghe", "headphone", "earbuds", "earphone", "airpods",
-                 "loa bluetooth", "loa kéo", "loa", "speaker", "tai nghe bluetooth"),
-        specs=(
-            Spec("product_type", "Loại sản phẩm", "text"),
-            Spec("battery_h", "Thời lượng pin tai nghe", "num", "giờ"),
-            Spec("power_w", "Tổng công suất", "num", "W"),
-            Spec("connection", "Công nghệ kết nối", "text"),
-            Spec("is_wireless", "Công nghệ kết nối", "flag:bluetooth"),
-        ),
-        desc_specs=("Loại sản phẩm", "Công nghệ kết nối", "Tổng công suất", "Thời lượng pin tai nghe"),
-        priorities=(
-            Priority("khong_day", ("không dây", "khong day", "bluetooth", "wireless"), "bool", "is_wireless", weight=3.0),
-            Priority("loa_to", ("công suất lớn", "loa to", "âm thanh lớn", "mạnh", "bass"), "max_spec", "power_w", weight=3.0),
-            Priority("pin_trau", ("pin trâu", "pin lâu", "pin khỏe", "dùng lâu"), "max_spec", "battery_h", weight=2.0),
-            Priority("gia_re", ("giá rẻ", "gia re", "rẻ", "tiết kiệm", "bình dân"), "cheap", weight=4.0),
-        ),
-        tradeoffs=(
-            Tradeoff("Công suất lớn nhất", "power_w", "max", "W"),
-            Tradeoff("Pin lâu nhất", "battery_h", "max", "giờ"),
-            Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price"),
-        ),
-    ),
-    # ---- Máy lạnh ---------------------------------------------------------- #
-    Category(
-        code=2002, slug="may_lanh", display="Máy lạnh", sheet="Máy lạnh",
-        aliases=("máy lạnh", "may lanh", "điều hòa", "dieu hoa", "máy điều hòa", "điều hoà"),
-        specs=(
-            Spec("hp", "Công suất làm lạnh", "num", "HP"),
-            Spec("btu", "Công suất làm lạnh", "max", "BTU"),
-            Spec("has_inverter", "Inverter", "flag:inverter"),
-            Spec("noise_db", "Độ ồn trung bình (được đo trong phòng thí nghiệm)", "min", "dB"),
-            Spec("power_kwh", "Tiêu thụ điện", "num", "kWh"),
-            Spec("gas", "Loại Gas", "text"),
-            Spec("mode_type", "Loại máy", "text"),
-        ),
-        ranges=(RangeSpec("area", "Phạm vi làm lạnh hiệu quả", "area"),),
-        desc_specs=("Loại máy", "Công suất làm lạnh", "Inverter", "Phạm vi làm lạnh hiệu quả"),
-        slots=(
-            Slot("area_m2", "diện tích phòng (m²)",
-                 question="Phòng mình rộng khoảng bao nhiêu m² ạ (hoặc phòng ngủ / phòng khách)?",
-                 kind="range_fit", range_key="area", unit="m²", weight=6.0,
-                 extract=(r"(\d+(?:[.,]\d+)?)\s*m2", r"(\d+(?:[.,]\d+)?)\s*m²", r"phòng\s*(\d+)\s*m"), primary=True),
-        ),
-        priorities=(
-            Priority("tiet_kiem_dien", ("tiết kiệm điện", "tiet kiem dien", "inverter", "ít điện", "tiết kiệm"), "bool", "has_inverter", weight=4.0),
-            Priority("chay_em", ("chạy êm", "êm", "ít ồn", "yên tĩnh", "phòng ngủ", "im lặng"), "min_spec", "noise_db", weight=3.0),
-            Priority("hai_chieu", ("2 chiều", "hai chiều", "sưởi", "làm ấm", "mùa đông"), "text", "mode_type", value="2 chiều", weight=3.0),
-            Priority("lam_lanh_nhanh", ("làm lạnh nhanh", "lạnh sâu", "lạnh nhanh", "mát nhanh"), "max_spec", "btu", weight=2.0),
-            Priority("gia_re", ("giá rẻ", "gia re", "rẻ", "tiết kiệm chi phí", "bình dân"), "cheap", weight=3.0),
-        ),
-        tradeoffs=(
-            Tradeoff("Công suất lớn nhất", "btu", "max", "BTU"),
-            Tradeoff("Chạy êm nhất", "noise_db", "min", "dB"),
-            Tradeoff("Ít tốn điện nhất", "power_kwh", "min", "kWh"),
-            Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price"),
-        ),
-    ),
-    # ---- Tủ lạnh ----------------------------------------------------------- #
-    Category(
-        code=1943, slug="tu_lanh", display="Tủ lạnh", sheet="Tủ lạnh",
-        aliases=("tủ lạnh", "tu lanh", "side by side", "multi door", "ngăn đá",
-                 "ngan da", "tủ 2 cánh", "tủ 4 cánh", "french door"),
-        specs=(
-            Spec("usable_capacity_l", "Dung tích sử dụng", "num", "lít"),
-            Spec("freezer_l", "Dung tích ngăn đá", "num", "lít"),
-            Spec("fridge_l", "Dung tích ngăn lạnh", "num", "lít"),
-            Spec("type", "Kiểu tủ", "text"),
-            Spec("has_inverter", "Công nghệ tiết kiệm điện", "flag:inverter"),
-            Spec("power_kwh_year", "Công suất tiêu thụ công bố theo TCVN", "num", "kWh/năm"),
-            Spec("water_dispenser", "Lấy nước ngoài", "yesno"),
-            Spec("auto_ice", "Làm đá tự động", "yesno"),
-        ),
-        ranges=(RangeSpec("household", "Dung tích sử dụng", "people"),),
-        desc_specs=("Kiểu tủ", "Dung tích sử dụng", "Công nghệ tiết kiệm điện"),
+        ranges=(RangeSpec("household", "Số người sử dụng", "people"),),
+        name_specs=("usable_capacity_l",),
         slots=(
             Slot("household_size", "số người dùng",
                  question="Nhà mình khoảng mấy người dùng ạ?",
                  kind="range_fit", range_key="household", weight=5.0,
-                 extract=(r"(\d+)\s*người", r"gia đình\s*(\d+)", r"nhà\s*(\d+)\s*người"), primary=True),
+                 extract=(r"(\d+)\s*người", r"gia đình\s*(\d+)"), primary=True, hardness="soft"),
             Slot("capacity_l", "dung tích (lít)",
-                 question="Anh/chị muốn dung tích khoảng bao nhiêu lít ạ?",
                  kind="proximity", spec_key="usable_capacity_l", unit="lít", weight=3.0,
-                 extract=(r"(\d+)\s*l[íi]t", r"(\d+)\s*l\b")),
+                 extract=(r"(\d+)\s*l[íi]t",)),
+            Slot("max_width_cm", "chiều ngang tối đa (cm)",
+                 kind="max_constraint", spec_key="width_cm", unit="cm", weight=4.0,
+                 extract=(r"ngang\s*(?:tối đa|toi da|max)?\s*(\d+(?:[.,]\d+)?)", r"(\d+(?:[.,]\d+)?)\s*cm"),
+                 hardness="hard", missing_policy="exclude"),
         ),
         priorities=(
-            Priority("tiet_kiem_dien", ("tiết kiệm điện", "tiet kiem dien", "inverter", "ít điện", "tiết kiệm"), "bool", "has_inverter", weight=4.0),
-            Priority("side_by_side", ("side by side", "sbs", "tủ to", "4 cánh", "multi door", "nhiều cánh"), "text", "type", value="side by side", weight=3.0),
-            Priority("lay_nuoc", ("lấy nước ngoài", "lay nuoc", "lấy nước", "nước ngoài"), "bool", "water_dispenser", weight=2.0),
-            Priority("dung_tich_lon", ("dung tích lớn", "trữ nhiều", "to", "rộng"), "max_spec", "usable_capacity_l", weight=3.0),
-            Priority("gia_re", ("giá rẻ", "gia re", "rẻ", "tiết kiệm chi phí", "bình dân"), "cheap", weight=3.0),
+            Priority("tiet_kiem_dien", ("tiết kiệm điện", "tiet kiem dien", "inverter"), "bool", "has_energy_saving", weight=4.0),
+            Priority("lay_nuoc_ngoai", ("lấy nước ngoài", "lay nuoc ngoai", "lấy nước"), "bool", "external_water", weight=2.0),
         ),
         tradeoffs=(
             Tradeoff("Dung tích lớn nhất", "usable_capacity_l", "max", "lít"),
-            Tradeoff("Ngăn đá lớn nhất", "freezer_l", "max", "lít"),
-            Tradeoff("Ít tốn điện nhất", "power_kwh_year", "min", "kWh/năm"),
             Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price"),
         ),
     ),
-    # ---- Máy giặt ---------------------------------------------------------- #
     Category(
-        code=1944, slug="may_giat", display="Máy giặt", sheet="Máy giặt",
-        aliases=("máy giặt", "may giat", "giặt sấy", "giat say", "máy giặt sấy"),
+        code=36, slug="may_lanh", display="Máy lạnh", sheet="Máy Lạnh",
+        aliases=("máy lạnh", "may lanh", "điều hòa", "dieu hoa", "điều hoà"),
+        specs=(
+            Spec("btu", "Công suất", "max", "BTU"),
+            Spec("has_inverter", "Inverter", "flag:inverter"),
+            Spec("noise_db", "Độ ồn", "min", "dB"),
+        ),
+        ranges=(RangeSpec("area", "Phạm vi làm lạnh hiệu quả", "area"),),
+        slots=(
+            Slot("area_m2", "diện tích phòng (m²)",
+                 question="Phòng mình rộng khoảng bao nhiêu m² ạ?",
+                 kind="range_fit", range_key="area", unit="m²", weight=6.0,
+                 extract=(r"(\d+(?:[.,]\d+)?)\s*m2", r"(\d+(?:[.,]\d+)?)\s*m²"), primary=True,
+                 hardness="hard", missing_policy="clarify"),
+        ),
+        priorities=(
+            Priority("tiet_kiem_dien", ("tiết kiệm điện", "inverter"), "bool", "has_inverter", weight=4.0),
+            Priority("chay_em", ("chạy êm", "êm", "ít ồn", "yên tĩnh"), "min_spec", "noise_db", weight=3.0),
+        ),
+        tradeoffs=(
+            Tradeoff("Công suất lớn nhất", "btu", "max", "BTU"),
+            Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price"),
+        ),
+    ),
+    Category(
+        code=39, slug="may_giat", display="Máy giặt", sheet="Máy Giặt",
+        aliases=("máy giặt", "may giat", "giặt sấy", "giat say"),
         specs=(
             Spec("wash_kg", "Khối lượng giặt", "num", "kg"),
             Spec("type", "Loại máy giặt", "text"),
-            Spec("has_inverter", "Loại Inverter", "flag:inverter"),
-            Spec("spin_rpm", "Tốc độ quay vắt tối đa", "num", "vòng/phút"),
-            Spec("motor_type", "Kiểu động cơ", "text"),
+            Spec("has_dryer", "Sấy", "present"),
         ),
         ranges=(RangeSpec("household", "Số người sử dụng", "people"),),
-        desc_specs=("Loại máy giặt", "Khối lượng giặt", "Số người sử dụng"),
         slots=(
             Slot("wash_kg", "khối lượng giặt (kg)",
-                 question="Nhà mình mấy người, hoặc cần giặt khoảng bao nhiêu kg mỗi lần ạ?",
+                 question="Cần giặt khoảng bao nhiêu kg mỗi lần ạ?",
                  kind="proximity", spec_key="wash_kg", unit="kg", weight=5.0,
                  extract=(r"(\d+(?:[.,]\d+)?)\s*kg",), primary=True),
             Slot("household_size", "số người dùng",
-                 question="Nhà mình khoảng mấy người ạ?",
                  kind="range_fit", range_key="household", weight=3.0,
-                 extract=(r"(\d+)\s*người", r"gia đình\s*(\d+)")),
+                 extract=(r"(\d+)\s*người",)),
         ),
         priorities=(
-            Priority("cua_truoc", ("cửa trước", "cua truoc", "lồng ngang", "cửa ngang"), "text", "type", value="trước", weight=3.0),
-            Priority("cua_tren", ("cửa trên", "cua tren", "lồng đứng", "cửa đứng"), "text", "type", value="trên", weight=3.0),
-            Priority("tiet_kiem_dien", ("tiết kiệm điện", "tiet kiem dien", "inverter", "ít điện", "tiết kiệm"), "bool", "has_inverter", weight=3.0),
-            Priority("giat_nhieu", ("giặt nhiều", "tải lớn", "nhiều đồ", "gia đình đông"), "max_spec", "wash_kg", weight=3.0),
-            Priority("gia_re", ("giá rẻ", "gia re", "rẻ", "tiết kiệm chi phí", "bình dân"), "cheap", weight=3.0),
+            Priority("cua_truoc", ("cửa trước", "cua truoc"), "text", "type", value="trước", weight=3.0),
+            Priority("co_say", ("có sấy", "co say", "sấy"), "bool", "has_dryer", weight=3.0),
         ),
-        tradeoffs=(
-            Tradeoff("Giặt được nhiều nhất", "wash_kg", "max", "kg"),
-            Tradeoff("Vắt nhanh nhất", "spin_rpm", "max", "vòng/phút"),
-            Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price"),
-        ),
+        tradeoffs=(Tradeoff("Giặt được nhiều nhất", "wash_kg", "max", "kg"), Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price")),
     ),
-    # ---- Máy hút bụi ------------------------------------------------------- #
     Category(
-        code=12298, slug="may_hut_bui", display="Máy hút bụi gia đình", sheet="Máy hút bụi gia đình",
-        aliases=("máy hút bụi", "may hut bui", "robot hút bụi", "robot lau nhà",
-                 "hút bụi cầm tay", "máy hút bụi không dây", "robot"),
+        code=40, slug="may_say", display="Máy sấy", sheet="Máy Sấy",
+        aliases=("máy sấy", "may say", "sấy quần áo"),
+        specs=(Spec("dry_kg", "Khối lượng sấy", "num", "kg"),),
+        slots=(Slot("dry_kg", "khối lượng sấy (kg)", question="Mình cần sấy khoảng bao nhiêu kg mỗi lần ạ?", kind="proximity", spec_key="dry_kg", unit="kg",
+                    extract=(r"(\d+(?:[.,]\d+)?)\s*kg",), primary=True),),
+        tradeoffs=(Tradeoff("Sấy nhiều nhất", "dry_kg", "max", "kg"), Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price")),
+    ),
+    Category(
+        code=41, slug="may_rua_chen", display="Máy rửa chén", sheet="Máy Rửa Chén",
+        aliases=("máy rửa chén", "may rua chen", "máy rửa bát"),
+        specs=(Spec("place_settings", "Bộ chén", "int"),),
+        slots=(Slot("place_settings", "số bộ chén", question="Gia đình mình cần máy rửa khoảng bao nhiêu bộ chén ạ?", kind="proximity", spec_key="place_settings",
+                    extract=(r"(\d+)\s*bộ",), primary=True),),
+        tradeoffs=(Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price"),),
+    ),
+    Category(
+        code=30, slug="tu_dong", display="Tủ đông", sheet="Tủ Đông",
+        aliases=("tủ đông", "tu dong", "tủ mát đông"),
+        specs=(Spec("usable_capacity_l", "Dung tích", "int", "lít"),),
+        slots=(Slot("capacity_l", "dung tích (lít)", question="Mình cần tủ đông khoảng bao nhiêu lít ạ?", kind="proximity", spec_key="usable_capacity_l", unit="lít",
+                    extract=(r"(\d+)\s*l[íi]t",), primary=True),),
+        tradeoffs=(Tradeoff("Dung tích lớn nhất", "usable_capacity_l", "max", "lít"), Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price")),
+    ),
+    Category(
+        code=49, slug="may_nuoc_nong", display="Máy nước nóng", sheet="Máy Nước Nóng",
+        aliases=("máy nước nóng", "may nuoc nong", "bình nóng lạnh"),
+        specs=(Spec("type", "Loại", "text"), Spec("capacity_l", "Dung tích", "num", "lít")),
+        slots=(),
+        tradeoffs=(Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price"),),
+    ),
+    Category(
+        code=72, slug="dong_ho", display="Đồng hồ thông minh", sheet="Đồng Hồ",
+        aliases=("đồng hồ", "dong ho", "smartwatch", "đồng hồ thông minh"),
         specs=(
-            # Handhelds report "Công suất hút"; robots report "Lực hút tối đa".
-            # Both map onto suction_pa (the later spec wins when present).
-            Spec("suction_pa", "Công suất hút", "num", "Pa"),
-            Spec("suction_pa", "Lực hút tối đa", "num", "Pa"),
-            Spec("power_w", "Công suất hoạt động", "num", "W"),
-            Spec("filter", "Bộ lọc", "text"),
-            Spec("type", "Loại máy", "text"),
-            Spec("area_m2", "Diện tích sử dụng", "num", "m²"),
-            Spec("noise_db", "Độ ồn cao nhất", "num", "dB"),
-            Spec("noise_db", "Độ ồn", "num", "dB"),
+            Spec("has_call", "Nghe gọi", "yesno"),
+            Spec("has_health", "Theo dõi sức khỏe", "present"),
+            Spec("has_sim", "SIM", "yesno"),
         ),
-        desc_specs=("Loại máy", "Công suất hút", "Bộ lọc"),
+        slots=(),
         priorities=(
-            Priority("robot", ("robot", "tự động", "tu dong", "lau nhà", "tự hành"), "text", "type", value="robot", weight=4.0),
-            Priority("khong_day", ("không dây", "khong day", "cầm tay", "cordless"), "text", "type", value="không dây", weight=3.0),
-            Priority("hut_manh", ("hút mạnh", "lực hút", "mạnh", "sạch sâu"), "max_spec", "suction_pa", weight=3.0),
-            Priority("gia_re", ("giá rẻ", "gia re", "rẻ", "tiết kiệm", "bình dân"), "cheap", weight=3.0),
+            Priority("nghe_goi", ("nghe gọi", "nghe goi", "gọi điện"), "bool", "has_call", weight=4.0),
+            Priority("suc_khoe", ("sức khỏe", "theo dõi sức khỏe", "nhịp tim"), "bool", "has_health", weight=3.0),
         ),
-        tradeoffs=(
-            Tradeoff("Lực hút mạnh nhất", "suction_pa", "max", "Pa"),
-            Tradeoff("Chạy êm nhất", "noise_db", "min", "dB"),
-            Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price"),
+        tradeoffs=(Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price"),),
+    ),
+    Category(
+        code=73, slug="may_tinh_de_ban", display="Máy tính để bàn", sheet="Máy Tính Để Bàn",
+        aliases=("máy tính để bàn", "may tinh de ban", "pc", "desktop"),
+        specs=(Spec("ram_gb", "RAM", "num", "GB"), Spec("storage_gb", "Ổ cứng", "num", "GB")),
+        slots=(Slot("ram_gb", "RAM (GB)", question="Mình cần tối thiểu bao nhiêu GB RAM ạ?", kind="min_constraint", spec_key="ram_gb", unit="GB",
+                    extract=(r"ram\s*(\d+)", r"(\d+)\s*gb\s*ram"), primary=True),),
+        tradeoffs=(Tradeoff("RAM cao nhất", "ram_gb", "max", "GB"), Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price")),
+    ),
+    Category(
+        code=75, slug="man_hinh", display="Màn hình", sheet="Màn Hình",
+        aliases=("màn hình", "man hinh", "monitor"),
+        specs=(Spec("screen_inch", "Kích thước", "num", "inch"),),
+        slots=(Slot("screen_inch", "inch", question="Mình muốn màn hình khoảng bao nhiêu inch ạ?", kind="proximity", spec_key="screen_inch", unit="inch",
+                    extract=(r"(\d+(?:[.,]\d+)?)\s*inch",), primary=True),),
+        tradeoffs=(Tradeoff("Màn lớn nhất", "screen_inch", "max", "inch"), Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price")),
+    ),
+    Category(
+        code=115, slug="may_in", display="Máy in", sheet="Máy In",
+        aliases=("máy in", "may in", "printer"),
+        specs=(Spec("type", "Loại máy in", "text"),),
+        slots=(),
+        tradeoffs=(Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price"),),
+    ),
+    Category(
+        code=116, slug="may_tinh_bang", display="Máy tính bảng", sheet="Máy Tính Bảng",
+        aliases=("máy tính bảng", "may tinh bang", "tablet", "ipad"),
+        specs=(
+            Spec("has_sim", "SIM", "yesno"),
+            Spec("storage_gb", "Bộ nhớ", "num", "GB"),
+            Spec("battery", "Pin", "present"),
         ),
+        slots=(),
+        priorities=(
+            Priority("co_sim", ("có sim", "co sim", "lắp sim", "5g", "4g"), "bool", "has_sim", weight=4.0),
+            Priority("pin_trau", ("pin trâu", "pin khỏe", "pin lâu"), "bool", "battery", weight=3.0),
+        ),
+        tradeoffs=(Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price"),),
+    ),
+    Category(
+        code=137, slug="micro_karaoke", display="Micro karaoke", sheet="Micro Karaoke",
+        aliases=("micro karaoke", "mic karaoke", "microphone karaoke"),
+        specs=(),
+        slots=(),
+        tradeoffs=(Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price"),),
+    ),
+    Category(
+        code=139, slug="micro_thu_am", display="Micro thu âm", sheet="Micro Thu Âm",
+        aliases=("micro thu âm", "micro thu am", "mic thu âm"),
+        specs=(),
+        slots=(),
+        tradeoffs=(Tradeoff("Giá tốt nhất", "price_vnd", "min", fmt="price"),),
     ),
 )
 
-BY_SLUG: dict[str, Category] = {c.slug: c for c in CATEGORIES}
-BY_CODE: dict[int, Category] = {c.code: c for c in CATEGORIES}
-BY_SHEET: dict[str, Category] = {c.sheet: c for c in CATEGORIES}
-
-
-# --------------------------------------------------------------------------- #
-# Generic categories — built on the fly for the long-tail families so every
-# product in the crawl stays searchable/advisable (ranked by budget + rating +
-# units sold) even without a hand-written config.
-# --------------------------------------------------------------------------- #
-
-def make_generic(code: int, display: str) -> Category:
-    display = str(display or "Sản phẩm").strip()
-    slug = slugify(display)
-    aliases = tuple(
-        dict.fromkeys(
-            a for a in (display.casefold(), _unaccent(display).casefold(), slug.replace("_", " "))
-            if len(a) >= 3
-        )
-    )
-    return Category(code=int(code), slug=slug, display=display, sheet=display, aliases=aliases, generic=True)
-
-
-def _generic_registry() -> dict[str, Category]:
-    """Distinct catalog categories not already deeply configured."""
-    from app.catalog import repository
-
-    out: dict[str, Category] = {}
-    for entry in repository.distinct_categories():
-        code = int(entry.get("code") or 0)
-        if code in BY_CODE:
-            continue
-        cat = make_generic(code, entry.get("display") or entry.get("slug") or "")
-        out[cat.slug] = cat
-    return out
-
-
-def get_category(ref: str | int | None) -> Category | None:
-    if ref is None:
-        return None
-    if isinstance(ref, int) or (isinstance(ref, str) and str(ref).strip().isdigit()):
-        code = int(ref)
-        if code in BY_CODE:
-            return BY_CODE[code]
-        for cat in _generic_registry().values():
-            if cat.code == code:
-                return cat
-        return None
-    text = str(ref).strip()
-    if text in BY_SLUG:
-        return BY_SLUG[text]
-    return _generic_registry().get(text)
-
-
-# "ko phải tủ lạnh", "không cần máy giặt"… — a mention right after a negation
-# must not count as intent for that category. ("chưa có tủ lạnh" is NOT a
-# rejection — it usually means the customer wants one — so "chưa" is excluded.)
-_NEGATION = re.compile(
-    r"(?:(?:không|khong|ko|chẳng|chang)\s*(?:phải|phai|cần|can|mua|lấy|lay)?"
-    r"|(?:đâu|dau)\s+(?:phải|phai))\s*$"
-)
-
-
-def _is_negated(low: str, start: int) -> bool:
-    prefix = low[max(0, start - 24) : start].strip()
-    return bool(_NEGATION.search(prefix))
-
-
-def _scan_aliases(cats, low: str) -> tuple[int, Category] | None:
-    best: tuple[int, Category] | None = None
-    for cat in cats:
-        for alias in cat.aliases:
-            if not alias:
-                continue
-            for match in re.finditer(re.escape(alias), low):
-                if _is_negated(low, match.start()):
-                    continue
-                score = len(alias)
-                if best is None or score > best[0]:
-                    best = (score, cat)
-                break
-    return best
-
-
-def detect_category(text: str) -> Category | None:
-    """Pick the category whose (non-negated) alias best matches the message.
-
-    Deep categories are checked first; if none match, the long-tail generic
-    categories (by their display name) are considered too.
-    """
-    low = (text or "").casefold()
-    best = _scan_aliases(CATEGORIES, low)
-    generic_best = _scan_aliases(_generic_registry().values(), low)
-    if generic_best and (best is None or generic_best[0] > best[0]):
-        best = generic_best
-    return best[1] if best else None
-
-
-def detect_negated_categories(text: str) -> set[str]:
-    """Slugs the user explicitly rejected ("ko phải tủ lạnh")."""
-    low = (text or "").casefold()
-    negated: set[str] = set()
-    for cat in CATEGORIES:
-        for alias in cat.aliases:
-            for match in re.finditer(re.escape(alias), low):
-                if _is_negated(low, match.start()):
-                    negated.add(cat.slug)
-    return negated
-
-
-# Truly out-of-scope things the catalog does not carry at all. SalePilot must
-# say so honestly instead of forcing an unrelated category.
 UNSUPPORTED_TERMS: tuple[tuple[str, str, str], ...] = (
-    (r"\bô ?tô\b|\boto\b|xe hơi|xe ô tô", "ô tô", ""),
+    (r"\blaptop\b|\blap top\b|\bmacbook\b", "laptop", "Anh/chị có thể xem máy tính để bàn hoặc máy tính bảng trong catalog hiện có ạ."),
+    (r"\bđiện thoại\b|\bdien thoai\b|\bsmartphone\b|\biphone\b", "điện thoại", ""),
+    (r"\btivi\b|\bti vi\b|\bsmart tivi\b", "tivi", ""),
+    (r"\bô ?tô\b|\boto\b|xe hơi", "ô tô", ""),
     (r"xe máy|xe gắn máy|xe điện", "xe máy / xe điện", ""),
-    (r"thực phẩm|đồ ăn|rau củ|thịt cá", "thực phẩm", ""),
-    (r"vé máy bay|đặt phòng|khách sạn|tour du lịch", "dịch vụ du lịch", ""),
+    (r"thực phẩm|đồ ăn|rau củ", "thực phẩm", ""),
+    (r"vé máy bay|khách sạn|tour du lịch", "dịch vụ du lịch", ""),
     (r"bất động sản|nhà đất|căn hộ", "bất động sản", ""),
 )
 
 
-def detect_unsupported(text: str) -> tuple[str, str] | None:
-    """Return (display_term, suggestion) when the user asks for something the
-    catalog genuinely does not carry."""
-    low = (text or "").casefold()
-    for pattern, display, suggestion in UNSUPPORTED_TERMS:
-        if re.search(pattern, low):
-            return display, suggestion
-    return None
+REGISTRY = CategoryRegistry(
+    CATEGORIES,
+    unsupported_terms=UNSUPPORTED_TERMS,
+    ignore_unsupported_when_category_detected=True,
+)
+BY_SLUG = REGISTRY.by_slug
+BY_CODE = REGISTRY.by_code
+BY_SHEET = REGISTRY.by_sheet
+EXPECTED_SHEETS: tuple[str, ...] = tuple(category.sheet for category in CATEGORIES)
+
+get_category = REGISTRY.get_category
+detect_category = REGISTRY.detect_category
+detect_negated_categories = REGISTRY.detect_negated_categories
+detect_unsupported = REGISTRY.detect_unsupported

@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { chatOnce, type TraceStep } from "@/lib/api";
+import { DecisionEvidence } from "@/components/DecisionEvidence";
 import { Markdown } from "@/components/Markdown";
+import { IconAlert, IconBot, IconSend, IconUser } from "@/components/Icons";
+import { chatOnce, type DecisionContract, type TraceStep } from "@/lib/api";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -12,9 +14,9 @@ const LS_MSGS = "salepilot_msgs";
 const GREETING: Msg = {
   role: "assistant",
   content:
-    "Chào bạn! Em là **SalePilot** — tư vấn điện máy & công nghệ theo nhu cầu thật " +
+    "Chào bạn! Em là **SalePilot-R** — hệ hỗ trợ quyết định điện máy theo nhu cầu thật " +
     "(tủ lạnh, máy lạnh, máy giặt, đồng hồ thông minh, máy tính bảng, PC, màn hình…).\n\n" +
-    "Bạn đang cần sản phẩm gì, ngân sách khoảng bao nhiêu ạ?",
+    "Em sẽ kiểm tra ràng buộc và chỉ đề xuất khi có đủ bằng chứng từ catalog. Bạn đang cần sản phẩm gì, ngân sách khoảng bao nhiêu ạ?",
 };
 
 const CHIPS = [
@@ -39,6 +41,7 @@ export default function ChatPage() {
   const [agents, setAgents] = useState<string[]>([]);
   const [memoryHit, setMemoryHit] = useState("");
   const [runId, setRunId] = useState("");
+  const [decision, setDecision] = useState<DecisionContract | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
@@ -94,6 +97,7 @@ export default function ChatPage() {
     setAgents([]);
     setMemoryHit("");
     setRunId("");
+    setDecision(null);
     setError("");
   }
 
@@ -102,6 +106,7 @@ export default function ChatPage() {
     if (!text || loading || !externalId) return;
     setInput("");
     setError("");
+    setDecision(null);
     setMsgs((m) => [...m, { role: "user", content: text }]);
     setLoading(true);
     try {
@@ -111,6 +116,7 @@ export default function ChatPage() {
       setAgents(res.used_agents || []);
       setMemoryHit(res.memory_summary || "");
       setRunId(res.run_id || "");
+      setDecision(res.decision || null);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg);
@@ -129,10 +135,10 @@ export default function ChatPage() {
         <div className="chat-header">
           <div className="who">
             <span className="assistant-avatar" aria-hidden>
-              🤖
+              <IconBot width={21} height={21} />
             </span>
             <div>
-              <div className="title">Tư vấn điện máy &amp; công nghệ</div>
+              <div className="title">Hỗ trợ quyết định điện máy</div>
               <div className="status">
                 <span className="live" /> Trực tuyến · {externalId || "đang tạo phiên…"}
               </div>
@@ -168,7 +174,7 @@ export default function ChatPage() {
           {msgs.map((m, i) => (
             <div key={i} className={`msg ${m.role === "user" ? "user" : "bot"}`}>
               <span className="msg-avatar" aria-hidden>
-                {m.role === "user" ? "🧑" : "🤖"}
+                {m.role === "user" ? <IconUser width={16} height={16} /> : <IconBot width={16} height={16} />}
               </span>
               <div className="bubble">
                 {m.role === "assistant" ? <Markdown text={m.content} /> : m.content}
@@ -178,7 +184,7 @@ export default function ChatPage() {
           {loading && (
             <div className="msg bot">
               <span className="msg-avatar" aria-hidden>
-                🤖
+                <IconBot width={16} height={16} />
               </span>
               <div className="bubble">
                 <span className="typing">
@@ -191,7 +197,12 @@ export default function ChatPage() {
           )}
         </div>
 
-        {error && <div className="error-note">⚠️ {error}</div>}
+        {error && (
+          <div className="error-note">
+            <IconAlert width={16} height={16} />
+            {error}
+          </div>
+        )}
 
         <div className="composer">
           <input
@@ -204,17 +215,28 @@ export default function ChatPage() {
             disabled={!externalId}
           />
           <button className="btn" onClick={() => send()} disabled={loading || !externalId}>
-            Gửi
+            Gửi <IconSend width={16} height={16} />
           </button>
         </div>
       </section>
 
       <section className="card trace-panel">
         <h2 className="card-title">
+          <span className="dot" /> Bằng chứng quyết định
+        </h2>
+        <p className="muted panel-intro">
+          Ràng buộc, nguồn SKU và hash giúp kiểm tra lại từng đề xuất.
+        </p>
+
+        <DecisionEvidence decision={decision} loading={loading} />
+
+        <div className="panel-divider" />
+
+        <h2 className="card-title">
           <span className="dot" /> Agent Trace
         </h2>
-        <p className="muted" style={{ marginTop: 6 }}>
-          Lead → catalog / knowledge · chống ảo giác bằng tool
+        <p className="muted panel-intro">
+          Luồng xử lý hỗ trợ debug; không được dùng thay cho bằng chứng quyết định.
         </p>
 
         {memoryHit && (

@@ -194,7 +194,7 @@ async def maybe_extract_from_text(channel: str, external_id: str, text: str) -> 
     phone_m = re.search(r"0\d{8,10}", text.replace(" ", "").replace(".", ""))
     interest = ""
     t = text.lower()
-    from app.catalog.categories import detect_category
+    from app.catalog.registry import detect_category
 
     category = detect_category(text)
     if category:

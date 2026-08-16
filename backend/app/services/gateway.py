@@ -14,14 +14,16 @@ async def ingest_message(
     external_id: str,
     text: str,
     customer_name: str = "Khách",
-    conversation_id: int | None = None,
 ) -> dict[str, Any]:
+    # Conversation is always derived server-side from (channel, external_id).
+    # Never accept a caller-supplied conversation_id: that would allow IDOR
+    # (one user hijacking another user's conversation history).
     conv = await get_or_create_conversation(
         channel=channel,
         external_id=external_id,
         customer_name=customer_name,
     )
-    conv_id = conversation_id or conv.id
+    conv_id = conv.id
     await append_message(conv_id, "user", text)
     history = await recent_history(conv_id)
 
@@ -43,7 +45,8 @@ async def ingest_message(
             "used_tools": result.get("used_tools"),
             "trace": result.get("trace"),
             "run_id": result.get("run_id"),
-            "memory": result.get("memory"),
+            "decision": result.get("decision"),
+            # memory intentionally excluded — PII only via admin /memory
         },
     )
     result["conversation_id"] = conv_id

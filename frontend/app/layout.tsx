@@ -3,14 +3,14 @@ import "./globals.css";
 import { Nav } from "@/components/Nav";
 
 export const metadata: Metadata = {
-  title: "SalePilot — Tư vấn điện máy đa tác nhân",
+  title: "SalePilot-R — Hỗ trợ quyết định bán lẻ có bằng chứng",
   description:
-    "Trợ lý AI đa tác nhân tư vấn & so sánh điện máy theo nhu cầu thật cho SME Việt Nam (VAIC 2026).",
+    "Research prototype constraint-first cho tư vấn điện máy tiếng Việt, với ràng buộc fail-closed và provenance kiểm tra được.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="vi">
+    <html lang="vi" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -27,8 +27,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
           <footer className="footer">
             <div className="container">
-              <span>SalePilot · Multi-Agent CSKH/Sales cho SME Việt Nam</span>
-              <span>VAIC 2026 · Dữ liệu từ catalog nội bộ — không bịa giá/tồn</span>
+              <span>SalePilot-R · Evidence-grounded Vietnamese retail decision support</span>
+              <span>Research prototype · Không suy đoán tồn kho · Không phải hệ thống production</span>
             </div>
           </footer>
         </div>

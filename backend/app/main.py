@@ -42,9 +42,12 @@ async def lifespan(_app: FastAPI):
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(
-        title="SalePilot",
-        description="AI so sánh & tư vấn tủ lạnh theo nhu cầu — VAIC Điện Máy Xanh / SME",
-        version="0.6.0",
+        title="SalePilot-R",
+        description=(
+            "Constraint-first, evidence-grounded Vietnamese retail decision-support "
+            "research prototype"
+        ),
+        version="0.7.0",
         lifespan=lifespan,
     )
     app.add_middleware(
@@ -73,16 +76,21 @@ def create_app() -> FastAPI:
     async def health():
         from app.catalog import repository as catalog_repository
 
+        catalog_identity = catalog_repository.catalog_identity()
+        category_count = len(catalog_repository.category_counts())
         return {
             "ok": True,
+            "ready": bool(catalog_identity.get("products") and catalog_identity.get("sha256")),
             "service": "salepilot",
-            "architecture": "product-advisor-multi-agent",
+            "profile": "research-prototype",
+            "architecture": "constraint-first-hybrid-decision-support",
             "shop": settings.shop_name,
             "default_category": settings.shop_category,
             "catalog": {
-                "source": catalog_repository.source(),
-                "products": len(catalog_repository.all_products()),
-                "categories": len(catalog_repository.category_counts()),
+                "source": catalog_identity.get("backend"),
+                "products": catalog_identity.get("products"),
+                "categories": category_count,
+                "sha256": catalog_identity.get("sha256"),
             },
             "llm_provider": settings.llm_provider,
             "features": {

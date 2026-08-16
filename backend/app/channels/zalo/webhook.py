@@ -18,7 +18,11 @@ router = APIRouter(prefix="/webhooks/zalo", tags=["zalo"])
 
 def _verify_signature(raw_body: bytes, signature: str | None) -> bool:
     settings = get_settings()
-    mode = (settings.zalo_verify_mode or "off").lower()
+    # Fail-closed: an empty/unset value must NOT silently behave like "off".
+    # config.py's Settings.zalo_verify_mode already defaults to "strict"; this
+    # fallback only matters if the field were ever explicitly set to "", and it
+    # must match that same fail-closed default, not bypass verification.
+    mode = (settings.zalo_verify_mode or "strict").lower()
     if mode == "off":
         return True
     secret = settings.zalo_webhook_secret or settings.zalo_oa_secret

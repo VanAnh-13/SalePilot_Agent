@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="980" viewBox="0 0 760 980">
+  <defs>
+    <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 Z" fill="#2d3748" filter="url(#rough)"/>
+    </marker>
+    <style>
+      text { font-family: 'Segoe Print', 'Comic Sans MS', cursive, sans-serif; }
+      .title { font-size: 32px; font-weight: 700; fill: #1a202c; }
+      .boxTitle { font-size: 25px; font-weight: 700; fill: #1a202c; }
+      .body { font-size: 21px; fill: #2d3748; }
+      .edge { stroke: #2d3748; stroke-width: 3; fill: none; marker-end: url(#arrow); filter: url(#rough); }
+      .box { filter: url(#rough); stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+  </defs>
+
+  <rect width="760" height="980" fill="#fcfbf9"/>
+
+  <text class="title" x="40" y="52">Sealed Evaluation Pipeline</text>
+
+  <rect class="box" x="40" y="80" width="680" height="185" rx="16" fill="#e0f2fe" stroke="#0284c7" stroke-width="3"/>
+  <text class="boxTitle" x="65" y="122">Frozen Inputs</text>
+  <text class="body" x="65" y="160">&#8226; 40 sealed Vietnamese episodes: labeled actions</text>
+  <text class="body" x="82" y="192">+ hard constraints (SEAL_RECORD hashes)</text>
+  <text class="body" x="65" y="230">&#8226; DMX snapshot: 13,716 products / 118 categories,</text>
+  <text class="body" x="82" y="262" opacity="0">.</text>
+  <text class="body" x="82" y="258">normalized SHA-256 pin</text>
+
+  <path class="edge" d="M 380 267 L 380 300"/>
+
+  <rect class="box" x="40" y="305" width="680" height="150" rx="16" fill="#f1f5f9" stroke="#475569" stroke-width="3"/>
+  <text class="boxTitle" x="65" y="347">Validated Open-Loop Replay</text>
+  <text class="body" x="65" y="385">&#8226; Manifest + seal checks before every run</text>
+  <text class="body" x="65" y="420">&#8226; Final-turn decision only; one shared Vietnamese</text>
+  <text class="body" x="82" y="450">parser (category, slots, state merge)</text>
+
+  <path class="edge" d="M 380 457 L 380 490"/>
+
+  <rect class="box" x="40" y="495" width="680" height="185" rx="16" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+  <text class="boxTitle" x="65" y="537">Three Deterministic Conditions</text>
+  <text class="body" x="65" y="575">&#8226; S_hybrid_constraint: constraint-first ranker</text>
+  <text class="body" x="65" y="610">&#8226; B1_lexical_filter: lexical filter, separate ranker</text>
+  <text class="body" x="65" y="645">&#8226; B0_price_popularity: budget sort only,</text>
+  <text class="body" x="82" y="673">no dimensional filters</text>
+
+  <path class="edge" d="M 380 682 L 380 715"/>
+
+  <rect class="box" x="40" y="720" width="680" height="220" rx="16" fill="#ffedd5" stroke="#ea580c" stroke-width="3"/>
+  <text class="boxTitle" x="65" y="762">Scoring and Custody</text>
+  <text class="body" x="65" y="800">&#8226; Category / action accuracy, pooled slot micro-F1,</text>
+  <text class="body" x="82" y="830">pooled hard-violation rate</text>
+  <text class="body" x="65" y="866">&#8226; Paired episode bootstrap: 10,000 resamples,</text>
+  <text class="body" x="82" y="896">95% confidence intervals</text>
+  <text class="body" x="65" y="930">&#8226; Hash-chained predictions, scores, bootstrap</text>
+</svg>

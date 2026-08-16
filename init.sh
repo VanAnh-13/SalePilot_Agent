@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Shell entrypoints are pinned to LF in .gitattributes for Windows checkouts.
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 
 echo "==> Working directory: $PWD"
+
+echo "==> Agent scope guard"
+python3 scripts/validate_agent_scope.py
 
 if [ ! -f .env ]; then
   echo "==> Creating .env from .env.example"
@@ -16,7 +21,18 @@ if [ ! -d backend/.venv ]; then
   python3 -m venv backend/.venv
 fi
 # shellcheck disable=SC1091
-source backend/.venv/bin/activate
+# Support both POSIX venvs (.venv/bin/activate) and Windows venvs
+# (.venv/Scripts/activate) — python -m venv lays these out differently per
+# platform (2026-08-01: this used to unconditionally source bin/activate,
+# which does not exist on Windows and would hard-fail under set -euo pipefail).
+if [ -f backend/.venv/bin/activate ]; then
+  source backend/.venv/bin/activate
+elif [ -f backend/.venv/Scripts/activate ]; then
+  source backend/.venv/Scripts/activate
+else
+  echo "ERROR: no venv activation script found under backend/.venv" >&2
+  exit 1
+fi
 pip install -q -r backend/requirements.txt
 (cd backend && python -m scripts.seed_db && python -m scripts.ingest_kb)
 
@@ -27,6 +43,9 @@ fi
 
 echo "==> Baseline verification"
 ./scripts/verify.sh
+
+echo "==> Record agent session scope"
+python3 scripts/validate_agent_scope.py --start-session
 
 echo "==> Startup commands (run in two terminals)"
 echo "    Backend:  cd backend && source .venv/bin/activate && uvicorn app.main:app --reload --port 8000"

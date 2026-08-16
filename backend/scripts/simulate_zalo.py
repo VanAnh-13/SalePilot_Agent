@@ -1,7 +1,10 @@
 """Simulate a Zalo OA webhook message against local backend."""
 
 import argparse
+import hashlib
+import hmac
 import json
+import os
 import sys
 import time
 import urllib.request
@@ -15,6 +18,11 @@ def main() -> None:
     )
     parser.add_argument("--user-id", default="zalo-demo-001")
     parser.add_argument("--url", default="http://127.0.0.1:8000/webhooks/zalo")
+    parser.add_argument(
+        "--secret",
+        default=os.environ.get("ZALO_OA_SECRET", ""),
+        help="Zalo OA secret for HMAC signing (or set ZALO_OA_SECRET env var)",
+    )
     args = parser.parse_args()
 
     payload = {
@@ -25,10 +33,24 @@ def main() -> None:
         "timestamp": str(int(time.time() * 1000)),
     }
     data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+
+    headers = {"Content-Type": "application/json"}
+    if args.secret:
+        signature = hmac.new(
+            args.secret.encode(), data, hashlib.sha256
+        ).hexdigest()
+        headers["X-Zalo-Signature"] = f"sha256={signature}"
+        print(f"Signing with HMAC (secret length={len(args.secret)})")
+    else:
+        print(
+            "WARNING: No --secret or ZALO_OA_SECRET set. "
+            "Request will fail if webhook uses strict verification (default)."
+        )
+
     req = urllib.request.Request(
         args.url,
         data=data,
-        headers={"Content-Type": "application/json"},
+        headers=headers,
         method="POST",
     )
     with urllib.request.urlopen(req, timeout=120) as resp:

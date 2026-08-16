@@ -7,6 +7,48 @@ export type TraceStep = {
   detail?: string;
 };
 
+export type DecisionConstraint = {
+  key: string;
+  hardness?: string;
+  missing_policy?: string;
+  expected?: unknown;
+  actual?: unknown;
+  status?: "matched" | "violated" | "unknown" | string;
+};
+
+export type DecisionItem = {
+  sku?: string | number | null;
+  name?: string | null;
+  price_vnd?: number | null;
+  why?: string | null;
+  constraints?: DecisionConstraint[];
+  provenance?: {
+    source?: string | null;
+    source_row?: string | number | null;
+    catalog_backend?: string | null;
+    catalog_hash?: string | null;
+  };
+};
+
+export type DecisionContract = {
+  schema_version?: string;
+  ok?: boolean;
+  need_more?: boolean;
+  missing_slots?: string[];
+  ask?: string[];
+  category?: string | null;
+  category_display?: string | null;
+  top3?: DecisionItem[];
+  disclaimer?: string | null;
+  decision_hash?: string | null;
+  source?: {
+    catalog_backend?: string | null;
+    catalog_hash?: string | null;
+    catalog_products?: number | null;
+    label?: string | null;
+  };
+};
+
 export type ChatDone = {
   reply: string;
   used_agents?: string[];
@@ -19,6 +61,7 @@ export type ChatDone = {
   memory?: Record<string, unknown> | null;
   memory_summary?: string | null;
   active_skills?: string[];
+  decision?: DecisionContract | null;
 };
 
 export async function chatOnce(message: string, externalId: string) {
@@ -36,38 +79,36 @@ export async function chatOnce(message: string, externalId: string) {
   return (await res.json()) as ChatDone;
 }
 
-export async function fetchLeads() {
-  const res = await fetch(`${API_URL}/leads`, { cache: "no-store" });
+// --- Admin endpoints routed through server-side BFF ---
+// ADMIN_API_KEY stays on the server; the browser never sees it.
+async function adminFetch(path: string) {
+  const res = await fetch(`/api/admin?path=${encodeURIComponent(path)}`, {
+    cache: "no-store",
+  });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
+}
+
+export async function fetchLeads() {
+  return adminFetch("/leads");
 }
 
 export async function fetchConversations() {
-  const res = await fetch(`${API_URL}/leads/conversations`, { cache: "no-store" });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return adminFetch("/leads/conversations");
 }
 
 export async function fetchZaloOutbox() {
-  const res = await fetch(`${API_URL}/outbox/zalo`, { cache: "no-store" });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return adminFetch("/outbox/zalo");
 }
 
 export async function fetchMemory() {
-  const res = await fetch(`${API_URL}/memory`, { cache: "no-store" });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return adminFetch("/memory");
 }
 
 export async function fetchJobs() {
-  const res = await fetch(`${API_URL}/jobs`, { cache: "no-store" });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return adminFetch("/jobs");
 }
 
 export async function fetchLatestRun() {
-  const res = await fetch(`${API_URL}/runs/latest`, { cache: "no-store" });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return adminFetch("/runs/latest");
 }

@@ -52,6 +52,7 @@ class CatalogProduct(Base):
     source: Mapped[str] = mapped_column(String(64), default="")
     norm: Mapped[dict] = mapped_column(JSON, default=dict)   # parsed numeric/text specs
     specs: Mapped[dict] = mapped_column(JSON, default=dict)  # raw Vietnamese spec_product
+    source_row: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
 
 class ProductSpec(Base):

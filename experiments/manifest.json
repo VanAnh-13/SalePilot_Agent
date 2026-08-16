@@ -1,0 +1,733 @@
+{
+  "schema_version": "salepilot-research-manifest-v1",
+  "project": "salepilot-r",
+  "track": "RIVF 2026 Track 2 AI Applications",
+  "created_at": "2026-07-23",
+  "updated_at": "2026-07-25",
+  "status": "ready",
+  "blockers": [],
+  "protocol_path": "docs/RIVF_TRACK2_PROTOCOL.md",
+  "dataset_card_path": "docs/DATASET_CARD.md",
+  "split_seed": 20260723,
+  "human_study_gate": "disabled",
+  "default_optional_tasks": {
+    "task_10_ui": "disabled",
+    "task_11_human_study": "disabled"
+  },
+  "catalog": {
+    "family": "dmx_crawl_products_detail",
+    "source_path": "products_detail.xlsx",
+    "source_required": true,
+    "source_present": true,
+    "raw_source_hash": "39a03b0390673f102ef69335f9594f06ad4b0eb13d8e9c00fd5e33f833f35666",
+    "normalized_catalog_hash": "e2afdf38ed2df5599611e6f8285643f727e2c06c721b1a055b7baeea797df15c",
+    "snapshot_path": "backend/data/research/catalog_dmx_snapshot.json",
+    "schema_version": "salepilot-catalog-v1",
+    "experiment_backend": "snapshot",
+    "expected_categories": 118,
+    "total_products": null,
+    "rights_status": "owner_confirmed_publication",
+    "derivative_release": "aggregates_and_labels_only_when_sealed",
+    "notes": "DMX products_detail.xlsx staged at repo root; gitignored. Import pending.",
+    "expected_total_products": 13716,
+    "per_category": {
+      "balo_tui_chong_soc": {
+        "total": 302,
+        "code": 7923
+      },
+      "ban_chai_co_toilet": {
+        "total": 3,
+        "code": 3188
+      },
+      "ban_ui": {
+        "total": 94,
+        "code": 1988
+      },
+      "bang_ve_dien_tu": {
+        "total": 8,
+        "code": 13918
+      },
+      "bang_ve_tu_xoa": {
+        "total": 2,
+        "code": 10421
+      },
+      "bep_dien": {
+        "total": 181,
+        "code": 9979
+      },
+      "bep_ga": {
+        "total": 83,
+        "code": 1983
+      },
+      "bep_tu": {
+        "total": 1,
+        "code": 1982
+      },
+      "binh_dun_sieu_toc": {
+        "total": 130,
+        "code": 1989
+      },
+      "binh_dung_nuoc": {
+        "total": 39,
+        "code": 4930
+      },
+      "binh_thuy_dien": {
+        "total": 17,
+        "code": 2064
+      },
+      "bo_luu_dien": {
+        "total": 7,
+        "code": 13678
+      },
+      "bon_nuoc": {
+        "total": 15,
+        "code": 14198
+      },
+      "bong_den_led": {
+        "total": 12,
+        "code": 7358
+      },
+      "camera": {
+        "total": 129,
+        "code": 13278
+      },
+      "cay_nuoc_nong_lanh": {
+        "total": 55,
+        "code": 2222
+      },
+      "cham_soc_me_va_be": {
+        "total": 11,
+        "code": 8719
+      },
+      "chuong_cua_camera": {
+        "total": 3,
+        "code": 14239
+      },
+      "chuot_ban_phim": {
+        "total": 400,
+        "code": 9386
+      },
+      "co_quet_son": {
+        "total": 2,
+        "code": 11978
+      },
+      "day_dong_ho": {
+        "total": 58,
+        "code": 7978
+      },
+      "den": {
+        "total": 1,
+        "code": 204
+      },
+      "den_dien_den_sac": {
+        "total": 22,
+        "code": 7075
+      },
+      "den_nang_luong_mat_troi": {
+        "total": 95,
+        "code": 14098
+      },
+      "den_thong_minh": {
+        "total": 13,
+        "code": 14099
+      },
+      "dien_thoai": {
+        "total": 168,
+        "code": 42
+      },
+      "dieu_khien_tivi": {
+        "total": 5,
+        "code": 5452
+      },
+      "dong_ho_thoi_trang": {
+        "total": 3138,
+        "code": 7264
+      },
+      "dong_ho_thong_minh": {
+        "total": 147,
+        "code": 7077
+      },
+      "dung_cu_can_do": {
+        "total": 1,
+        "code": 8984
+      },
+      "dung_cu_gia_dinh": {
+        "total": 16,
+        "code": 7739
+      },
+      "flycam": {
+        "total": 9,
+        "code": 13279
+      },
+      "ghe_massage": {
+        "total": 13,
+        "code": 344
+      },
+      "gia_do_may_giat_may_loc_nuoc_chan_loa": {
+        "total": 3,
+        "code": 2825
+      },
+      "gia_treo_man_hinh": {
+        "total": 19,
+        "code": 13658
+      },
+      "hop_dung_do_da_nang": {
+        "total": 3,
+        "code": 13238
+      },
+      "hub_cap_ket_noi": {
+        "total": 61,
+        "code": 12979
+      },
+      "khung_treo_tivi": {
+        "total": 20,
+        "code": 5005
+      },
+      "kiem_tra_dat_lich_thay_loi": {
+        "total": 1,
+        "code": 13458
+      },
+      "lam_dep_cham_soc_ca_nhan": {
+        "total": 307,
+        "code": 12978
+      },
+      "laptop": {
+        "total": 468,
+        "code": 44
+      },
+      "lau_dien": {
+        "total": 43,
+        "code": 1986
+      },
+      "lo_vi_song": {
+        "total": 52,
+        "code": 1987
+      },
+      "loa": {
+        "total": 1,
+        "code": 2162
+      },
+      "loc_tong_dau_nguon": {
+        "total": 25,
+        "code": 14258
+      },
+      "mat_kinh": {
+        "total": 15,
+        "code": 7678
+      },
+      "may_anh_va_phu_kien": {
+        "total": 51,
+        "code": 14179
+      },
+      "may_choi_game": {
+        "total": 21,
+        "code": 12918
+      },
+      "may_cua_may_cat": {
+        "total": 2,
+        "code": 11458
+      },
+      "may_doc_sach": {
+        "total": 17,
+        "code": 14139
+      },
+      "may_ep_trai_cay": {
+        "total": 65,
+        "code": 2062
+      },
+      "may_giat": {
+        "total": 198,
+        "code": 1944
+      },
+      "may_hut_bui": {
+        "total": 230,
+        "code": 12298
+      },
+      "may_hut_mui": {
+        "total": 59,
+        "code": 4645
+      },
+      "may_lam_da": {
+        "total": 5,
+        "code": 13798
+      },
+      "may_lam_sua_chua": {
+        "total": 2,
+        "code": 1062
+      },
+      "may_lanh": {
+        "total": 228,
+        "code": 2002
+      },
+      "may_loc_nuoc_dien_giai": {
+        "total": 25,
+        "code": 13518
+      },
+      "may_loc_nuoc_ro_hydrogen": {
+        "total": 33,
+        "code": 13519
+      },
+      "may_nhoi_bot_danh_trung": {
+        "total": 2,
+        "code": 2262
+      },
+      "may_nuoc_nong": {
+        "total": 113,
+        "code": 1962
+      },
+      "may_rua_chen": {
+        "total": 43,
+        "code": 5475
+      },
+      "may_say_giay": {
+        "total": 4,
+        "code": 9941
+      },
+      "may_say_quan_ao": {
+        "total": 41,
+        "code": 2202
+      },
+      "may_tao_tieng_on_trang": {
+        "total": 1,
+        "code": 13838
+      },
+      "may_tinh_bang": {
+        "total": 53,
+        "code": 522
+      },
+      "may_vat_cam": {
+        "total": 15,
+        "code": 10138
+      },
+      "may_xay_ca_phe": {
+        "total": 2,
+        "code": 9599
+      },
+      "may_xay_sinh_to": {
+        "total": 113,
+        "code": 1985
+      },
+      "may_xay_thit": {
+        "total": 33,
+        "code": 11818
+      },
+      "micro": {
+        "total": 36,
+        "code": 12518
+      },
+      "mieng_dan_camera": {
+        "total": 48,
+        "code": 13118
+      },
+      "noi_ap_suat": {
+        "total": 37,
+        "code": 1984
+      },
+      "noi_com_dien": {
+        "total": 226,
+        "code": 1922
+      },
+      "noi_nau_cham": {
+        "total": 7,
+        "code": 10140
+      },
+      "num_ti": {
+        "total": 1,
+        "code": 8899
+      },
+      "o_cam_bong_den_thong_minh": {
+        "total": 2,
+        "code": 10871
+      },
+      "o_cung_di_dong": {
+        "total": 25,
+        "code": 1902
+      },
+      "o_khoa": {
+        "total": 10,
+        "code": 8980
+      },
+      "ong_kinh_tele": {
+        "total": 4,
+        "code": 14038
+      },
+      "op_lung_mieng_dan": {
+        "total": 1039,
+        "code": 9262
+      },
+      "pc_may_in": {
+        "total": 229,
+        "code": 9738
+      },
+      "phan_mem": {
+        "total": 184,
+        "code": 85
+      },
+      "phu_kien": {
+        "total": 25,
+        "code": 482
+      },
+      "phu_kien_dien_may": {
+        "total": 15,
+        "code": 2823
+      },
+      "phu_kien_dien_thoai_khac": {
+        "total": 74,
+        "code": 9341
+      },
+      "phu_kien_may_lanh": {
+        "total": 5,
+        "code": 10538
+      },
+      "phu_kien_nha_bep": {
+        "total": 830,
+        "code": 7481
+      },
+      "phu_kien_op_lung": {
+        "total": 39,
+        "code": 13878
+      },
+      "phu_kien_tablet": {
+        "total": 8,
+        "code": 1882
+      },
+      "pin_sac": {
+        "total": 3,
+        "code": 11279
+      },
+      "quat_cac_loai": {
+        "total": 373,
+        "code": 14058
+      },
+      "sac_cap": {
+        "total": 445,
+        "code": 9518
+      },
+      "sac_du_phong": {
+        "total": 180,
+        "code": 57
+      },
+      "sieu_sac_thuoc": {
+        "total": 6,
+        "code": 13758
+      },
+      "tai_nghe": {
+        "total": 623,
+        "code": 13698
+      },
+      "the_nho": {
+        "total": 26,
+        "code": 55
+      },
+      "thiet_bi_chong_giat_on_ap": {
+        "total": 33,
+        "code": 9055
+      },
+      "thiet_bi_dinh_vi_phu_kien": {
+        "total": 15,
+        "code": 10618
+      },
+      "thiet_bi_khong_khi": {
+        "total": 160,
+        "code": 13898
+      },
+      "thiet_bi_lam_banh": {
+        "total": 154,
+        "code": 9939
+      },
+      "thiet_bi_lam_bep_khac": {
+        "total": 56,
+        "code": 8840
+      },
+      "thiet_bi_loc_nuoc": {
+        "total": 224,
+        "code": 9679
+      },
+      "thiet_bi_mang": {
+        "total": 108,
+        "code": 4727
+      },
+      "thiet_bi_nha_thong_minh": {
+        "total": 17,
+        "code": 9458
+      },
+      "thiet_bi_suoi_am": {
+        "total": 4,
+        "code": 8839
+      },
+      "thiet_bi_suoi_am_khac": {
+        "total": 3,
+        "code": 9658
+      },
+      "tivi": {
+        "total": 307,
+        "code": 1942
+      },
+      "tu_dong_tu_mat": {
+        "total": 141,
+        "code": 166
+      },
+      "tu_lanh": {
+        "total": 251,
+        "code": 1943
+      },
+      "tu_say_quan_ao": {
+        "total": 9,
+        "code": 13538
+      },
+      "tu_tru_ruou_vang": {
+        "total": 5,
+        "code": 6552
+      },
+      "tui_dung_phu_kien": {
+        "total": 78,
+        "code": 13818
+      },
+      "tui_dung_rac": {
+        "total": 2,
+        "code": 6553
+      },
+      "usb": {
+        "total": 38,
+        "code": 75
+      },
+      "vali_keo": {
+        "total": 5,
+        "code": 8841
+      },
+      "vot_muoi": {
+        "total": 13,
+        "code": 4366
+      },
+      "xe_dap": {
+        "total": 39,
+        "code": 9758
+      }
+    },
+    "categories": [
+      "balo_tui_chong_soc",
+      "ban_chai_co_toilet",
+      "ban_ui",
+      "bang_ve_dien_tu",
+      "bang_ve_tu_xoa",
+      "bep_dien",
+      "bep_ga",
+      "bep_tu",
+      "binh_dun_sieu_toc",
+      "binh_dung_nuoc",
+      "binh_thuy_dien",
+      "bo_luu_dien",
+      "bon_nuoc",
+      "bong_den_led",
+      "camera",
+      "cay_nuoc_nong_lanh",
+      "cham_soc_me_va_be",
+      "chuong_cua_camera",
+      "chuot_ban_phim",
+      "co_quet_son",
+      "day_dong_ho",
+      "den",
+      "den_dien_den_sac",
+      "den_nang_luong_mat_troi",
+      "den_thong_minh",
+      "dien_thoai",
+      "dieu_khien_tivi",
+      "dong_ho_thoi_trang",
+      "dong_ho_thong_minh",
+      "dung_cu_can_do",
+      "dung_cu_gia_dinh",
+      "flycam",
+      "ghe_massage",
+      "gia_do_may_giat_may_loc_nuoc_chan_loa",
+      "gia_treo_man_hinh",
+      "hop_dung_do_da_nang",
+      "hub_cap_ket_noi",
+      "khung_treo_tivi",
+      "kiem_tra_dat_lich_thay_loi",
+      "lam_dep_cham_soc_ca_nhan",
+      "laptop",
+      "lau_dien",
+      "lo_vi_song",
+      "loa",
+      "loc_tong_dau_nguon",
+      "mat_kinh",
+      "may_anh_va_phu_kien",
+      "may_choi_game",
+      "may_cua_may_cat",
+      "may_doc_sach",
+      "may_ep_trai_cay",
+      "may_giat",
+      "may_hut_bui",
+      "may_hut_mui",
+      "may_lam_da",
+      "may_lam_sua_chua",
+      "may_lanh",
+      "may_loc_nuoc_dien_giai",
+      "may_loc_nuoc_ro_hydrogen",
+      "may_nhoi_bot_danh_trung",
+      "may_nuoc_nong",
+      "may_rua_chen",
+      "may_say_giay",
+      "may_say_quan_ao",
+      "may_tao_tieng_on_trang",
+      "may_tinh_bang",
+      "may_vat_cam",
+      "may_xay_ca_phe",
+      "may_xay_sinh_to",
+      "may_xay_thit",
+      "micro",
+      "mieng_dan_camera",
+      "noi_ap_suat",
+      "noi_com_dien",
+      "noi_nau_cham",
+      "num_ti",
+      "o_cam_bong_den_thong_minh",
+      "o_cung_di_dong",
+      "o_khoa",
+      "ong_kinh_tele",
+      "op_lung_mieng_dan",
+      "pc_may_in",
+      "phan_mem",
+      "phu_kien",
+      "phu_kien_dien_may",
+      "phu_kien_dien_thoai_khac",
+      "phu_kien_may_lanh",
+      "phu_kien_nha_bep",
+      "phu_kien_op_lung",
+      "phu_kien_tablet",
+      "pin_sac",
+      "quat_cac_loai",
+      "sac_cap",
+      "sac_du_phong",
+      "sieu_sac_thuoc",
+      "tai_nghe",
+      "the_nho",
+      "thiet_bi_chong_giat_on_ap",
+      "thiet_bi_dinh_vi_phu_kien",
+      "thiet_bi_khong_khi",
+      "thiet_bi_lam_banh",
+      "thiet_bi_lam_bep_khac",
+      "thiet_bi_loc_nuoc",
+      "thiet_bi_mang",
+      "thiet_bi_nha_thong_minh",
+      "thiet_bi_suoi_am",
+      "thiet_bi_suoi_am_khac",
+      "tivi",
+      "tu_dong_tu_mat",
+      "tu_lanh",
+      "tu_say_quan_ao",
+      "tu_tru_ruou_vang",
+      "tui_dung_phu_kien",
+      "tui_dung_rac",
+      "usb",
+      "vali_keo",
+      "vot_muoi",
+      "xe_dap"
+    ]
+  },
+  "production_catalog": {
+    "family": "dmx_crawl_119_categories",
+    "source": "external_owner_held",
+    "total_products": 13716,
+    "categories": 118,
+    "backend": "postgres_neon",
+    "rights_status": "owner_confirmed_publication",
+    "notes": "Full DMX crawl used at runtime; not committed to repo."
+  },
+  "assets": [
+    {
+      "id": "catalog_workbook",
+      "path": "products_detail.xlsx",
+      "role": "canonical_catalog_source",
+      "required_for_experiments": true,
+      "rights_status": "owner_confirmed_publication",
+      "hash": "39a03b0390673f102ef69335f9594f06ad4b0eb13d8e9c00fd5e33f833f35666",
+      "notes": "DMX products_detail.xlsx staged at repo root; gitignored"
+    },
+    {
+      "id": "catalog_snapshot",
+      "path": "backend/data/research/catalog_dmx_snapshot.json",
+      "role": "canonical_experiment_snapshot",
+      "required_for_experiments": true,
+      "rights_status": "derived_ready",
+      "hash": "e2afdf38ed2df5599611e6f8285643f727e2c06c721b1a055b7baeea797df15c",
+      "notes": "Normalized DMX research snapshot"
+    },
+    {
+      "id": "engineering_fixture",
+      "path": "experiments/fixtures/catalog_dev_fixture.json",
+      "role": "dev_fixture_only",
+      "required_for_experiments": false,
+      "rights_status": "available_local",
+      "hash": "8280afaee0affa8ddeb6066a87b4883a0eeca1cfb5e09e13e3ed28efc84dcb13",
+      "notes": "70 SKU / 14 categories / 5 per category. Dev-only; not for sealed claims."
+    },
+    {
+      "id": "benchmark_dev",
+      "path": "experiments/benchmark/dev.jsonl",
+      "role": "evaluation_benchmark_dev",
+      "required_for_experiments": true,
+      "rights_status": "available_local",
+      "hash": "71dc6be4cfc0d4e0d231f9ffb933ab45ffb638171e8b995bb42e0cd7416a30ed"
+    },
+    {
+      "id": "benchmark_test",
+      "path": "experiments/benchmark/test.jsonl",
+      "role": "evaluation_benchmark_test",
+      "required_for_experiments": true,
+      "rights_status": "available_local",
+      "hash": "6871e1b0067d389b690f602683a98aa709b7f40699fd02ed4473fd70d1123586"
+    },
+    {
+      "id": "policy_corpus",
+      "path": "backend/data/policies",
+      "role": "policy_faq_source",
+      "required_for_experiments": false,
+      "rights_status": "owner_confirmed_publication",
+      "hash": null,
+      "notes": "DMX policies copied locally: warranty, delivery, personal data, store rules"
+    },
+    {
+      "id": "faq_json",
+      "path": "backend/data/faq.json",
+      "role": "policy_faq_chunks",
+      "required_for_experiments": false,
+      "rights_status": "owner_confirmed_publication",
+      "hash": null
+    },
+    {
+      "id": "need_scenarios_seed",
+      "path": "backend/data/need_scenarios.json",
+      "role": "dev_seed_only",
+      "required_for_experiments": false,
+      "rights_status": "available_local",
+      "hash": null,
+      "notes": "Not sealed test labels"
+    }
+  ],
+  "llm_baseline": {
+    "provider": "meta_ai",
+    "api_base": "https://api.meta.ai/v1",
+    "model": "muse-spark-1.1",
+    "condition_id": "B2_llm_single_agent",
+    "script": "scripts/run_llm_baseline.py",
+    "notes": "Single-agent LLM baseline. Requires META_API_KEY env var."
+  },
+  "privacy": {
+    "benchmark_ids": "synthetic_or_pseudonymous",
+    "allow_raw_trajectories_in_release": false,
+    "allow_real_phone_email": false,
+    "redaction_required": true
+  },
+  "reproducibility": {
+    "offline_required": true,
+    "llm_condition_if_no_key": "unavailable",
+    "require_source_bundle_hash": true
+  },
+  "deployment": {
+    "public_url": true,
+    "docker_compose": true,
+    "health_endpoint": "/health",
+    "offline_capable": true
+  }
+}

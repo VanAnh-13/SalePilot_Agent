@@ -7,16 +7,8 @@ import json
 import re
 from typing import Any
 
-from app.agent.catalog_domain import (
-    compare,
-    detect_category,
-    detect_negated_categories,
-    detect_unsupported,
-    extract_need_from_text,
-    merge_needs,
-    recommend_top3,
-)
-from app.catalog.categories import CATEGORIES
+from app.agent.catalog_queries import compare
+from app.agent.consultation import ConsultationResult, consult
 from app.agent.memory.store import (
     get_memory_summary,
     load_need,
@@ -25,9 +17,16 @@ from app.agent.memory.store import (
     save_need,
 )
 from app.agent.run_bag import get_run_bag, reset_run_bag
+from app.agent.recommendation import extract_need_from_text, merge_needs
 from app.agent.tools.crm import create_lead, escalate_to_human
 from app.agent.tools.knowledge import search_knowledge
-from app.agent.tools.runtime import ToolContext, get_ctx, set_ctx
+from app.agent.tools.runtime import ToolContext, get_ctx, note_tool, set_ctx
+from app.catalog.registry import (
+    CATEGORIES,
+    detect_category,
+    detect_negated_categories,
+    detect_unsupported,
+)
 
 
 def _trace(agent: str, event: str, detail: str = "") -> None:
@@ -99,6 +98,19 @@ def _has_need_signal(need: dict[str, Any]) -> bool:
     ) or bool(need.get("priority"))
 
 
+def _catalog_welcome() -> str:
+    categories = ", ".join(category.display.lower() for category in CATEGORIES)
+    return (
+        "Xin chào! Em là SalePilot — trợ lý AI tư vấn **điện máy & công nghệ** "
+        "theo nhu cầu thật, dựa trên dữ liệu catalog hiện có "
+        "(giá, khuyến mãi, đánh giá, lượt bán):\n"
+        f"{categories}.\n"
+        "Anh/chị đang cần sản phẩm gì, **ngân sách khoảng bao nhiêu** ạ? "
+        "Em sẽ hỏi thêm vài ý (dùng cho ai / diện tích phòng / ưu tiên gì...) "
+        "để gợi ý top 3 phù hợp nhất."
+    )
+
+
 async def run_offline_multi_agent(
     user_text: str,
     *,
@@ -152,10 +164,8 @@ async def run_offline_multi_agent(
     phone_m = re.search(r"0\d{8,10}", user_text.replace(" ", "").replace(".", ""))
     need_crm = bool(phone_m) or any(k in t for k in ("gọi lại", "để lại sđt", "liên hệ em"))
 
-    category = detect_category(user_text)
-    extracted_need = extract_need_from_text(user_text)
-    # Multi-turn: merge this turn's extraction onto the accumulated need so a
-    # follow-up like "giá khoảng 10tr" keeps the earlier "tôi muốn mua PC".
+    # Multi-turn: load accumulated need first so a follow-up like "RAM 16 GB"
+    # can extract category-specific slots without re-naming the product family.
     stored_need = await load_need(channel, external_id)
     # "ko phải tủ lạnh" — drop a stored category the user just rejected.
     negated = detect_negated_categories(user_text)
@@ -164,6 +174,9 @@ async def run_offline_multi_agent(
             k: v for k, v in stored_need.items() if k in {"budget_vnd", "brand"}
         }
         await save_need(channel, external_id, stored_need)
+    category = detect_category(user_text)
+    extract_category = category.slug if category else stored_need.get("category")
+    extracted_need = extract_need_from_text(user_text, category=extract_category)
     merged_need = merge_needs(stored_need, extracted_need)
     # Budget mentioned in an earlier turn lives in the memory profile — reuse it.
     if merged_need.get("budget_vnd") is None:
@@ -225,6 +238,26 @@ async def run_offline_multi_agent(
         if not need_faq:
             return None
         _trace("lead", "delegate", "→ knowledge")
+        if stock_question:
+            # Catalog has no realtime inventory column; answer honestly instead of
+            # ranking an unrelated policy chunk that happened to match keywords.
+            summary = (
+                "Em chưa có dữ liệu tồn kho thời gian thực trong catalog hiện tại, "
+                "nên không thể khẳng định còn hàng theo từng SKU. "
+                "Anh/chị chọn mẫu ưng ý rồi em hỗ trợ kiểm tra khả năng giao hàng "
+                "qua cửa hàng/tư vấn viên ạ."
+            )
+            bag["results"].append(
+                {
+                    "agent": "knowledge",
+                    "summary": summary,
+                    "tools_used": ["stock_guardrail"],
+                    "ok": True,
+                }
+            )
+            _trace("knowledge", "end", summary[:160])
+            agents.append("knowledge")
+            return summary
         raw = await search_knowledge.ainvoke({"query": user_text})
         data = json.loads(raw)
         hits = data.get("results") or []
@@ -245,8 +278,6 @@ async def run_offline_multi_agent(
         if not do_compare_now:
             return None
         _trace("lead", "delegate", "→ catalog (compare)")
-        from app.agent.tools.runtime import note_tool
-
         note_tool("compare_products")
         cmp = compare(compare_skus)
         bag["results"].append(
@@ -261,14 +292,16 @@ async def run_offline_multi_agent(
         agents.append("catalog")
         return _format_compare(cmp)
 
+    consultation_result: ConsultationResult | None = None
+
     async def do_catalog() -> str | None:
+        nonlocal consultation_result
         if not need_product:
             return None
         _trace("lead", "delegate", f"→ catalog ({merged_need.get('category') or 'auto'})")
-        from app.agent.tools.runtime import note_tool
-
         note_tool("recommend_top3")
-        rec = recommend_top3(merged_need)
+        consultation_result = consult(merged_need)
+        rec = consultation_result.recommendation
         # Remember the recommended SKUs so a later "so sánh 2 mẫu đầu" works.
         top_skus = [p["sku"] for p in (rec.get("top3") or [])]
         if top_skus:
@@ -325,14 +358,7 @@ async def run_offline_multi_agent(
         parts.append("Em đã chuyển yêu cầu cho tư vấn viên người ạ.")
 
     if not parts:
-        parts.append(
-            "Xin chào! Em là SalePilot — trợ lý AI tư vấn **điện máy & công nghệ** theo nhu cầu thật, "
-            "dựa trên hơn 13.000 sản phẩm dienmayxanh (giá, khuyến mãi, đánh giá, lượt bán):\n"
-            "điện thoại, laptop, tivi, loa & tai nghe, máy lạnh, tủ lạnh, máy giặt, máy hút bụi/robot... "
-            "và hơn 100 ngành hàng khác.\n"
-            "Anh/chị đang cần sản phẩm gì, **ngân sách khoảng bao nhiêu** ạ? "
-            "Em sẽ hỏi thêm vài ý (dùng cho ai / diện tích phòng / ưu tiên gì...) để gợi ý top 3 phù hợp nhất."
-        )
+        parts.append(_catalog_welcome())
 
     if mem and need_product:
         parts.insert(0, f"(Em nhớ: {mem})")
@@ -341,6 +367,7 @@ async def run_offline_multi_agent(
     bag["final"] = reply
     _trace("lead", "finalize", reply[:200])
     ctx = get_ctx()
+    decision = consultation_result.decision if consultation_result else None
     return {
         "reply": reply,
         "used_tools": list(ctx.used_tools),
@@ -350,4 +377,5 @@ async def run_offline_multi_agent(
         "needs_human": ctx.needs_human,
         "lead_id": ctx.lead_id,
         "conversation_id": conversation_id,
+        "decision": decision,
     }

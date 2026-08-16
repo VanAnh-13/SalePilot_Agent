@@ -1,0 +1,374 @@
+{
+  "create_order_dmx": {
+    "call_count": 22,
+    "parameter_keys": [
+      "customerAddress",
+      "customerGender",
+      "customerName",
+      "customerPhone",
+      "isConfirmOrder",
+      "packageId",
+      "productCode",
+      "productId",
+      "productName",
+      "productPrice",
+      "productQuantity",
+      "timeDelivery"
+    ],
+    "examples": [
+      {
+        "conversation_id": "dmx_0001",
+        "arguments": {
+          "customerName": "Phạm Văn Còn",
+          "customerGender": 1,
+          "customerPhone": "0935395467",
+          "productCode": "0160015000920",
+          "productId": 337171,
+          "productName": "Tai nghe Chụp Tai Logitech H111",
+          "productPrice": 200000,
+          "productQuantity": 1,
+          "packageId": 0,
+          "customerAddress": "51 Bưng ông thoàn ,phường long Trường, Tphcm",
+          "timeDelivery": "Giao từ 10h - 12h, ngày mai (18/07)",
+          "isConfirmOrder": false
+        }
+      },
+      {
+        "conversation_id": "dmx_0001",
+        "arguments": {
+          "customerName": "Phạm Văn Còn",
+          "customerGender": 1,
+          "customerPhone": "0935395467",
+          "productCode": "0160015000920",
+          "productId": 337171,
+          "productName": "Tai nghe Chụp Tai Logitech H111",
+          "productPrice": 200000,
+          "productQuantity": 1,
+          "packageId": 0,
+          "customerAddress": "51 Bưng ông thoàn ,phường long Trường, Tphcm",
+          "timeDelivery": "Giao từ 10h - 12h, ngày mai (18/07)",
+          "isConfirmOrder": true
+        }
+      },
+      {
+        "conversation_id": "dmx_0002",
+        "arguments": {
+          "customerName": "Lê Nhung",
+          "customerGender": 0,
+          "customerPhone": "0987006690",
+          "productCode": "4844140000128",
+          "productId": 330303,
+          "productName": "Bàn ủi hơi nước Tefal Ultimate Power Pro FV9E50E0 3200W",
+          "productPrice": 3090000,
+          "productQuantity": 1,
+          "packageId": 0,
+          "customerAddress": "tòa A6 An Bình city, phường Phú Diễn, Hà Nội",
+          "timeDelivery": "Giao từ 16h - 20h, Thứ 2 (20/07)",
+          "isConfirmOrder": false
+        }
+      },
+      {
+        "conversation_id": "dmx_0002",
+        "arguments": {
+          "customerName": "Lê Nhung",
+          "customerGender": 0,
+          "customerPhone": "0987006690",
+          "productCode": "4844140000128",
+          "productId": 330303,
+          "productName": "Bàn ủi hơi nước Tefal Ultimate Power Pro FV9E50E0 3200W",
+          "productPrice": 3090000,
+          "productQuantity": 1,
+          "packageId": 0,
+          "customerAddress": "tòa A6 An Bình city, phường Phú Diễn, Hà Nội",
+          "timeDelivery": "Giao từ 16h - 20h, Thứ 2 (20/07)",
+          "isConfirmOrder": true
+        }
+      },
+      {
+        "conversation_id": "dmx_0003",
+        "arguments": {
+          "customerName": "L I K",
+          "customerGender": 2,
+          "customerPhone": "0988888",
+          "productCode": "0220042003888",
+          "productId": 366068,
+          "productName": "Laptop Asus Gaming ROG Zephyrus GA403GM - SY004W (R9 AI 465, 32GB, 1TB, RTX 5060 8GB, 3K OLED 120Hz, Win11)",
+          "productPrice": 64590000,
+          "productQuantity": 1,
+          "packageId": 0,
+          "customerAddress": "Hà Nội",
+          "timeDelivery": "Giao từ 18h - 21h, Thứ 7 (25/07)",
+          "isConfirmOrder": false
+        }
+      }
+    ]
+  },
+  "search_product_dmx_v3": {
+    "call_count": 17,
+    "parameter_keys": [
+      "Orders",
+      "PageSize",
+      "PriceFrom",
+      "PriceTo",
+      "address",
+      "attribute",
+      "brand",
+      "category",
+      "product_name",
+      "product_url_guess",
+      "re_query"
+    ],
+    "examples": [
+      {
+        "conversation_id": "dmx_0001",
+        "arguments": {
+          "category": "tai nghe",
+          "brand": [],
+          "attribute": [
+            {
+              "name": "loại sản phẩm",
+              "value": "chụp tai"
+            }
+          ],
+          "product_name": "",
+          "product_url_guess": "",
+          "re_query": "tai nghe chụp tai",
+          "PriceFrom": 290000,
+          "PriceTo": 290000,
+          "PageSize": 3,
+          "Orders": "none",
+          "address": "TP.Hồ Chí Minh"
+        }
+      },
+      {
+        "conversation_id": "dmx_0002",
+        "arguments": {
+          "category": "bàn ủi",
+          "brand": [
+            {
+              "name": "brand",
+              "value": "Tefal"
+            }
+          ],
+          "attribute": [],
+          "product_name": "FV9E50",
+          "product_url_guess": "",
+          "re_query": "bàn ủi Tefal FV9E50",
+          "PriceFrom": 0,
+          "PriceTo": 0,
+          "PageSize": 3,
+          "Orders": "none",
+          "address": "TP. Hà Nội"
+        }
+      },
+      {
+        "conversation_id": "dmx_0003",
+        "arguments": {
+          "category": "laptop",
+          "brand": [
+            {
+              "name": "brand",
+              "value": "Asus"
+            }
+          ],
+          "attribute": [
+            {
+              "name": "nhu cầu sử dụng",
+              "value": "gaming"
+            }
+          ],
+          "product_name": "",
+          "product_url_guess": "",
+          "re_query": "laptop Asus gaming",
+          "PriceFrom": 0,
+          "PriceTo": 0,
+          "PageSize": 3,
+          "Orders": "none",
+          "address": "TP.Hồ Chí Minh"
+        }
+      },
+      {
+        "conversation_id": "dmx_0004",
+        "arguments": {
+          "category": "máy giặt",
+          "brand": [
+            {
+              "name": "brand",
+              "value": "Casper"
+            }
+          ],
+          "attribute": [
+            {
+              "name": "khối lượng giặt",
+              "value": "12.5 kg"
+            }
+          ],
+          "product_name": "",
+          "product_url_guess": "",
+          "re_query": "máy giặt Casper 12.5 kg",
+          "PriceFrom": 0,
+          "PriceTo": 0,
+          "PageSize": 3,
+          "Orders": "none",
+          "address": "TP. Hồ Chí Minh"
+        }
+      },
+      {
+        "conversation_id": "dmx_0005",
+        "arguments": {
+          "category": "máy tính bảng",
+          "brand": [
+            {
+              "name": "brand",
+              "value": "OPPO"
+            }
+          ],
+          "attribute": [],
+          "product_name": "OPPO Pad Neo",
+          "product_url_guess": "",
+          "re_query": "máy tính bảng OPPO Pad Neo",
+          "PriceFrom": 0,
+          "PriceTo": 0,
+          "PageSize": 3,
+          "Orders": "none",
+          "address": "Tây Ninh"
+        }
+      }
+    ]
+  },
+  "get-time-delivery-dmx": {
+    "call_count": 11,
+    "parameter_keys": [
+      "customerAddress",
+      "productId"
+    ],
+    "examples": [
+      {
+        "conversation_id": "dmx_0001",
+        "arguments": {
+          "productId": 337171,
+          "customerAddress": "51 Bưng ông thoàn ,phường long Trường, Tphcm"
+        }
+      },
+      {
+        "conversation_id": "dmx_0002",
+        "arguments": {
+          "productId": 330303,
+          "customerAddress": "tòa A6 An Bình city, phường Phú Diễn, Hà Nội"
+        }
+      },
+      {
+        "conversation_id": "dmx_0003",
+        "arguments": {
+          "productId": 366068,
+          "customerAddress": "Hà Nội"
+        }
+      },
+      {
+        "conversation_id": "dmx_0004",
+        "arguments": {
+          "productId": 341986,
+          "customerAddress": "32 Đường Số 99 Ấp Giữa Củ Chi, X.Củ Chi, TP. Hồ Chí Minh"
+        }
+      },
+      {
+        "conversation_id": "dmx_0004",
+        "arguments": {
+          "productId": 341986,
+          "customerAddress": "53 đường 99 ấp giữa, xã củ chi"
+        }
+      }
+    ]
+  },
+  "check_infor_customer": {
+    "call_count": 3,
+    "parameter_keys": [
+      "CustomerAdress",
+      "CustomerId",
+      "CustomerName",
+      "CustomerPhone"
+    ],
+    "examples": [
+      {
+        "conversation_id": "dmx_0004",
+        "arguments": {
+          "CustomerName": "",
+          "CustomerPhone": "",
+          "CustomerAdress": "",
+          "CustomerId": ""
+        }
+      },
+      {
+        "conversation_id": "dmx_0005",
+        "arguments": {
+          "CustomerName": 0,
+          "CustomerPhone": "",
+          "CustomerAdress": "",
+          "CustomerId": ""
+        }
+      },
+      {
+        "conversation_id": "dmx_0007",
+        "arguments": {
+          "CustomerName": 0,
+          "CustomerPhone": "",
+          "CustomerAdress": "",
+          "CustomerId": ""
+        }
+      }
+    ]
+  },
+  "compare-search": {
+    "call_count": 1,
+    "parameter_keys": [
+      "category_id",
+      "list_product_name"
+    ],
+    "examples": [
+      {
+        "conversation_id": "dmx_0003",
+        "arguments": {
+          "list_product_name": [
+            "RS70F65Q3TSV",
+            "HRSN9563DWDXVN"
+          ],
+          "category_id": [
+            "tủ lạnh"
+          ]
+        }
+      }
+    ]
+  },
+  "payment_process": {
+    "call_count": 1,
+    "parameter_keys": [
+      "crmOrderId",
+      "hashOrder",
+      "payment_type"
+    ],
+    "examples": [
+      {
+        "conversation_id": "dmx_0003",
+        "arguments": {
+          "crmOrderId": 116548245,
+          "hashOrder": "hyBm79k6yWs38Svie7fo5sltR13vPKfXR66PiMz30YvKzfotQe6yL17MBKZGjjlh",
+          "payment_type": "Thanh toán khi nhận hàng"
+        }
+      }
+    ]
+  },
+  "installment-links": {
+    "call_count": 1,
+    "parameter_keys": [
+      "productCode"
+    ],
+    "examples": [
+      {
+        "conversation_id": "dmx_0010",
+        "arguments": {
+          "productCode": "0131491004779"
+        }
+      }
+    ]
+  }
+}

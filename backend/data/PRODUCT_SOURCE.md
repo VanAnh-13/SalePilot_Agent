@@ -1,14 +1,37 @@
-# Refrigerator catalog source
+# Catalog source — Điện Máy Xanh crawl
 
-- Workbook: `Spec_cate_gia.xlsx`
-- Google Sheet ID: `1EjYJxHmYPZJsUrpxXjkUgThioqBH4KgW`
-- Tab: `Tủ Lạnh`
-- GID: `1924624295`
-- Category filter: `category_code = 38`
-- Import command: `python -m scripts.import_refrigerators`
+## Primary (runtime)
 
-`products.json` is the checked-in offline snapshot used by SalePilot. The importer keeps every refrigerator SKU from the selected tab and preserves non-empty source cells in each product's `specs` object.
+- Local pack: `C:\Downloads\DMX_product\`
+- Products: `products_detail.json` (~13.7k SKU, 118 categories)
+- Policies: `chinh_sach_*.md`, `dieu-khoang-su-dung.md`, `noi_quy_cua_hang.md`, `chat_luong_phuc_vu.md`
+- Optional spreadsheet: `products_detail.xlsx`
+- Chat sample (not ingested by default): `chat_history_buy_product.json`
 
-The source contains 1,692 refrigerator SKUs. Only rows with `giá khuyến mãi` or `giá gốc` receive `price_vnd`; recommendation ranking excludes rows without a current price. Missing stock is not converted to zero and SalePilot does not claim availability because the sheet has no stock column.
+### Import
 
-`name` is a deterministic display label assembled from source-backed brand, style, usable capacity, and model code because this tab does not contain a product-name column.
+```bash
+# from backend/ (Docker mounts C:\Downloads\DMX_product -> /data)
+python -m scripts.import_products_detail --json /data/products_detail.json --snapshot-only
+python -m scripts.import_policies --src /data
+python -m scripts.etl_to_postgres --source snapshot --skip-specs   # Neon/cloud
+```
+
+- Snapshot: `backend/data/catalog_snapshot.json`
+- FAQ/KB: `backend/data/faq.json` + `backend/data/policies/`
+- Normalized DMX rows retain `source_row`; Postgres mirrors the same provenance field.
+- Registry: `app/catalog/crawl_categories.py` (deep: điện thoại, laptop, tivi, tai nghe, máy lạnh, tủ lạnh code **1943**, máy giặt, máy hút bụi)
+
+### Runtime backend
+
+- `CATALOG_BACKEND=postgres` → Neon cloud (primary when loaded)
+- Fallback: Mongo → snapshot
+
+The RIVF workbook importer is isolated from this runtime path: it writes
+`backend/data/research/catalog_workbook_snapshot.json` and the dedicated
+`research_catalog_workbook_products` collection.
+
+## Legacy / research-only
+
+- Refrigerator Google Sheet / `products.json` — historical fridge-only path
+- Workbook `Spec_cate_gia.xlsx` + `app/catalog/categories.py` — RIVF 14-ngành experiment path (not the live DMX catalog)

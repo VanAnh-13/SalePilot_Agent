@@ -9,8 +9,10 @@ from app.agent.catalog_domain import (
     recommend_top3 as rank_top3,
     search,
 )
+from app.agent.decision import build_decision
+from app.agent.run_bag import get_run_bag
 from app.agent.tools.runtime import note_tool
-from app.catalog.categories import CATEGORIES
+from app.catalog.registry import CATEGORIES
 from app.catalog import repository
 
 _CATEGORY_HELP = ", ".join(f"{c.slug} ({c.display})" for c in CATEGORIES)
@@ -127,4 +129,15 @@ async def recommend_top3(
         force=force,
         free_text=free_text,
     )
-    return json.dumps(rank_top3(need), ensure_ascii=False)
+    recommendation = rank_top3(need)
+    try:
+        decision = build_decision(need, recommendation)
+        get_run_bag()["decision"] = decision
+    except Exception:
+        # The recommendation itself remains usable if provenance enrichment
+        # encounters malformed third-party/catalog data.
+        decision = None
+    payload = dict(recommendation)
+    if decision is not None:
+        payload["decision"] = decision
+    return json.dumps(payload, ensure_ascii=False)

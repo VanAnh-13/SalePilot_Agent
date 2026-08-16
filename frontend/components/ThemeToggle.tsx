@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { IconMoon, IconSun } from "@/components/Icons";
 
 type Theme = "dark" | "light";
 const LS_THEME = "salepilot_theme";
@@ -37,7 +38,7 @@ export function ThemeToggle() {
       aria-label={isDark ? "Chuyển nền sáng" : "Chuyển nền tối"}
       title={isDark ? "Nền tối · bấm để sang nền sáng" : "Nền sáng · bấm để sang nền tối"}
     >
-      {isDark ? "☀️" : "🌙"}
+      {isDark ? <IconSun width={18} height={18} /> : <IconMoon width={18} height={18} />}
     </button>
   );
 }

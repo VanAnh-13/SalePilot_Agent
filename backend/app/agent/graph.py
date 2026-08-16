@@ -2,6 +2,7 @@ import asyncio
 import json
 import re
 from collections.abc import AsyncIterator
+from time import perf_counter
 from typing import Any
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
@@ -12,9 +13,9 @@ from app.agent.catalog_domain import (
     detect_category,
     extract_need_from_text,
     merge_needs,
-    recommend_top3,
     resolve_followup_answer,
 )
+from app.agent.consultation import consult
 from app.agent.lead_tools import LEAD_TOOLS
 from app.agent.run_bag import get_run_bag, reset_run_bag
 from app.agent.llm import get_chat_model, has_llm_key
@@ -32,6 +33,14 @@ from app.agent.state import AgentState
 from app.agent.tools.runtime import ToolContext, get_ctx, set_ctx
 from app.agent.trajectory.export import save_trajectory
 from app.config import get_settings
+from app.observability.metrics import record_run
+
+
+def _record_route(result: dict[str, Any], route: str, started: float) -> dict[str, Any]:
+    """Tag the run with its serving route and record latency for /runs/metrics."""
+    result["route"] = route
+    record_run(route, (perf_counter() - started) * 1000.0)
+    return result
 
 
 def _build_graph():
@@ -223,7 +232,9 @@ async def _try_fast_path(
             channel=channel, external_id=external_id, conversation_id=conversation_id,
             lead_id=lead_id, customer_name=customer_name,
         )
-        rec = recommend_top3(need)
+        consultation_result = consult(need)
+        rec = consultation_result.recommendation
+        decision = consultation_result.decision
         if need.get("category"):
             await save_need(channel, external_id, need)
 
@@ -289,6 +300,7 @@ async def _try_fast_path(
             channel=channel, external_id=external_id, conversation_id=conversation_id,
             user_text=user_text, reply=reply, trace=trace, agents=agents,
             tools=tools_used, memory=memory_after, skills=[],
+            decision=decision,
         )
         return {
             "reply": reply,
@@ -305,6 +317,7 @@ async def _try_fast_path(
             "active_skills": [],
             "memory_before": memory_before,
             "fast_path": True,
+            "decision": decision,
         }
     except Exception:
         return None  # any hiccup → fall back to the full graph
@@ -320,6 +333,7 @@ async def run_agent(
     lead_id: int | None = None,
     customer_name: str = "Khách",
 ) -> dict[str, Any]:
+    started = perf_counter()
     memory_before = await load_profile(channel, external_id)
     memory_summary = await get_memory_summary(channel, external_id)
     await maybe_extract_from_text(channel, external_id, user_text)
@@ -345,11 +359,12 @@ async def run_agent(
             tools=result.get("used_tools") or [],
             memory=memory_after,
             skills=[],
+            decision=result.get("decision"),
         )
         result["run_id"] = run_id
         result["memory"] = memory_after
         result["memory_summary"] = await get_memory_summary(channel, external_id)
-        return result
+        return _record_route(result, "offline", started)
 
     # Fast-path (B): clear recommend intent → deterministic engine + 1 LLM call.
     fast = await _try_fast_path(
@@ -363,7 +378,7 @@ async def run_agent(
         memory_before=memory_before,
     )
     if fast is not None:
-        return fast
+        return _record_route(fast, "fast_path", started)
 
     reset_run_bag()
     _prepare_ctx(
@@ -414,9 +429,11 @@ async def run_agent(
 
     bag = get_run_bag()
     ctx = get_ctx()
+    route = "llm_graph"
     reply = bag.get("final") or ""
     if not reply:
         if llm_error is not None:
+            route = "llm_error_fallback"
             bag["trace"].append(
                 {"agent": "lead", "event": "llm_error", "detail": type(llm_error).__name__}
             )
@@ -454,23 +471,29 @@ async def run_agent(
         tools=list(ctx.used_tools),
         memory=memory_after,
         skills=list(bag.get("active_skills") or []),
+        decision=bag.get("decision"),
     )
 
-    return {
-        "reply": reply,
-        "used_tools": list(ctx.used_tools),
-        "used_agents": used_agents,
-        "trace": list(bag["trace"]),
-        "subagent_results": list(bag["results"]),
-        "needs_human": ctx.needs_human,
-        "lead_id": ctx.lead_id,
-        "conversation_id": conversation_id,
-        "run_id": run_id,
-        "memory": memory_after,
-        "memory_summary": await get_memory_summary(channel, external_id),
-        "active_skills": list(bag.get("active_skills") or []),
-        "memory_before": memory_before,
-    }
+    return _record_route(
+        {
+            "reply": reply,
+            "used_tools": list(ctx.used_tools),
+            "used_agents": used_agents,
+            "trace": list(bag["trace"]),
+            "subagent_results": list(bag["results"]),
+            "needs_human": ctx.needs_human,
+            "lead_id": ctx.lead_id,
+            "conversation_id": conversation_id,
+            "run_id": run_id,
+            "memory": memory_after,
+            "memory_summary": await get_memory_summary(channel, external_id),
+            "active_skills": list(bag.get("active_skills") or []),
+            "memory_before": memory_before,
+            "decision": bag.get("decision"),
+        },
+        route,
+        started,
+    )
 
 
 async def run_agent_stream(
@@ -512,4 +535,5 @@ async def run_agent_stream(
         "run_id": result.get("run_id"),
         "memory": result.get("memory"),
         "active_skills": result.get("active_skills"),
+        "decision": result.get("decision"),
     }

@@ -25,6 +25,7 @@ async def save_trajectory(
     tools: list,
     memory: dict | None = None,
     skills: list | None = None,
+    decision: dict | None = None,
 ) -> str | None:
     if not get_settings().trajectory_enabled:
         return None
@@ -43,6 +44,7 @@ async def save_trajectory(
         "tools": tools,
         "memory": memory or {},
         "skills": skills or [],
+        "decision": decision,
     }
 
     TRAJ_DIR.mkdir(parents=True, exist_ok=True)
