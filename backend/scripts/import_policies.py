@@ -69,6 +69,21 @@ def build_entries(src: Path) -> list[dict]:
     return entries
 
 
+def merge_entries(existing: list[dict], policy_entries: list[dict]) -> list[dict]:
+    """Replace policy entries in place, keep every curated (non-policy) entry.
+
+    An entry is a policy entry when its id starts with one of the POLICY_DOCS
+    topics — those ids are generated above, so hand-curated FAQ entries that
+    use any other id survive a re-import.
+    """
+    policy_prefixes = tuple(f"{topic}-" for _, topic in POLICY_DOCS.values())
+    curated = [e for e in existing if not str(e.get("id", "")).startswith(policy_prefixes)]
+    kept = len(curated)
+    if kept:
+        print(f"  = kept {kept} curated (non-policy) entries")
+    return curated + policy_entries
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Ingest DMX policy .md files into the knowledge base.",
@@ -81,6 +96,11 @@ def main() -> None:
         help="Directory containing policy .md files. Falls back to DMX_SRC_DIR in .env.",
     )
     parser.add_argument("--out", type=Path, default=DATA_DIR / "faq.json")
+    parser.add_argument(
+        "--replace",
+        action="store_true",
+        help="Overwrite the whole output file (old behavior). Default merges: curated non-policy entries are kept.",
+    )
     args = parser.parse_args()
 
     src = resolve_dmx_src(args.src)
@@ -89,6 +109,14 @@ def main() -> None:
     entries = build_entries(src)
     if not entries:
         raise SystemExit("No policy chunks produced.")
+
+    if not args.replace and args.out.exists():
+        try:
+            existing = json.loads(args.out.read_text(encoding="utf-8"))
+            if isinstance(existing, list):
+                entries = merge_entries(existing, entries)
+        except json.JSONDecodeError:
+            print("  ! existing output is not valid JSON, writing fresh file")
 
     args.out.write_text(json.dumps(entries, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"\nWrote {len(entries)} KB entries -> {args.out}")

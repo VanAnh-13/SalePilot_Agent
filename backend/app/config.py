@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     # to the friendly fallback quickly instead of hanging the chat; 30s is ample
     # for a max_tokens-capped reply on a healthy endpoint.
     llm_timeout_s: int = 30
+    # Provider-level retries for transient errors (429/5xx/network). The
+    # per-request timeout still bounds total wait, so 2 retries can add at most
+    # ~2x the timeout in the worst case before the friendly fallback kicks in.
+    llm_max_retries: int = 2
     # Fast-path: False = instant, deterministic Markdown top-3 (structured,
     # source-grounded, no LLM call) — the default, and what the chat UI renders
     # best. True = spend 1 LLM call to rephrase as prose (slower, and burns the
@@ -79,6 +83,9 @@ class Settings(BaseSettings):
     scheduler_enabled: bool = True
     max_subagents_per_turn: int = 3
     trajectory_enabled: bool = True
+    # Rolling LLM conversation summary stored in customer memory (needs an LLM
+    # key; silently skipped offline). Turn off to keep profile-only memory.
+    memory_summary_enabled: bool = True
 
     @property
     def cors_origin_list(self) -> list[str]:

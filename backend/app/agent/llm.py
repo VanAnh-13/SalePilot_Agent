@@ -63,23 +63,23 @@ def get_chat_model() -> BaseChatModel:
             temperature=0.3,
             max_tokens=settings.llm_max_tokens,
             timeout=settings.llm_timeout_s,
-            max_retries=1,
+            max_retries=settings.llm_max_retries,
         )
 
     if not settings.openai_api_key:
         return _FallbackModel()
     from langchain_openai import ChatOpenAI
 
-    # max_retries=1 + tight timeout: slow/rate-limited compatible endpoints must
-    # fail fast instead of silently retrying into 100s+ waits. max_tokens caps
-    # reply length — chat answers don't need essays and slow endpoints charge
-    # wall-clock per token.
+    # Tight timeout + bounded retries (LLM_MAX_RETRIES): transient 429/5xx get
+    # retried, but a genuinely dead endpoint still fails fast into the friendly
+    # fallback instead of hanging the chat. max_tokens caps reply length — chat
+    # answers don't need essays and slow endpoints charge wall-clock per token.
     kwargs: dict = {
         "api_key": settings.openai_api_key,
         "temperature": 0.3,
         "max_tokens": settings.llm_max_tokens,
         "timeout": settings.llm_timeout_s,
-        "max_retries": 1,
+        "max_retries": settings.llm_max_retries,
     }
     if settings.openai_base_url:
         # OpenAI-compatible endpoint: trust MODEL_NAME verbatim (provider-specific

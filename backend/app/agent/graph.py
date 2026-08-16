@@ -403,85 +403,17 @@ def _build_graph_messages(
     return messages
 
 
-async def run_agent(
-    user_text: str,
+async def _finalize_llm_run(
     *,
-    history: list[dict[str, str]] | None = None,
-    channel: str = "web",
-    external_id: str = "",
-    conversation_id: int | None = None,
-    lead_id: int | None = None,
-    customer_name: str = "Khách",
+    user_text: str,
+    channel: str,
+    external_id: str,
+    conversation_id: int | None,
+    memory_before: dict[str, Any],
+    started: float,
+    llm_error: Exception | None = None,
 ) -> dict[str, Any]:
-    started = perf_counter()
-    memory_before = await load_profile(channel, external_id)
-    memory_summary = await get_memory_summary(channel, external_id)
-    await maybe_extract_from_text(channel, external_id, user_text)
-
-    if not has_llm_key():
-        result = await _run_offline_route(
-            user_text,
-            channel=channel,
-            external_id=external_id,
-            conversation_id=conversation_id,
-            lead_id=lead_id,
-            customer_name=customer_name,
-        )
-        return _record_route(result, "offline", started)
-
-    # Fast-path (B): clear recommend intent → deterministic engine + 1 LLM call.
-    fast = await _try_fast_path(
-        user_text,
-        channel=channel,
-        external_id=external_id,
-        conversation_id=conversation_id,
-        lead_id=lead_id,
-        customer_name=customer_name,
-        memory_summary=memory_summary,
-        memory_before=memory_before,
-    )
-    if fast is not None:
-        return _record_route(fast, "fast_path", started)
-
-    reset_run_bag()
-    _prepare_ctx(
-        channel=channel,
-        external_id=external_id,
-        conversation_id=conversation_id,
-        lead_id=lead_id,
-        customer_name=customer_name,
-    )
-
-    sys = _system_with_memory(lead_system_prompt(), memory_summary)
-    messages = _build_graph_messages(sys, history, user_text)
-
-    graph = get_graph()
-    llm_error: Exception | None = None
-    try:
-        await graph.ainvoke(
-            {
-                "messages": messages,
-                "channel": channel,
-                "external_id": external_id,
-                "conversation_id": conversation_id,
-                "lead_id": lead_id,
-                "customer_name": customer_name,
-                "needs_human": False,
-                "plan": "",
-                "active_agents": [],
-                "subagent_results": [],
-                "trace": [],
-                "final_reply": "",
-            },
-            config={"recursion_limit": 24},
-        )
-    except Exception as exc:  # LLM timeout / rate-limit / endpoint down
-        # Never surface a raw 500 to the customer: degrade to a friendly message
-        # and keep serving. The deterministic recommend fast-path already handles
-        # clear product intents without the LLM, so this only affects the
-        # ambiguous / FAQ / compare queries that need reasoning.
-        llm_error = exc
-
+    """Shared post-processing for the LLM graph route (batch and streaming)."""
     bag = get_run_bag()
     ctx = get_ctx()
     route = "llm_graph"
@@ -543,7 +475,49 @@ async def run_agent(
     )
 
 
-async def run_agent_stream(
+def _graph_state(
+    messages: list,
+    *,
+    channel: str,
+    external_id: str,
+    conversation_id: int | None,
+    lead_id: int | None,
+    customer_name: str,
+) -> dict[str, Any]:
+    return {
+        "messages": messages,
+        "channel": channel,
+        "external_id": external_id,
+        "conversation_id": conversation_id,
+        "lead_id": lead_id,
+        "customer_name": customer_name,
+        "needs_human": False,
+        "plan": "",
+        "active_agents": [],
+        "subagent_results": [],
+        "trace": [],
+        "final_reply": "",
+    }
+
+
+async def _stream_graph_tokens(state: dict[str, Any]) -> AsyncIterator[str]:
+    """Yield lead-node reply text as the model produces it (true streaming).
+
+    stream_mode="messages" emits one chunk per token for models that support
+    streaming; tool-call fragments and non-lead nodes are filtered out.
+    """
+    graph = get_graph()
+    async for msg, meta in graph.astream(state, config={"recursion_limit": 24}, stream_mode="messages"):
+        if meta.get("langgraph_node") != "lead":
+            continue
+        if getattr(msg, "tool_call_chunks", None):
+            continue
+        content = getattr(msg, "content", "")
+        if isinstance(content, str) and content:
+            yield content
+
+
+async def run_agent(
     user_text: str,
     *,
     history: list[dict[str, str]] | None = None,
@@ -552,27 +526,89 @@ async def run_agent_stream(
     conversation_id: int | None = None,
     lead_id: int | None = None,
     customer_name: str = "Khách",
-) -> AsyncIterator[dict[str, Any]]:
-    result = await run_agent(
+) -> dict[str, Any]:
+    started = perf_counter()
+    memory_before = await load_profile(channel, external_id)
+    memory_summary = await get_memory_summary(channel, external_id)
+    await maybe_extract_from_text(channel, external_id, user_text)
+
+    if not has_llm_key():
+        result = await _run_offline_route(
+            user_text,
+            channel=channel,
+            external_id=external_id,
+            conversation_id=conversation_id,
+            lead_id=lead_id,
+            customer_name=customer_name,
+        )
+        return _record_route(result, "offline", started)
+
+    # Fast-path (B): clear recommend intent → deterministic engine + 1 LLM call.
+    fast = await _try_fast_path(
         user_text,
-        history=history,
+        channel=channel,
+        external_id=external_id,
+        conversation_id=conversation_id,
+        lead_id=lead_id,
+        customer_name=customer_name,
+        memory_summary=memory_summary,
+        memory_before=memory_before,
+    )
+    if fast is not None:
+        return _record_route(fast, "fast_path", started)
+
+    reset_run_bag()
+    _prepare_ctx(
         channel=channel,
         external_id=external_id,
         conversation_id=conversation_id,
         lead_id=lead_id,
         customer_name=customer_name,
     )
-    if result.get("memory_summary"):
-        yield {"type": "memory", "summary": result["memory_summary"]}
-    for step in result["trace"]:
-        yield {"type": "trace", **step}
-    reply = result["reply"]
+
+    sys = _system_with_memory(lead_system_prompt(), memory_summary)
+    messages = _build_graph_messages(sys, history, user_text)
+    state = _graph_state(
+        messages,
+        channel=channel,
+        external_id=external_id,
+        conversation_id=conversation_id,
+        lead_id=lead_id,
+        customer_name=customer_name,
+    )
+
+    graph = get_graph()
+    llm_error: Exception | None = None
+    try:
+        await graph.ainvoke(state, config={"recursion_limit": 24})
+    except Exception as exc:  # LLM timeout / rate-limit / endpoint down
+        # Never surface a raw 500 to the customer: degrade to a friendly message
+        # and keep serving. The deterministic recommend fast-path already handles
+        # clear product intents without the LLM, so this only affects the
+        # ambiguous / FAQ / compare queries that need reasoning.
+        llm_error = exc
+
+    return await _finalize_llm_run(
+        user_text=user_text,
+        channel=channel,
+        external_id=external_id,
+        conversation_id=conversation_id,
+        memory_before=memory_before,
+        started=started,
+        llm_error=llm_error,
+    )
+
+
+def _chunk_reply(reply: str) -> list[str]:
+    """Split a fully-computed reply into UI-sized pieces (offline/fast routes)."""
     step = max(12, len(reply) // 20 or 12)
-    for i in range(0, len(reply), step):
-        yield {"type": "token", "content": reply[i : i + step]}
-    yield {
+    return [reply[i : i + step] for i in range(0, len(reply), step)]
+
+
+def _done_event(result: dict[str, Any]) -> dict[str, Any]:
+    return {
         "type": "done",
-        "reply": reply,
+        "reply": result["reply"],
         "used_tools": result["used_tools"],
         "used_agents": result["used_agents"],
         "trace": result["trace"],
@@ -584,3 +620,105 @@ async def run_agent_stream(
         "active_skills": result.get("active_skills"),
         "decision": result.get("decision"),
     }
+
+
+def _yield_batched(result: dict[str, Any]) -> list[dict[str, Any]]:
+    """Event sequence for routes that finish before streaming (offline/fast)."""
+    events: list[dict[str, Any]] = []
+    if result.get("memory_summary"):
+        events.append({"type": "memory", "summary": result["memory_summary"]})
+    for step in result["trace"]:
+        events.append({"type": "trace", **step})
+    for piece in _chunk_reply(result["reply"]):
+        events.append({"type": "token", "content": piece})
+    events.append(_done_event(result))
+    return events
+
+
+async def run_agent_stream(
+    user_text: str,
+    *,
+    history: list[dict[str, str]] | None = None,
+    channel: str = "web",
+    external_id: str = "",
+    conversation_id: int | None = None,
+    lead_id: int | None = None,
+    customer_name: str = "Khách",
+) -> AsyncIterator[dict[str, Any]]:
+    started = perf_counter()
+    memory_before = await load_profile(channel, external_id)
+    memory_summary = await get_memory_summary(channel, external_id)
+    await maybe_extract_from_text(channel, external_id, user_text)
+
+    if not has_llm_key():
+        result = await _run_offline_route(
+            user_text,
+            channel=channel,
+            external_id=external_id,
+            conversation_id=conversation_id,
+            lead_id=lead_id,
+            customer_name=customer_name,
+        )
+        result = _record_route(result, "offline", started)
+        for event in _yield_batched(result):
+            yield event
+        return
+
+    fast = await _try_fast_path(
+        user_text,
+        channel=channel,
+        external_id=external_id,
+        conversation_id=conversation_id,
+        lead_id=lead_id,
+        customer_name=customer_name,
+        memory_summary=memory_summary,
+        memory_before=memory_before,
+    )
+    if fast is not None:
+        result = _record_route(fast, "fast_path", started)
+        for event in _yield_batched(result):
+            yield event
+        return
+
+    # LLM graph route: stream real tokens as the lead model produces them.
+    reset_run_bag()
+    _prepare_ctx(
+        channel=channel,
+        external_id=external_id,
+        conversation_id=conversation_id,
+        lead_id=lead_id,
+        customer_name=customer_name,
+    )
+    sys = _system_with_memory(lead_system_prompt(), memory_summary)
+    messages = _build_graph_messages(sys, history, user_text)
+    state = _graph_state(
+        messages,
+        channel=channel,
+        external_id=external_id,
+        conversation_id=conversation_id,
+        lead_id=lead_id,
+        customer_name=customer_name,
+    )
+
+    if memory_summary:
+        yield {"type": "memory", "summary": memory_summary}
+
+    llm_error: Exception | None = None
+    try:
+        async for piece in _stream_graph_tokens(state):
+            yield {"type": "token", "content": piece}
+    except Exception as exc:  # provider died mid-stream → friendly fallback
+        llm_error = exc
+
+    result = await _finalize_llm_run(
+        user_text=user_text,
+        channel=channel,
+        external_id=external_id,
+        conversation_id=conversation_id,
+        memory_before=memory_before,
+        started=started,
+        llm_error=llm_error,
+    )
+    for step in result["trace"]:
+        yield {"type": "trace", **step}
+    yield _done_event(result)

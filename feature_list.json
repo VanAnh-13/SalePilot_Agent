@@ -1604,6 +1604,263 @@
         }
       ],
       "notes": "Slice C of the owner-approved escalation+takeover plan (2026-08-16)."
+    },
+    {
+      "id": "llm-resilience-001",
+      "priority": 2,
+      "area": "backend-agent",
+      "title": "LLM resilience: configurable retries and sub-agent error isolation",
+      "user_visible_behavior": "Transient provider errors are retried (LLM_MAX_RETRIES, default 2) instead of failing on the first attempt; a sub-agent LLM failure no longer kills the whole reply — the lead gets an error summary and continues.",
+      "status": "passing",
+      "allowed_files": [
+        "backend/app/config.py",
+        "backend/app/agent/llm.py",
+        "backend/app/agent/subagents/base.py",
+        "backend/tests/test_llm_resilience.py"
+      ],
+      "approved_protected_files": [],
+      "verification": [
+        "Full backend unittest suite passes from backend/.",
+        "scripts/verify.sh passes."
+      ],
+      "evidence": [
+        "config.py: llm_max_retries (default 2) documents the timeout-bounded worst case; llm.py passes it to both ChatOpenAI and ChatAnthropic instead of hardcoded 1.",
+        "subagents/base.py: the sub-agent LLM loop is wrapped — a provider failure logs a warning and returns ok=False with a summary telling the lead to use tools directly, instead of killing the whole reply.",
+        "tests/test_llm_resilience.py: retry count honored from env (with get_settings lru_cache clearing), exploding model isolated, ok-path unchanged."
+      ],
+      "test_evidence": [
+        {
+          "command": "backend/.venv/Scripts/python.exe -X utf8 -m unittest discover -s tests (from backend)",
+          "result": "passed",
+          "date": "2026-08-16"
+        },
+        {
+          "command": "PYTHONUTF8=1 scripts/verify.sh",
+          "result": "passed",
+          "date": "2026-08-16"
+        }
+      ],
+      "notes": "S1 of the remaining-limitations plan (2026-08-16)."
+    },
+    {
+      "id": "real-streaming-001",
+      "priority": 2,
+      "area": "backend-agent",
+      "title": "True token streaming on the LLM graph route (SSE)",
+      "user_visible_behavior": "On /chat/stream with an LLM key, reply tokens are yielded as the model produces them (first token latency ~= model TTFB) instead of after the whole reply completes; offline and fast-path routes keep their existing chunked output.",
+      "status": "passing",
+      "allowed_files": [
+        "backend/app/agent/graph.py",
+        "backend/tests/test_streaming.py"
+      ],
+      "approved_protected_files": [],
+      "verification": [
+        "Full backend unittest suite passes from backend/.",
+        "scripts/verify.sh passes.",
+        "New test streams through a fake model and proves tokens arrive incrementally before the run completes."
+      ],
+      "evidence": [
+        "graph.py: run_agent's graph-route post-processing extracted into _finalize_llm_run (shared by batch and streaming); _graph_state/_build_graph_messages build the LangGraph input once.",
+        "run_agent_stream now streams REAL tokens on the LLM route via graph.astream(stream_mode='messages'), filtering to lead-node text chunks (tool-call fragments excluded); offline and fast-path routes keep batched chunk output via _yield_batched/_chunk_reply. Provider death mid-stream degrades to the friendly fallback.",
+        "tests/test_streaming.py: a fake model streaming five chunks proves >=4 incremental token events before the done event, joined reply equals the model output; offline route still emits memory/trace/tokens/done."
+      ],
+      "test_evidence": [
+        {
+          "command": "backend/.venv/Scripts/python.exe -X utf8 -m unittest discover -s tests (from backend)",
+          "result": "passed",
+          "date": "2026-08-16"
+        },
+        {
+          "command": "PYTHONUTF8=1 scripts/verify.sh",
+          "result": "passed",
+          "date": "2026-08-16"
+        }
+      ],
+      "notes": "S2 of the remaining-limitations plan (2026-08-16). Post-stream bookkeeping (skills, memory, trajectory) is shared with run_agent."
+    },
+    {
+      "id": "rag-pg-metadata-001",
+      "priority": 2,
+      "area": "backend-agent",
+      "title": "Restore KB metadata boosts on the Postgres path and use policy-filtered retrieval",
+      "user_visible_behavior": "Policy questions (bảo hành/đổi trả/giao hàng/lắp đặt) rank their own policy chunks above unrelated ones regardless of whether the KB loaded from Postgres or faq.json; PG rows no longer silently lose metadata.",
+      "status": "passing",
+      "allowed_files": [
+        "backend/app/rag/store.py",
+        "backend/app/agent/tools/knowledge.py",
+        "backend/tests/test_rag_metadata.py"
+      ],
+      "approved_protected_files": [],
+      "verification": [
+        "Full backend unittest suite passes from backend/.",
+        "scripts/verify.sh passes."
+      ],
+      "evidence": [
+        "rag/store.py: _load_faq_from_pg reconstructs policy_type from the existing KbDoc.topic column via _TOPIC_POLICY_TYPES (topic-level granularity, documented in-code) — metadata boosts and filters now work on the Postgres path too; no protected schema change.",
+        "Dead+broken search_products_text removed (zero callers and it referenced an undefined _score — would NameError if ever called).",
+        "tools/knowledge.py: search_knowledge now calls search_policy with a policy_type detected from the query signal (bảo hàng/đổi trả/giao hàng/lắp đặt/khui hộp), so policy questions pre-filter to their own domain; search_faq stays for MCP.",
+        "tests/test_rag_metadata.py: 5 tests — topic mapping completeness, boost reordering, cross-domain filter, query signal detection, tool round-trip."
+      ],
+      "test_evidence": [
+        {
+          "command": "backend/.venv/Scripts/python.exe -X utf8 -m unittest discover -s tests (from backend)",
+          "result": "passed",
+          "date": "2026-08-16"
+        },
+        {
+          "command": "PYTHONUTF8=1 scripts/verify.sh",
+          "result": "passed",
+          "date": "2026-08-16"
+        }
+      ],
+      "notes": "S3 of the remaining-limitations plan (2026-08-16). policy_type is reconstructed from the existing KbDoc.topic column (topic-level granularity, documented) — no protected schema change."
+    },
+    {
+      "id": "rag-ingest-merge-001",
+      "priority": 2,
+      "area": "backend-agent",
+      "title": "Policy import merges instead of clobbering curated FAQ entries",
+      "user_visible_behavior": "Re-running the policy importer updates only policy entries; hand-curated FAQ entries in faq.json survive. --replace restores the old full-overwrite behavior.",
+      "status": "passing",
+      "allowed_files": [
+        "backend/scripts/import_policies.py",
+        "backend/tests/test_import_policies_merge.py"
+      ],
+      "approved_protected_files": [],
+      "verification": [
+        "Full backend unittest suite passes from backend/.",
+        "scripts/verify.sh passes.",
+        "Unit test proves curated entries survive a merge and --replace removes them."
+      ],
+      "evidence": [
+        "scripts/import_policies.py: default merge mode (merge_entries) replaces policy-prefixed ids and keeps curated non-policy entries; --replace restores full overwrite; corrupt JSON output falls back to fresh write.",
+        "tests/test_import_policies_merge.py: curated entry survives, stale policy entry replaced exactly once, empty-existing path. (Initial tuple-unpack bug in the prefix generator caught by the test itself.)"
+      ],
+      "test_evidence": [
+        {
+          "command": "backend/.venv/Scripts/python.exe -X utf8 -m unittest discover -s tests (from backend)",
+          "result": "passed",
+          "date": "2026-08-16"
+        },
+        {
+          "command": "PYTHONUTF8=1 scripts/verify.sh",
+          "result": "passed",
+          "date": "2026-08-16"
+        }
+      ],
+      "notes": "S4 of the remaining-limitations plan (2026-08-16)."
+    },
+    {
+      "id": "memory-hygiene-001",
+      "priority": 2,
+      "area": "backend-agent",
+      "title": "Memory hygiene: GDPR erase endpoint and no duplicate auto-extract notes",
+      "user_visible_behavior": "Owner can erase a customer's stored memory via admin DELETE /memory/{channel}/{external_id}; auto-extraction no longer appends a duplicate note every matching turn.",
+      "status": "passing",
+      "allowed_files": [
+        "backend/app/api/memory.py",
+        "backend/app/agent/memory/store.py",
+        "backend/tests/test_memory_hygiene.py"
+      ],
+      "approved_protected_files": [],
+      "verification": [
+        "Full backend unittest suite passes from backend/.",
+        "scripts/verify.sh passes."
+      ],
+      "evidence": [
+        "store.py merge_profile: identical consecutive notes (repeated 'auto-extract' turns) no longer duplicate; different notes still append.",
+        "store.py erase_memory + admin-gated DELETE /memory/{channel}/{external_id} (404 when nothing stored, fail-closed without token) — right-to-erasure path.",
+        "tests/test_memory_hygiene.py: note dedupe round-trip + full endpoint lifecycle via TestClient."
+      ],
+      "test_evidence": [
+        {
+          "command": "backend/.venv/Scripts/python.exe -X utf8 -m unittest discover -s tests (from backend)",
+          "result": "passed",
+          "date": "2026-08-16"
+        },
+        {
+          "command": "PYTHONUTF8=1 scripts/verify.sh",
+          "result": "passed",
+          "date": "2026-08-16"
+        }
+      ],
+      "notes": "S5 of the remaining-limitations plan (2026-08-16)."
+    },
+    {
+      "id": "memory-summary-001",
+      "priority": 2,
+      "area": "backend-agent",
+      "title": "Rolling LLM conversation summary stored in customer memory",
+      "user_visible_behavior": "With an LLM key, long conversations are periodically summarized into the customer profile (conv_summary) and injected into future turns' memory context; offline or disabled, behavior is unchanged.",
+      "status": "passing",
+      "allowed_files": [
+        "backend/app/config.py",
+        "backend/app/agent/memory/store.py",
+        "backend/app/services/gateway.py",
+        "backend/tests/test_memory_summary.py"
+      ],
+      "approved_protected_files": [],
+      "verification": [
+        "Full backend unittest suite passes from backend/.",
+        "scripts/verify.sh passes.",
+        "Unit tests cover summarize-on-threshold, offline skip, and flag-off skip."
+      ],
+      "evidence": [
+        "store.py: maybe_summarize_conversation keeps a rolling LLM summary (conv_summary, refreshed every SUMMARY_THRESHOLD=6 messages) via the shared _write_profile upsert; get_memory_summary surfaces 'tóm_tắt=' first. Failures log and keep the old summary.",
+        "config.py: memory_summary_enabled flag (default on; needs LLM key, silently skipped offline).",
+        "gateway.py: best-effort call after the reply is stored, so the summary never affects the served answer.",
+        "tests/test_memory_summary.py: threshold firing + visibility + no-refresh-below-delta, offline skip, flag-off skip (env + settings cache_clear pattern)."
+      ],
+      "test_evidence": [
+        {
+          "command": "backend/.venv/Scripts/python.exe -X utf8 -m unittest discover -s tests (from backend)",
+          "result": "passed",
+          "date": "2026-08-16"
+        },
+        {
+          "command": "backend/.venv/Scripts/python.exe -X utf8 -m unittest tests.test_memory_summary",
+          "result": "passed",
+          "date": "2026-08-16"
+        }
+      ],
+      "notes": "S6 of the remaining-limitations plan (2026-08-16). Summary lives in the free-form profile JSON — no schema change."
+    },
+    {
+      "id": "no-hardcode-cleanup-001",
+      "priority": 2,
+      "area": "backend-agent",
+      "title": "Remove newly-introduced hardcode duplication (single policy-keyword source; no silent except)",
+      "user_visible_behavior": "No behavior change: one source of truth for policy signal keywords shared by the scorer boost and the retrieval pre-filter; the gateway summary failure is logged instead of silently swallowed.",
+      "status": "passing",
+      "allowed_files": [
+        "backend/app/rag/store.py",
+        "backend/app/agent/tools/knowledge.py",
+        "backend/app/services/gateway.py",
+        "backend/tests/test_rag_metadata.py"
+      ],
+      "approved_protected_files": [],
+      "verification": [
+        "Full backend unittest suite passes from backend/.",
+        "scripts/verify.sh passes."
+      ],
+      "evidence": [
+        "rag/store.py: POLICY_SIGNALS is now the single source of policy keywords; the scorer's policy _METADATA_BOOSTS rows DERIVE from it. tools/knowledge.py detect_policy_type imports the same mapping — detection and boosting can no longer drift.",
+        "gateway.py: the best-effort summary guard logs a warning with exc_info instead of a silent except-pass (the standard set in refactor slice 2).",
+        "test_rag_metadata.py: topic universe asserted against scripts.import_policies.POLICY_DOCS (no third hardcoded copy) + new single-source derivation test; detection tests use the public detect_policy_type."
+      ],
+      "test_evidence": [
+        {
+          "command": "backend/.venv/Scripts/python.exe -X utf8 -m unittest discover -s tests (from backend)",
+          "result": "passed",
+          "date": "2026-08-16"
+        },
+        {
+          "command": "PYTHONUTF8=1 scripts/verify.sh",
+          "result": "passed",
+          "date": "2026-08-16"
+        }
+      ],
+      "notes": "Owner feedback 2026-08-16: 'không được hard code, dirty code'. Fixes duplication introduced by S3/S6 before closing them."
     }
   ]
 }

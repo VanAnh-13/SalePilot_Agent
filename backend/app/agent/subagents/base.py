@@ -1,10 +1,13 @@
 import json
+import logging
 from typing import Any
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 
 from app.agent.llm import get_chat_model
 from app.agent.prompts import subagent_prompt
+
+logger = logging.getLogger(__name__)
 from app.agent.tools.catalog import (
     compare_products,
     get_product_detail,
@@ -58,29 +61,42 @@ async def run_subagent(name: str, task: str, context: str = "") -> dict[str, Any
     ]
 
     final_text = ""
-    for _ in range(MAX_SUBAGENT_STEPS):
-        ai: AIMessage = await model.ainvoke(messages)
-        messages.append(ai)
-        if not ai.tool_calls:
+    try:
+        for _ in range(MAX_SUBAGENT_STEPS):
+            ai: AIMessage = await model.ainvoke(messages)
+            messages.append(ai)
+            if not ai.tool_calls:
+                final_text = ai.content if isinstance(ai.content, str) else str(ai.content or "")
+                break
+            for tc in ai.tool_calls:
+                note_tool(f"{name}:{tc['name']}")
+                tool_fn = tools_by_name.get(tc["name"])
+                if not tool_fn:
+                    result = json.dumps({"error": f"tool {tc['name']} not allowed for {name}"})
+                else:
+                    try:
+                        result = await tool_fn.ainvoke(tc["args"])
+                    except Exception as e:
+                        result = json.dumps({"error": str(e)}, ensure_ascii=False)
+                messages.append(ToolMessage(content=str(result), tool_call_id=tc["id"]))
+        else:
+            plain = get_chat_model()
+            ai = await plain.ainvoke(
+                messages + [HumanMessage(content="Tóm tắt kết quả cho lead agent (ngắn).")]
+            )
             final_text = ai.content if isinstance(ai.content, str) else str(ai.content or "")
-            break
-        for tc in ai.tool_calls:
-            note_tool(f"{name}:{tc['name']}")
-            tool_fn = tools_by_name.get(tc["name"])
-            if not tool_fn:
-                result = json.dumps({"error": f"tool {tc['name']} not allowed for {name}"})
-            else:
-                try:
-                    result = await tool_fn.ainvoke(tc["args"])
-                except Exception as e:
-                    result = json.dumps({"error": str(e)}, ensure_ascii=False)
-            messages.append(ToolMessage(content=str(result), tool_call_id=tc["id"]))
-    else:
-        plain = get_chat_model()
-        ai = await plain.ainvoke(
-            messages + [HumanMessage(content="Tóm tắt kết quả cho lead agent (ngắn).")]
-        )
-        final_text = ai.content if isinstance(ai.content, str) else str(ai.content or "")
+    except Exception as exc:
+        # One broken sub-agent must not kill the whole reply: report the
+        # failure back to the lead so it can continue without this result.
+        logger.warning("sub-agent %s failed: %s", name, type(exc).__name__, exc_info=True)
+        return {
+            "agent": name,
+            "task": task,
+            "summary": f"Sub-agent {name} lỗi LLM ({type(exc).__name__}) — lead hãy tự dùng tool trực tiếp.",
+            "data": {},
+            "tools_used": list(get_ctx().used_tools)[len(used_before):],
+            "ok": False,
+        }
 
     used_after = list(get_ctx().used_tools)
     tools_used = used_after[len(used_before) :]

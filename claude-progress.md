@@ -696,3 +696,17 @@
 - Verification: backend 73/73 PASS (68 + 5 new); scripts/verify.sh PASS; frontend tsc + build PASS; scope guard check-session PASS.
 - Process note: scope-guard baseline re-initialized once (same known gap as Session 028 — a .zcode plan artifact changed outside the previous feature's whitelist and accept-external refuses baseline-feature mismatch).
 - Git: uncommitted, per policy.
+
+### Session 030 — Remaining agent limitations closed (streaming, LLM resilience, RAG, memory)
+
+- Date: 2026-08-16. Follows owner instruction "commit và tiếp tục làm mấy cái còn lại" after commit d081ea3.
+- S1 llm-resilience-001 — config llm_max_retries (default 2) wired to both providers; sub-agent LLM failures isolated (logged, ok=False summary telling lead to use tools directly) instead of killing the reply. 3 tests (incl. get_settings lru_cache clearing pattern for env-driven tests).
+- S2 real-streaming-001 — run_agent_stream streams REAL tokens on the LLM route via graph.astream(stream_mode="messages") (lead-node text chunks only); shared _finalize_llm_run for batch+streaming bookkeeping; offline/fast-path keep batched chunks; mid-stream provider death → friendly fallback. Fake streaming model test proves >=4 incremental tokens before done.
+- S3 rag-pg-metadata-001 — PG loader reconstructs policy_type from KbDoc.topic (_TOPIC_POLICY_TYPES, topic-level granularity, no schema change); dead+broken search_products_text (undefined _score → NameError) removed; search_knowledge uses policy-filtered retrieval (search_policy).
+- S4 rag-ingest-merge-001 — policy import merges (curated non-policy entries survive; --replace restores overwrite); tuple-unpack bug in prefix generator caught by its own test.
+- S5 memory-hygiene-001 — repeated identical "auto-extract" notes no longer duplicate; admin DELETE /memory/{channel}/{external_id} (right to erasure, fail-closed).
+- S6 memory-summary-001 — rolling LLM conv_summary refreshed every 6 stored messages (SUMMARY_THRESHOLD), surfaced as "tóm_tắt=" in memory context; skipped offline/flag-off; gateway calls it best-effort after the reply.
+- no-hardcode-cleanup-001 (owner feedback: "không được hard code, dirty code") — POLICY_SIGNALS single source (scorer boosts + retrieval filter derive from it); gateway's new except-pass replaced with logged warning; topic universe asserted from POLICY_DOCS (no third copy).
+- Final verification: backend 90/90 PASS; scripts/verify.sh PASS; scope guard check-session + plain PASS; WIP=0.
+- Still open (feature work, needs owner decision): Chroma embeddings at query time, real Zalo OA client, provider failover across OpenAI<->Anthropic (retry exists, cross-provider failover not built), skills auto-activation.
+- Live e2e with the owner's LLM key (real streaming latency) not exercised in tests — hermetic fake-model coverage only; verify manually when the key is active.

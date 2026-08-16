@@ -14,6 +14,21 @@ def reload_kb() -> None:
     _product_cache = None
 
 
+# KbDoc has no metadata columns, so the PG loader reconstructs the coarse
+# policy_type tags from the existing `topic` column. Chunk-level granularity
+# (e.g. a delivery doc chunk that is only about installation) is lost, but the
+# scorer boosts and search_policy filters work identically on both sources.
+_TOPIC_POLICY_TYPES: dict[str, list[str]] = {
+    "bao_hanh_doi_tra": ["bao_hanh", "doi_tra", "hoan_tien"],
+    "giao_hang_lap_dat": ["giao_hang", "lap_dat"],
+    "khui_hop_apple": ["khui_hop", "kiem_tra"],
+    "du_lieu_ca_nhan": ["du_lieu"],
+    "dieu_khoan": ["dieu_khoan"],
+    "noi_quy": ["noi_quy"],
+    "phuc_vu": ["chat_luong"],
+}
+
+
 def _load_faq_from_pg() -> list[dict] | None:
     try:
         from sqlalchemy import select
@@ -24,7 +39,15 @@ def _load_faq_from_pg() -> list[dict] | None:
         with SyncSession() as session:
             rows = session.execute(select(KbDoc)).scalars().all()
         return [
-            {"id": r.id, "question": r.question, "answer": r.answer, "topic": r.topic, "source": r.source}
+            {
+                "id": r.id,
+                "question": r.question,
+                "answer": r.answer,
+                "topic": r.topic,
+                "source": r.source,
+                "policy_type": _TOPIC_POLICY_TYPES.get(r.topic or "", []),
+                "product_groups": [],
+            }
             for r in rows
         ] or None
     except Exception:
@@ -57,13 +80,27 @@ def _load_products() -> list[dict]:
 # applies lexical + metadata boosts without knowing about retrieval logic.
 # ---------------------------------------------------------------------------
 
+# Single source of truth for policy-domain keywords: the scorer's metadata
+# boost AND the retrieval pre-filter (tools/knowledge.py) both derive from
+# this mapping — policy_type tag -> user-query signals (diacritic + plain).
+POLICY_SIGNALS: dict[str, tuple[str, ...]] = {
+    "bao_hanh": ("bảo hành", "bao hanh", "warranty"),
+    "doi_tra": ("đổi trả", "doi tra", "hoàn tiền", "hoan tien", "đổi cũ"),
+    "giao_hang": ("giao hàng", "giao hang", "ship", "vận chuyển", "van chuyen"),
+    "lap_dat": ("lắp đặt", "lap dat", "lắp ráp"),
+    "khui_hop": ("khui hộp", "khui hop", "kích hoạt apple", "kich hoat apple"),
+    "hoan_tien": ("hoàn tiền", "hoan tien"),
+    "chat_luong": ("chất lượng phục vụ", "chat luong phuc vu"),
+    "du_lieu": ("dữ liệu cá nhân", "du lieu ca nhan"),
+    "noi_quy": ("nội quy", "noi quy"),
+    "dieu_khoan": ("điều khoản", "dieu khoan"),
+}
+
 # Metadata field → query signal terms → score boost
 # Declared as data so new domains only add entries here (OCP).
 _METADATA_BOOSTS: list[tuple[str, list[str], float]] = [
-    ("policy_type", ["bảo hành", "bao hanh", "bảo hành"], 1.5),
-    ("policy_type", ["đổi trả", "doi tra", "hoàn tiền"], 1.5),
-    ("policy_type", ["giao hàng", "giao hang", "ship", "vận chuyển"], 1.5),
-    ("policy_type", ["lắp đặt", "lap dat", "lắp ráp"], 1.5),
+    # Policy rows derive from POLICY_SIGNALS so keywords never drift apart.
+    *[("policy_type", list(signals), 1.5) for signals in POLICY_SIGNALS.values()],
     ("product_groups", ["điện thoại", "dien thoai", "iphone", "samsung"], 1.0),
     ("product_groups", ["laptop", "macbook", "máy tính xách tay"], 1.0),
     ("product_groups", ["tủ lạnh", "tu lanh"], 1.0),
@@ -164,16 +201,6 @@ async def search_policy(
         {"id": f.get("id"), "question": f.get("question"), "answer": f.get("answer")}
         for f, _ in hits[:k]
     ]
-
-
-async def search_products_text(query: str, k: int = 5) -> list[dict]:
-    products = _load_products()
-    ranked = sorted(
-        products,
-        key=lambda p: _score(query, p.get("name", "") + " " + p.get("description", "") + " " + p.get("sku", "")),
-        reverse=True,
-    )
-    return ranked[:k]
 
 
 def ingest_kb() -> dict:

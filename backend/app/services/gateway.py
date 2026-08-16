@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from app.agent.graph import run_agent
+from app.agent.memory.store import maybe_summarize_conversation
 from app.services.conversation import append_message, get_or_create_conversation, recent_history
 from app.services.escalation import is_taken_over
+
+logger = logging.getLogger(__name__)
 
 TAKEOVER_REPLY = (
     "Hội thoại đang được tư vấn viên tiếp nhận. "
@@ -74,5 +78,16 @@ async def ingest_message(
             # memory intentionally excluded — PII only via admin /memory
         },
     )
+    # Best-effort rolling summary of the stored conversation; skipped offline
+    # or when disabled — must never affect the reply just served.
+    try:
+        await maybe_summarize_conversation(channel, external_id, await recent_history(conv_id))
+    except Exception:
+        logger.warning(
+            "conversation summary failed (channel=%s external_id=%s)",
+            channel,
+            external_id,
+            exc_info=True,
+        )
     result["conversation_id"] = conv_id
     return result
