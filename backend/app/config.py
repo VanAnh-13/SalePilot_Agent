@@ -90,6 +90,15 @@ class Settings(BaseSettings):
     # user message (max 2/turn), instead of waiting for the model to call
     # activate_skill.
     auto_activate_skills: bool = True
+    # Hybrid retrieval: blend lexical scoring with Chroma embedding similarity
+    # at query time. Off by default — the default embedding function downloads
+    # a model on first use, so enabling is an explicit opt-in. Any runtime
+    # failure silently degrades to pure lexical retrieval.
+    rag_embeddings_enabled: bool = False
+    # Optional sentence-transformers model name for CHROMA_EMBEDDING_MODEL
+    # (e.g. "intfloat/multilingual-e5-small"). Empty = chroma's default
+    # (English MiniLM — weak on pure Vietnamese text, documented limitation).
+    chroma_embedding_model: str = ""
 
     @property
     def cors_origin_list(self) -> list[str]:

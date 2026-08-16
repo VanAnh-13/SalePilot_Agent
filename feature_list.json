@@ -1975,6 +1975,44 @@
         }
       ],
       "notes": "Continuation slice 2026-08-16. Keywords derive from SKILL.md frontmatter itself — no per-skill hardcoded lists (owner's no-hardcode rule)."
+    },
+    {
+      "id": "rag-embeddings-query-001",
+      "priority": 3,
+      "area": "backend-agent",
+      "title": "Hybrid retrieval: Chroma embeddings at query time (config-gated, lexical fallback)",
+      "user_visible_behavior": "With RAG_EMBEDDINGS_ENABLED=true and a usable Chroma store, policy retrieval blends lexical scoring with semantic similarity (catches paraphrases like 'ship mất bao lâu' vs 'giao hàng'); on any failure or when disabled, retrieval is exactly the current lexical behavior.",
+      "status": "passing",
+      "allowed_files": [
+        "backend/app/config.py",
+        "backend/app/rag/store.py",
+        "backend/tests/test_rag_embeddings.py"
+      ],
+      "approved_protected_files": [],
+      "verification": [
+        "Full backend unittest suite passes from backend/.",
+        "scripts/verify.sh passes.",
+        "Offline tests with a deterministic fake embedding prove reranking + graceful fallback + flag-off no-op."
+      ],
+      "evidence": [
+        "rag/store.py: query-time hybrid retrieval — _chroma_collection lazily opens (and auto-populates from the current KB) a cosine-space 'salepilot_faq' collection; _semantic_similarities embeds the query; _hybrid_score = lexical + SEMANTIC_WEIGHT*sim with sim only counted at/above SEMANTIC_FLOOR (0.55). search_policy uses hybrid; search_faq (MCP bulk) stays lexical.",
+        "Every failure mode degrades to pure lexical: flag off, Chroma import error, collection error, query error (each logs a warning). reload_kb and ingest_kb reset the collection cache; ingest_kb now shares the embedding function + cosine space with query-time (no duplicated bootstrap logic).",
+        "config: RAG_EMBEDDINGS_ENABLED (default false — default EF downloads a model on first use) + CHROMA_EMBEDDING_MODEL for a multilingual sentence-transformers model once installed (default English MiniLM is weak on Vietnamese — documented).",
+        "tests/test_rag_embeddings.py: 5 offline tests with a deterministic fake embedding function (chromadb 1.x protocol: __call__/embed_query returning vector lists) — semantic reranking proven via direct similarity assertions, auto-populate, flag-off no-op, chroma-failure fallback, below-floor ignored."
+      ],
+      "test_evidence": [
+        {
+          "command": "backend/.venv/Scripts/python.exe -X utf8 -m unittest discover -s tests (from backend)",
+          "result": "passed",
+          "date": "2026-08-16"
+        },
+        {
+          "command": "PYTHONUTF8=1 scripts/verify.sh",
+          "result": "passed",
+          "date": "2026-08-16"
+        }
+      ],
+      "notes": "Continuation 2026-08-16 on owner request. Default chroma EF (English MiniLM) is weak on pure Vietnamese — documented; CHROMA_EMBEDDING_MODEL allows a multilingual sentence-transformers model once installed. Collection uses cosine space."
     }
   ]
 }

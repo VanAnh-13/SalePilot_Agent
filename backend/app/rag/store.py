@@ -1,17 +1,27 @@
 import json
+import logging
 from pathlib import Path
 
 from app.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 _DATA = Path(__file__).resolve().parents[2] / "data"
 _faq_cache: list[dict] | None = None
 _product_cache: list[dict] | None = None
 
+# Hybrid retrieval weights: semantic similarity (cosine, 0..1) contributes
+# SEMANTIC_WEIGHT points on top of the lexical score, but only when at or
+# above SEMANTIC_FLOOR — below that the signal is noise, not paraphrase.
+SEMANTIC_WEIGHT = 2.0
+SEMANTIC_FLOOR = 0.55
+
 
 def reload_kb() -> None:
-    global _faq_cache, _product_cache
+    global _faq_cache, _product_cache, _chroma_state
     _faq_cache = None
     _product_cache = None
+    _chroma_state = None
 
 
 # KbDoc has no metadata columns, so the PG loader reconstructs the coarse
@@ -156,6 +166,84 @@ class Scorer:
 _scorer = Scorer()
 
 
+# ---------------------------------------------------------------------------
+# Semantic layer — Chroma embeddings at query time (hybrid retrieval).
+# Off by default (RAG_EMBEDDINGS_ENABLED): the default embedding function
+# downloads a model on first use. Every failure degrades to pure lexical.
+# ---------------------------------------------------------------------------
+_chroma_state: object | None = None  # None=untried, False=failed, Collection=ok
+_CHROMA_COLLECTION = "salepilot_faq"
+
+
+def _embedding_function():
+    model = (get_settings().chroma_embedding_model or "").strip()
+    if model:
+        from chromadb.utils import embedding_functions
+
+        return embedding_functions.SentenceTransformerEmbeddingFunction(model_name=model)
+    from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
+
+    return DefaultEmbeddingFunction()
+
+
+def _chroma_collection():
+    """Lazily open (and auto-populate) the FAQ collection; None when unusable."""
+    global _chroma_state
+    if _chroma_state is not None:
+        return _chroma_state or None
+    if not get_settings().rag_embeddings_enabled:
+        _chroma_state = False
+        return None
+    try:
+        import chromadb
+
+        client = chromadb.PersistentClient(path=str(Path(get_settings().chroma_path)))
+        col = client.get_or_create_collection(
+            name=_CHROMA_COLLECTION,
+            embedding_function=_embedding_function(),
+            metadata={"hnsw:space": "cosine"},
+        )
+        if col.count() == 0:
+            faqs = _load_faq()
+            if faqs:
+                col.add(
+                    ids=[f["id"] for f in faqs],
+                    documents=[f"{f.get('question', '')}\n{f.get('answer', '')}" for f in faqs],
+                    metadatas=[{"type": "faq"} for _ in faqs],
+                )
+        _chroma_state = col
+        return col
+    except Exception:
+        logger.warning("Chroma embeddings unavailable — lexical-only retrieval", exc_info=True)
+        _chroma_state = False
+        return None
+
+
+def _semantic_similarities(query: str, candidates: list[dict]) -> dict[str, float]:
+    """id -> cosine similarity for the query against the candidates, or {}."""
+    col = _chroma_collection()
+    if col is None or not candidates:
+        return {}
+    try:
+        n = min(max(len(candidates), 10), 50)
+        res = col.query(query_texts=[query], n_results=n, include=["distances"])
+        ids = (res.get("ids") or [[]])[0]
+        dists = (res.get("distances") or [[]])[0]
+        # cosine space: distance = 1 - similarity
+        return {i: max(0.0, 1.0 - d) for i, d in zip(ids, dists)}
+    except Exception:
+        logger.warning("semantic query failed — lexical-only for this call", exc_info=True)
+        return {}
+
+
+def _hybrid_score(query: str, chunk: dict, semantic: dict[str, float]) -> float:
+    lexical = _scorer.score(query, chunk)
+    sim = semantic.get(chunk.get("id") or "", 0.0)
+    if sim < SEMANTIC_FLOOR:
+        return lexical
+    return lexical + SEMANTIC_WEIGHT * sim
+
+
 async def search_faq(query: str, k: int = 3) -> list[dict]:
     """Metadata-aware lexical retrieval — works offline without Chroma/embeddings."""
     faqs = _load_faq()
@@ -194,7 +282,8 @@ async def search_policy(
         return True
 
     candidates = [f for f in faqs if _matches_filters(f)] or faqs
-    scored = [(f, _scorer.score(query, f)) for f in candidates]
+    semantic = _semantic_similarities(query, candidates)
+    scored = [(f, _hybrid_score(query, f, semantic)) for f in candidates]
     ranked = sorted(scored, key=lambda x: -x[1])
     hits = [(f, s) for f, s in ranked if s > 0]
     return [
@@ -204,22 +293,27 @@ async def search_policy(
 
 
 def ingest_kb() -> dict:
-    """Ensure data files present; optional Chroma bootstrap for future upgrade."""
+    """Bootstrap the Chroma FAQ collection (cosine space, shared embedding
+    function with query-time retrieval). Non-fatal when Chroma is unusable."""
+    global _chroma_state
     settings = get_settings()
     chroma_path = Path(settings.chroma_path)
     chroma_path.mkdir(parents=True, exist_ok=True)
     faq_n = len(_load_faq())
     prod_n = len(_load_products())
-    # Try Chroma if available — non-fatal
     try:
         import chromadb
 
         client = chromadb.PersistentClient(path=str(chroma_path))
         try:
-            client.delete_collection("salepilot_faq")
+            client.delete_collection(_CHROMA_COLLECTION)
         except Exception:
             pass
-        col = client.get_or_create_collection("salepilot_faq")
+        col = client.get_or_create_collection(
+            name=_CHROMA_COLLECTION,
+            embedding_function=_embedding_function(),
+            metadata={"hnsw:space": "cosine"},
+        )
         if faq_n:
             faqs = _load_faq()
             col.add(
@@ -227,6 +321,7 @@ def ingest_kb() -> dict:
                 documents=[f"{f['question']}\n{f['answer']}" for f in faqs],
                 metadatas=[{"type": "faq"} for _ in faqs],
             )
+        _chroma_state = None  # force re-open with the fresh collection
         return {"faq": faq_n, "products": prod_n, "chroma": col.count()}
     except Exception as e:
         return {"faq": faq_n, "products": prod_n, "chroma": f"skipped: {e}"}

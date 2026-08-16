@@ -719,3 +719,11 @@
 - skills-auto-activate-001 — skills/matcher.py pure lexical matcher (unigram + adjacent-bigram overlap on each skill's own frontmatter, diacritics folded, no per-skill keyword lists); graph._auto_activate_skills loads up to 2 matching skills into the run bag on both LLM routes with trace 'auto:<name>'; AUTO_ACTIVATE_SKILLS=false disables. Probed against real Vietnamese phrasings before wiring.
 - Verification: backend 103/103 PASS; scripts/verify.sh PASS; frontend tsc + build PASS (fe-streaming slice); scope guard check-session + plain PASS; WIP=0.
 - Remaining roadmap (needs owner/external): Chroma embeddings at query time (needs embedding model decision), real Zalo OA client (blocked on OA approval), live streaming e2e with the real key.
+
+### Session 032 — Chroma embeddings at query time (hybrid retrieval)
+
+- Date: 2026-08-16. Owner request "Làm Chroma embedding lúc query".
+- rag-embeddings-query-001 — search_policy now blends lexical + semantic: lazy cosine-space Chroma collection (auto-populated from the active KB), query embedded at call time, score = lexical + 2.0*cos with a 0.55 floor (below = noise). All failure paths (flag off, no chromadb, query error) degrade to the previous lexical behavior with a logged warning. ingest_kb shares the same EF + cosine space. Default OFF (RAG_EMBEDDINGS_ENABLED) because chroma's default EF downloads a model on first use; CHROMA_EMBEDDING_MODEL reserved for a multilingual sentence-transformers model (English MiniLM limitation on Vietnamese documented in config).
+- Test notes: deterministic offline fake EF satisfies the chromadb 1.x EmbeddingFunction protocol (embed_query returns a LIST of embeddings — caught via direct similarity assertions after the first run silently fell back to lexical). Suite slower (~38s) due to real chromadb PersistentClient in tmp dirs.
+- Verification: backend 108/108 PASS; scripts/verify.sh PASS; scope guard PASS.
+- Remaining from roadmap: real Zalo OA client (external), live e2e streaming with the owner key.
