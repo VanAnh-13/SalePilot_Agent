@@ -3,44 +3,18 @@
 ## Current Verified State
 
 - Repository root: `D:\Homeworks\SalePilot_Agent`
-- Active feature: **audit-fix-001** — **in_progress** (14 Session-020 findings closed; 4 of them were re-opened by an independent 2026-08-01 re-audit and have now been fixed for real — see Session 021. Two NEW issues found by that same re-audit are still open: a stale scope-guard baseline and an unfixed dev-split B2 custody mismatch — see Session 021 "Known risk")
-- Catalog experiment backend: **snapshot** from `experiments/fixtures/catalog_dev_fixture.json` (70 SKU / 14 categories)
-- Research manifest: **OK** (`experiments/manifest.json` passes `validate_research_manifest.py`)
-- Production catalog: DMX crawl in Neon Postgres (13,716 products / 118 categories); `CATALOG_BACKEND=postgres` for live app
-- Sealed test results: **verified** — `experiments/results/exp_test_*.json` (40 episodes, 3 deterministic conditions B0/B1/S)
-- **B2 LLM test artifacts removed** — custody was dishonest (claimed FPT/DeepSeek, file contained Meta/muse-spark-1.1, repeat=0). B2 excluded from paper. Dev B2 results remain in `experiments/results/llm_baseline_dev.jsonl`
-- Evaluator tests: **9/9 pass** (`experiments/evaluate/test_metrics.py`)
-- Backend tests: **40/40 pass**
-- Frontend: TypeScript 0 errors, production build PASS
-- Scope guard: **PASS for real** — `--self-test` (synthetic fixtures) AND the plain `python scripts/validate_agent_scope.py` against the actual `feature_list.json` (the latter was silently broken by an invalid-JSON typo until Session 021 fixed it)
-- Paper: abstract corrected (action accuracy differs between conditions); author block still placeholder TODO
-- RIVF deadline: **2026-08-31** (extended per CFP — re-verified 2026-08-01 by live fetch of rivf2026.org/call-for-papers.html, not just copied from an earlier claim)
-- Security: `/chat` no longer leaks memory/PII; `/jobs` requires admin auth; dashboard uses server-side BFF
-- Docker: Dockerfile runner no longer depends on standalone output
-- ETL: fully atomic (single transaction commit)
-- Zalo simulator: signs HMAC for strict mode compatibility
+- Date: 2026-08-23
+- Active feature: **none** — all product features are `passing`; `blocked`: paper-001/rivf-001 (authorized workbook pending); several legacy `not_started` scaffolds remain
+- Channel: **Web only** — Zalo integration removed entirely (Session 036, owner decision): no `/webhooks/zalo`, no `/outbox/zalo`, no `ZALO_*` settings
+- Backend tests: **122/122 pass**; evaluator tests **9/9 pass**; `scripts/verify.sh` **PASS** (incl. MCP smoke)
+- Frontend: TypeScript **0 errors** (`npx tsc --noEmit`). ⚠️ Production build could NOT be executed inside the coding-agent sandbox (next build jest-worker pipe timeout — Session 037); owner should run `npm run build` once on the feature branch
+- Rate limiting: in-process sliding window on `/chat[/stream]` (`CHAT_RATE_LIMIT_PER_MINUTE=60`, `WEBHOOK_RATE_LIMIT_PER_MINUTE=120` retained as a generic knob); scheduler claims jobs atomically; Zalo soft-mode logging removed along with the channel
+- Scope guard: `--self-test` + plain validate **PASS**. By design there is **no session baseline while zero features are in_progress**, so `--check-session` reports "no session baseline" until the next working session runs `--start-session`
+- Git: all recent work lives on branch **`feat/zalo-removal-fe-redesign`** (pushed, @8c2ddc7); remote **`main` restored to `1533c73`** by force-with-lease per owner instruction — never push feature work to main without an explicit ask
+- Research: sealed B0/B1/S results verified (40 episodes); the open known issue is the dev-split B2 custody mismatch recorded in earlier sessions
+- Security posture: admin endpoints fail-closed behind `ADMIN_API_KEY`; dashboard uses the double-token server-side BFF; public chat is rate-limited; sandbox/web-fetch default off; CORS never falls back to wildcard+credentials
 - Do not commit `.env` (contains cloud secrets)
-- Date: 2026-08-01
-- Goal: Scaffold multi-agent SalePilot base for VAIC SME track (CSKH/Sales + Zalo stub)
-- Completed:
-  - Backend Lead + sub-agents, tools, offline multi-agent path
-  - API chat/leads/products/outbox/zalo webhook
-  - Frontend home/chat/dashboard
-  - Seed data (products/FAQ), docs
-  - Harness pack (AGENTS.md, feature_list, init, progress)
-- Verification run:
-  - `python -m scripts.seed_db` + `ingest_kb`
-  - Offline `run_agent` with catalog+knowledge tools
-  - HTTP `/health` + `/chat` smoke
-- Evidence captured:
-  - Historical base scaffold chat returned a furniture demo reply; current product domain is refrigerator category_code=38.
-- Commits: (none required yet)
-- Files or artifacts updated: entire scaffold under `backend/`, `frontend/`, `docs/`
-- Known risk or unresolved issue:
-  - Historical base scaffold catalog search was generic; current refrigerator verification is recorded in Session 005.
-  - No automated pytest suite yet (`verify-001`)
-  - Frontend not e2e tested in headless browser this session
-- Next best step: mark chat/multi-agent features with evidence; implement `verify-001` pytest smoke or `deploy-001` when ready
+- Next best step: owner verifies `npm run build` locally on `feat/zalo-removal-fe-redesign`, then opens a PR into main
 
 ### Session 002
 
@@ -776,3 +750,10 @@
 - Verification: tsc --noEmit 0 lỗi; backend 122/122 PASS; verify.sh PASS; guards PASS.
 - ⚠️ Build limitation (disclosed): next build không hoàn thành trong sandbox của coding-agent (jest-worker spawn qua named pipe timeout ở trần 10 phút, 3 lần thử kể cả escalated; node mồ côi đã được dọn). Owner cần chạy `npm run build` local một lần để xác nhận gói production.
 - Incident note: các tiến trình node mồ côi sau kill khiến executor treo ngẫu nhiên — Stop-Process PID 29392/30000 đã xử lý.
+
+### Session 038 — relocate work off main (owner instruction)
+
+- Date: 2026-08-23. Owner: "không được push lên main" sau khi 9 commit đã lỡ lên origin/main.
+- Hành động: tạo nhánh `feat/zalo-removal-fe-redesign` @8c2ddc7 → push + tracking; local main reset về `1533c73`; `git push --force-with-lease=refs/heads/main:8c2ddc7 origin main` phục hồi remote main đúng về mốc cũ (xác nhận qua ls-remote).
+- Guard note: push -u ghi section tracking vào .git/config khiến check-session báo sensitive .git/config → re-anchor baseline; khi không còn feature in_progress, start-session không ghi baseline (by design) nên --check-session sẽ báo "no session baseline" cho tới phiên làm việc kế tiếp — plain validate/self-test vẫn là green check ở trạng thái nghỉ.
+- Bài học: luôn hỏi rõ nhánh đích trước khi push; mặc định đề xuất nhánh tính năng thay vì main.
