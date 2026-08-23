@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentType, type SVGProps } from "react";
 import {
   fetchConversations,
   fetchJobs,
@@ -21,6 +21,20 @@ import { IconAlert, IconBrain, IconChat, IconClock, IconRefresh, IconUsers } fro
 import { ConversationsTable } from "@/components/dashboard/ConversationsTable";
 import { LeadsTable } from "@/components/dashboard/LeadsTable";
 import { statusPillClass } from "@/components/dashboard/shared";
+import { OWNER_TOKEN_KEY } from "@/lib/constants";
+
+// Auto-refresh cadence so a finished consultation shows up without a manual reload.
+const AUTO_REFRESH_MS = 7000;
+// Characters previewed from an agent run's reply before truncation.
+const REPLY_PREVIEW_CAP = 400;
+
+type StatTone = "blue" | "green" | "purple" | "amber";
+type Stat = {
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  color: StatTone;
+  value: number;
+  label: string;
+};
 
 export default function DashboardPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -73,7 +87,14 @@ export default function DashboardPage() {
       setJobs(val(results[4], []));
       setRun(val(results[5], null));
       setLastUpdated(new Date());
-      if (errors.length) setErr(errors.join(" | "));
+      if (errors.includes("UNAUTHORIZED")) {
+        try {
+          localStorage.removeItem(OWNER_TOKEN_KEY);
+        } catch {}
+        setErr("Owner token không hợp lệ hoặc chưa đặt. Tải lại trang để nhập lại (OWNER_TOKEN).");
+      } else if (errors.length) {
+        setErr(errors.join(" | "));
+      }
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -82,17 +103,27 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
-    load();
+    (async () => {
+      // The admin BFF requires an owner token; prompt for it once if missing.
+      try {
+        if (typeof window !== "undefined" && !localStorage.getItem(OWNER_TOKEN_KEY)) {
+          const token = window.prompt("Nhập owner token để xem dashboard:");
+          if (token) localStorage.setItem(OWNER_TOKEN_KEY, token);
+        }
+      } catch {}
+      load();
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-refresh so a finished consultation shows up without a manual reload.
   useEffect(() => {
     if (!auto) return;
-    const id = setInterval(() => load(true), 7000);
+    const id = setInterval(() => load(true), AUTO_REFRESH_MS);
     return () => clearInterval(id);
   }, [auto]);
 
-  const stats = [
+  const stats: Stat[] = [
     { icon: IconUsers, color: "blue", value: leads.length, label: "Leads" },
     { icon: IconChat, color: "green", value: convs.length, label: "Cuộc hội thoại" },
     { icon: IconBrain, color: "purple", value: memory.length, label: "Hồ sơ ghi nhớ" },
@@ -237,8 +268,8 @@ export default function DashboardPage() {
               <strong>User:</strong> {run.user_text}
             </p>
             <p style={{ margin: 0, color: "var(--text-soft)" }}>
-              <strong style={{ color: "var(--text)" }}>Reply:</strong> {run.reply?.slice(0, 400)}
-              {(run.reply?.length || 0) > 400 ? "…" : ""}
+              <strong style={{ color: "var(--text)" }}>Reply:</strong> {run.reply?.slice(0, REPLY_PREVIEW_CAP)}
+              {(run.reply?.length || 0) > REPLY_PREVIEW_CAP ? "…" : ""}
             </p>
           </div>
         ) : (

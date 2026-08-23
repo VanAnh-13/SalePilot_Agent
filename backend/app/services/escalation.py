@@ -41,7 +41,7 @@ async def open_escalation(
         if lead_id:
             lead = await session.get(Lead, lead_id)
             if lead:
-                lead.notes = (lead.notes + f"\n[ESCALATE] {reason}").strip()
+                lead.notes = ((lead.notes or "") + f"\n[ESCALATE] {reason}").strip()
         ticket = OutboxMessage(
             channel=channel,
             user_id=external_id,

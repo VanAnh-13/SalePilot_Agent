@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from typing import Any
 
 from app.catalog import normalize as N
@@ -32,6 +33,12 @@ def fmt_sold(value: Any) -> str:
     if number >= 1_000:
         return f"{number / 1_000:.1f}".rstrip("0").rstrip(".") + "k"
     return str(number)
+
+
+def _fold(text: str) -> str:
+    """Casefold + strip Vietnamese diacritics so unaccented queries match."""
+    nfkd = unicodedata.normalize("NFD", text.casefold())
+    return "".join(ch for ch in nfkd if unicodedata.category(ch) != "Mn")
 
 
 def _norm(product: dict[str, Any]) -> dict[str, Any]:
@@ -100,10 +107,11 @@ def reload_products() -> None:
 def _fits_household(product: dict[str, Any], household_size: int) -> bool:
     norm = _norm(product)
     minimum = norm.get("household_min")
-    if minimum is None:
-        return False
     maximum = norm.get("household_max")
-    return household_size >= int(minimum) and (
+    if minimum is None and maximum is None:
+        return False
+    min_val = int(minimum) if minimum is not None else 1
+    return household_size >= min_val and (
         maximum is None or household_size <= int(maximum)
     )
 
@@ -168,11 +176,17 @@ def search(
         score = 1.0
         if query_text:
             text = product.get("search_text") or ""
+            folded_text = _fold(text)
             score = 0.0
             for token in re.split(r"\s+", query_text):
-                if len(token) > 1 and token in text:
+                if len(token) <= 1:
+                    continue
+                # Exact match first, then a diacritic-folded fallback so users
+                # who type without accents ("tiet kiem dien") still hit the right
+                # products instead of stray token matches.
+                if token in text or _fold(token) in folded_text:
                     score += 1.0
-            if query_text in text:
+            if query_text in text or _fold(query_text) in folded_text:
                 score += 3.0
             if score <= 0:
                 continue

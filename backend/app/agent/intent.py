@@ -9,7 +9,6 @@ non-diacritic spellings.
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from app.agent.catalog_domain import (
@@ -18,6 +17,7 @@ from app.agent.catalog_domain import (
     merge_needs,
     resolve_followup_answer,
 )
+from app.agent.constants import PHONE_RE
 from app.agent.memory.store import load_profile
 
 FAQ_KEYWORDS = (
@@ -33,8 +33,6 @@ COMPARE_KEYWORDS = (
     "so sánh", "so sanh", "compare", "đối chiếu", "doi chieu", "so kèo",
 )
 STOCK_KEYWORDS = ("còn hàng", "con hang", "tồn kho", "ton kho", "khả năng giao hàng")
-
-PHONE_RE = re.compile(r"0\d{8,10}")
 
 
 def phone_in_text(user_text: str) -> str | None:

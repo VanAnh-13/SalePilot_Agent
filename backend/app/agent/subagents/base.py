@@ -4,6 +4,7 @@ from typing import Any
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 
+from app.agent.constants import LEAD_SUBAGENTS
 from app.agent.llm import get_chat_model
 from app.agent.prompts import subagent_prompt
 
@@ -40,7 +41,7 @@ async def run_subagent(name: str, task: str, context: str = "") -> dict[str, Any
         return {
             "agent": name,
             "task": task,
-            "summary": f"Unknown agent '{name}'. Valid: {list(SUBAGENTS)}",
+            "summary": f"Unknown agent '{name}'. Valid: {list(LEAD_SUBAGENTS)}",
             "data": {},
             "tools_used": [],
             "ok": False,

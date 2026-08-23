@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
-# Chạy backend local (hot-reload): uvicorn --reload :8000 · DB Neon/Atlas (.env) · catalog snapshot.
-cd "$(dirname "$0")"   # để .venv/ và ../.env đúng đường dẫn dù chạy từ đâu
-exec .venv/bin/python -m uvicorn app.main:app \
-  --env-file ../.env --reload --reload-dir app --host 0.0.0.0 --port 8000
+set -euo pipefail
 
+# Detect the correct venv python path (POSIX vs Windows).
+if [ -f .venv/bin/python ]; then
+  VENV_PYTHON=.venv/bin/python
+elif [ -f .venv/Scripts/python.exe ]; then
+  VENV_PYTHON=.venv/Scripts/python.exe
+else
+  echo "ERROR: no venv python found under .venv" >&2
+  exit 1
+fi
+
+exec $VENV_PYTHON -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --env-file ../.env

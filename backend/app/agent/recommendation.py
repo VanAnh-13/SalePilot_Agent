@@ -189,7 +189,15 @@ def _priorities(need: dict[str, Any]) -> list[str]:
 
 
 def _spec_stats(products: list[dict[str, Any]], key: str) -> tuple[float, float]:
-    values = [float(p[key]) for p in (product_public(x) for x in products) if p.get(key) is not None]
+    values: list[float] = []
+    for x in products:
+        p = product_public(x)
+        v = p.get(key)
+        if v is not None:
+            try:
+                values.append(float(v))
+            except (ValueError, TypeError):
+                pass
     return (min(values), max(values)) if values else (0.0, 0.0)
 
 

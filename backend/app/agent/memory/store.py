@@ -2,16 +2,44 @@ from __future__ import annotations
 
 import json
 import logging
-import re
+from copy import deepcopy
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
+from app.agent.catalog_queries import fmt_price
+from app.agent.constants import PHONE_RE
 from app.config import get_settings
 from app.db.session import async_session
 from app.models.entities import CustomerMemory
 
 logger = logging.getLogger(__name__)
+
+# Length / count caps for the profile fields, so stored memories and the
+# customer-facing memory summary stay bounded. Grouped here, beside the one
+# functional threshold (SUMMARY_THRESHOLD) further down.
+ADDRESS_CAP = 300
+PURCHASE_HISTORY_CAP = 10
+INTERESTS_CAP = 12
+SKUS_CAP = 12
+NOTES_CAP = 20
+NOTE_CAP = 200
+PROFILE_SUMMARY_CAP = 500
+CONV_SUMMARY_CAP = 160
+ADDRESS_PREVIEW_CAP = 80
+INTERESTS_PREVIEW_CAP = 5
+NOTES_PREVIEW_CAP = 3
+INTENT_PREVIEW_CAP = 80
+CONV_SUMMARY_ROLL_CAP = 400
+CONV_TURN_CAP = 200
+CONV_WINDOW = 12
+
+
+def _now_iso() -> str:
+    from datetime import datetime, timezone
+
+    return datetime.now(timezone.utc).isoformat()
 
 DEFAULT_PROFILE: dict[str, Any] = {
     "name": "",
@@ -21,15 +49,31 @@ DEFAULT_PROFILE: dict[str, Any] = {
     "preferred_skus": [],
     "notes": [],
     "last_intent": "",
+    # Retail fields: delivery address, past purchases (capped), and explicit
+    # marketing consent — safe-by-default False, only set True when the
+    # customer clearly agrees.
+    "address": "",
+    "purchase_history": [],
+    "marketing_consent": False,
     # Accumulated need profile (category, budget, slots, priorities) so
     # follow-up turns like "giá khoảng 10tr" keep the earlier context.
     "need": {},
 }
 
 
+def default_profile() -> dict[str, Any]:
+    """A fresh, independent profile (nested lists/dicts are deep-copied).
+
+    Never use `dict(DEFAULT_PROFILE)` — that shallow-copies the template, so
+    the nested lists (`interests`, `purchase_history`, ...) would be shared
+    across every caller and cross-contaminate customer records.
+    """
+    return deepcopy(DEFAULT_PROFILE)
+
+
 async def load_profile(channel: str, external_id: str) -> dict[str, Any]:
     if not get_settings().memory_enabled or not external_id:
-        return dict(DEFAULT_PROFILE)
+        return default_profile()
     async with async_session() as session:
         row = (
             await session.execute(
@@ -38,14 +82,18 @@ async def load_profile(channel: str, external_id: str) -> dict[str, Any]:
                     CustomerMemory.external_id == external_id,
                 )
             )
-        ).scalar_one_or_none()
+        ).scalars().first()
         if not row:
-            return dict(DEFAULT_PROFILE)
+            return default_profile()
         try:
             data = json.loads(row.profile_json or "{}")
         except json.JSONDecodeError:
             data = {}
-        out = dict(DEFAULT_PROFILE)
+        # A non-dict payload (e.g. "[1, 2]") is valid JSON but would crash
+        # out.update(...); guard it rather than 500ing that customer's chat.
+        if not isinstance(data, dict):
+            data = {}
+        out = default_profile()
         out.update(data)
         return out
 
@@ -61,26 +109,35 @@ async def get_memory_summary(channel: str, external_id: str) -> str:
             profile.get("notes"),
             profile.get("budget_vnd"),
             profile.get("conv_summary"),
+            profile.get("address"),
+            profile.get("purchase_history"),
+            profile.get("marketing_consent"),
         ]
     ):
         return ""
     parts = []
     if profile.get("conv_summary"):
-        parts.append(f"tóm_tắt={profile['conv_summary'][:160]}")
+        parts.append(f"tóm_tắt={profile['conv_summary'][:CONV_SUMMARY_CAP]}")
     if profile.get("name"):
         parts.append(f"tên={profile['name']}")
     if profile.get("phone"):
         parts.append(f"SĐT={profile['phone']}")
+    if profile.get("address"):
+        parts.append(f"địa_chỉ={profile['address'][:ADDRESS_PREVIEW_CAP]}")
+    if profile.get("purchase_history"):
+        parts.append(f"đã_mua={len(profile['purchase_history'])} lần")
+    if profile.get("marketing_consent"):
+        parts.append("đồng_ý_marketing=có")
     if profile.get("budget_vnd"):
-        parts.append(f"budget≈{int(profile['budget_vnd']):,}".replace(",", ".") + "đ")
+        parts.append("budget≈" + fmt_price(profile["budget_vnd"]))
     if profile.get("interests"):
-        parts.append("quan_tâm=" + ", ".join(profile["interests"][:5]))
+        parts.append("quan_tâm=" + ", ".join(profile["interests"][:INTERESTS_PREVIEW_CAP]))
     if profile.get("preferred_skus"):
-        parts.append("SKU=" + ", ".join(profile["preferred_skus"][:5]))
+        parts.append("SKU=" + ", ".join(profile["preferred_skus"][:INTERESTS_PREVIEW_CAP]))
     if profile.get("last_intent"):
-        parts.append(f"intent={profile['last_intent'][:80]}")
+        parts.append(f"intent={profile['last_intent'][:INTENT_PREVIEW_CAP]}")
     if profile.get("notes"):
-        parts.append("ghi_chú=" + "; ".join(profile["notes"][-3:]))
+        parts.append("ghi_chú=" + "; ".join(profile["notes"][-NOTES_PREVIEW_CAP:]))
     return " | ".join(parts)
 
 
@@ -96,30 +153,7 @@ async def save_need(channel: str, external_id: str, need: dict[str, Any]) -> Non
         return
     profile = await load_profile(channel, external_id)
     profile["need"] = {k: v for k, v in need.items() if k != "raw" and v not in (None, "", [])}
-    summary = await _summary_from_profile(profile)
-    async with async_session() as session:
-        row = (
-            await session.execute(
-                select(CustomerMemory).where(
-                    CustomerMemory.channel == channel,
-                    CustomerMemory.external_id == external_id,
-                )
-            )
-        ).scalar_one_or_none()
-        payload = json.dumps(profile, ensure_ascii=False)
-        if row:
-            row.profile_json = payload
-            row.summary = summary
-        else:
-            session.add(
-                CustomerMemory(
-                    channel=channel,
-                    external_id=external_id,
-                    profile_json=payload,
-                    summary=summary,
-                )
-            )
-        await session.commit()
+    await _write_profile(channel, external_id, profile, await _summary_from_profile(profile))
 
 
 async def merge_profile(
@@ -133,9 +167,12 @@ async def merge_profile(
     sku: str = "",
     note: str = "",
     last_intent: str = "",
+    address: str = "",
+    purchase_sku: str = "",
+    marketing_consent: bool | None = None,
 ) -> dict[str, Any]:
     if not get_settings().memory_enabled or not external_id:
-        return dict(DEFAULT_PROFILE)
+        return default_profile()
 
     profile = await load_profile(channel, external_id)
     if name:
@@ -144,25 +181,35 @@ async def merge_profile(
         profile["phone"] = phone
     if budget_vnd is not None and budget_vnd > 0:
         profile["budget_vnd"] = budget_vnd
+    if address:
+        profile["address"] = address[:ADDRESS_CAP]
+    if purchase_sku:
+        history = list(profile.get("purchase_history") or [])
+        entry = {"sku": purchase_sku, "at": _now_iso()}
+        if not history or history[-1].get("sku") != purchase_sku:
+            history.append(entry)
+        profile["purchase_history"] = history[-PURCHASE_HISTORY_CAP:]
+    if marketing_consent is not None:
+        profile["marketing_consent"] = bool(marketing_consent)
     if interest:
         interests = list(profile.get("interests") or [])
         if interest not in interests:
             interests.append(interest)
-        profile["interests"] = interests[-12:]
+        profile["interests"] = interests[-INTERESTS_CAP:]
     if sku:
         skus = list(profile.get("preferred_skus") or [])
         if sku not in skus:
             skus.append(sku)
-        profile["preferred_skus"] = skus[-12:]
+        profile["preferred_skus"] = skus[-SKUS_CAP:]
     if note:
         notes = list(profile.get("notes") or [])
         # Same-value notes (e.g. repeated "auto-extract" turns) must not
         # duplicate — only append when the last note differs.
-        if not notes or notes[-1] != note[:200]:
-            notes.append(note[:200])
-        profile["notes"] = notes[-20:]
+        if not notes or notes[-1] != note[:NOTE_CAP]:
+            notes.append(note[:NOTE_CAP])
+        profile["notes"] = notes[-NOTES_CAP:]
     if last_intent:
-        profile["last_intent"] = last_intent[:200]
+        profile["last_intent"] = last_intent[:NOTE_CAP]
 
     summary = await _summary_from_profile(profile)
     await _write_profile(channel, external_id, profile, summary)
@@ -175,33 +222,43 @@ async def _write_profile(
     profile: dict[str, Any],
     summary: str,
 ) -> None:
-    async with async_session() as session:
-        row = (
-            await session.execute(
-                select(CustomerMemory).where(
-                    CustomerMemory.channel == channel,
-                    CustomerMemory.external_id == external_id,
+    payload = json.dumps(profile, ensure_ascii=False)
+    # Read-then-write across sessions races on the first write for a new
+    # customer. The unique constraint on (channel, external_id) turns the
+    # duplicate INSERT into an IntegrityError we retry as an UPDATE.
+    for _ in range(3):
+        async with async_session() as session:
+            row = (
+                await session.execute(
+                    select(CustomerMemory).where(
+                        CustomerMemory.channel == channel,
+                        CustomerMemory.external_id == external_id,
+                    )
                 )
-            )
-        ).scalar_one_or_none()
-        payload = json.dumps(profile, ensure_ascii=False)
-        if row:
-            row.profile_json = payload
-            row.summary = summary
-        else:
-            session.add(
-                CustomerMemory(
-                    channel=channel,
-                    external_id=external_id,
-                    profile_json=payload,
-                    summary=summary,
+            ).scalars().first()
+            if row:
+                row.profile_json = payload
+                row.summary = summary
+            else:
+                session.add(
+                    CustomerMemory(
+                        channel=channel,
+                        external_id=external_id,
+                        profile_json=payload,
+                        summary=summary,
+                    )
                 )
-            )
-        await session.commit()
+            try:
+                await session.commit()
+                return
+            except IntegrityError:
+                await session.rollback()
+                # A concurrent write just inserted the row; loop to update it.
+                continue
 
 
 async def _summary_from_profile(profile: dict[str, Any]) -> str:
-    return json.dumps(profile, ensure_ascii=False)[:500]
+    return json.dumps(profile, ensure_ascii=False)[:PROFILE_SUMMARY_CAP]
 
 
 # Refresh the rolling conversation summary at most every N stored messages.
@@ -236,20 +293,16 @@ async def maybe_summarize_conversation(
 
     from langchain_core.messages import HumanMessage, SystemMessage
 
+    from app.agent.prompts import conversation_summary_system_prompt
+
     transcript = "\n".join(
-        f"{'Khách' if m.get('role') != 'assistant' else 'Bot'}: {str(m.get('content', ''))[:200]}"
-        for m in history[-12:]
+        f"{'Khách' if m.get('role') != 'assistant' else 'Bot'}: {str(m.get('content', ''))[:CONV_TURN_CAP]}"
+        for m in history[-CONV_WINDOW:]
     )
     try:
         ai = await get_chat_model().ainvoke(
             [
-                SystemMessage(
-                    content=(
-                        "Tóm tắt hội thoại tư vấn điện máy sau thành GIẢN LƯỢC tiếng Việt "
-                        "tối đa 60 từ: nhu cầu chính (sản phẩm, ngân sách, ràng buộc), "
-                        "những gì đã đề xuất, việc còn lại cần làm. Chỉ xuất tóm tắt."
-                    )
-                ),
+                SystemMessage(content=conversation_summary_system_prompt),
                 HumanMessage(content=transcript),
             ]
         )
@@ -260,7 +313,7 @@ async def maybe_summarize_conversation(
         logger.warning("conversation summary failed", exc_info=True)
         return existing
 
-    profile["conv_summary"] = summary[:400]
+    profile["conv_summary"] = summary[:CONV_SUMMARY_ROLL_CAP]
     profile["conv_summary_len"] = len(history)
     await _write_profile(channel, external_id, profile, await _summary_from_profile(profile))
     return profile["conv_summary"]
@@ -271,7 +324,7 @@ async def maybe_extract_from_text(channel: str, external_id: str, text: str) -> 
     if not get_settings().memory_enabled or not external_id or not text:
         return await load_profile(channel, external_id)
 
-    phone_m = re.search(r"0\d{8,10}", text.replace(" ", "").replace(".", ""))
+    phone_m = PHONE_RE.search(text.replace(" ", "").replace(".", ""))
     interest = ""
     t = text.lower()
     from app.catalog.registry import detect_category

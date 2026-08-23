@@ -138,7 +138,7 @@ async def run_offline_multi_agent(
         await save_need(channel, external_id, stored_need)
     category = detect_category(user_text)
     merged_need, _ = await merge_turn_need(
-        user_text, stored_need, resolve_followup=False
+        user_text, stored_need, resolve_followup=True
     )
     await fill_budget_from_profile(merged_need, channel=channel, external_id=external_id)
     # The turn's fresh extraction feeds the routing policy below.

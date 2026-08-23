@@ -103,7 +103,11 @@ def read_turn_signals(
     # last top-3 we recommended to this customer). Compare replaces recommend.
     compare_skus = skus_in_text[:5] if compare_intent else []
     if compare_intent and len(compare_skus) < 2:
-        compare_skus = list(stored_need.get("last_skus") or [])[:5]
+        # Merge, don't replace: keep any SKU the user explicitly typed and fill
+        # the rest from the last recommended top-3 (previously the typed SKU was
+        # discarded, so the compare ran on stale SKUs and never answered the ask).
+        extra = [s for s in (stored_need.get("last_skus") or []) if s not in compare_skus]
+        compare_skus = (compare_skus + extra)[:5]
     do_compare_now = compare_intent and len(compare_skus) >= 2
     if do_compare_now:
         need_product = False

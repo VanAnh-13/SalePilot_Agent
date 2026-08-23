@@ -1,4 +1,7 @@
+import { timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+
+import { DEFAULT_BACKEND_URL } from "@/lib/constants";
 
 /**
  * Server-side BFF proxy for admin-only backend endpoints.
@@ -14,7 +17,16 @@ import { NextRequest, NextResponse } from "next/server";
 const BACKEND_URL =
   process.env.BACKEND_URL?.replace(/\/$/, "") ||
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
-  "http://localhost:8000";
+  DEFAULT_BACKEND_URL;
+
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  try {
+    return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+  } catch {
+    return false;
+  }
+}
 
 async function proxyToBackend(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -25,6 +37,20 @@ async function proxyToBackend(req: NextRequest) {
       { error: "Missing 'path' query parameter" },
       { status: 400 },
     );
+  }
+
+  // Authenticate the BROWSER caller with an owner token (separate from the
+  // server-only ADMIN_API_KEY). Without this gate the proxy nullifies the
+  // backend's admin auth: any reachable client could dump /leads, /memory, …
+  const ownerToken = process.env.OWNER_TOKEN;
+  if (!ownerToken) {
+    return NextResponse.json(
+      { error: "OWNER_TOKEN not configured on server" },
+      { status: 503 },
+    );
+  }
+  if (!safeCompare(req.headers.get("x-owner-token") || "", ownerToken)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const adminKey = process.env.ADMIN_API_KEY;

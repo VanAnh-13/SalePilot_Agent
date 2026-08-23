@@ -203,10 +203,15 @@ def load(force: bool = False) -> int:
             if docs:
                 source = name
                 break
-        _CACHE, _SOURCE = (docs or []), source
-        _CATALOG_HASH = _docs_digest(_CACHE) if _CACHE else None
-        _LOADED = True
-        _DISTINCT_CATS = None
+        if docs:
+            _CACHE, _SOURCE = docs, source
+            _CATALOG_HASH = _docs_digest(_CACHE)
+            _LOADED = True
+            _DISTINCT_CATS = None
+        else:
+            # Transient backend failure: leave _LOADED False so the next access
+            # retries instead of serving an empty catalog until process restart.
+            _CACHE, _SOURCE, _CATALOG_HASH = [], "empty", None
         return len(_CACHE)
 
 

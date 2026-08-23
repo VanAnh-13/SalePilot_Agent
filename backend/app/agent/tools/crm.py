@@ -89,7 +89,7 @@ async def schedule_followup(lead_id: int = 0, hours_from_now: int = 24, note: st
             if lead:
                 lead.status = "follow_up"
                 stamp = when.strftime("%Y-%m-%d %H:%M UTC")
-                lead.notes = (lead.notes + f"\n[Follow-up {stamp} job#{job_id}] {note}").strip()
+                lead.notes = ((lead.notes or "") + f"\n[Follow-up {stamp} job#{job_id}] {note}").strip()
                 await session.commit()
     return json.dumps(
         {

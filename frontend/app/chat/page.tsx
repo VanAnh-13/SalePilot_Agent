@@ -4,45 +4,33 @@ import { useEffect, useRef, useState } from "react";
 import { DecisionEvidence } from "@/components/DecisionEvidence";
 import { Markdown } from "@/components/Markdown";
 import { IconAlert, IconBot, IconSend, IconUser } from "@/components/Icons";
-import { chatOnce, streamChat, type DecisionContract, type TraceStep } from "@/lib/api";
+import { chatOnce, streamChat } from "@/lib/api";
+import {
+  agentClass,
+  CHAT_ERROR_MESSAGE,
+  CHIPS,
+  GREETING,
+  LS_ID,
+  LS_MSGS,
+  MEMORY_PREVIEW_CAP,
+  WEB_ID_PREFIX,
+  type Msg,
+  type MsgMeta,
+} from "@/lib/chatConfig";
+import { downloadMarkdown } from "@/lib/markdownExport";
 
-type Msg = { id: string; role: "user" | "assistant"; content: string };
-
-const LS_ID = "salepilot_external_id";
-const LS_MSGS = "salepilot_msgs";
-
-const GREETING: Msg = {
-  id: "greeting",
-  role: "assistant",
-  content:
-    "Chào bạn! Em là **SalePilot-R** — hệ hỗ trợ quyết định điện máy theo nhu cầu thật " +
-    "(tủ lạnh, máy lạnh, máy giặt, đồng hồ thông minh, máy tính bảng, PC, màn hình…).\n\n" +
-    "Em sẽ kiểm tra ràng buộc và chỉ đề xuất khi có đủ bằng chứng từ catalog. Bạn đang cần sản phẩm gì, ngân sách khoảng bao nhiêu ạ?",
-};
-
-const CHIPS = [
-  "Gia đình 4 người, dưới 15 triệu, cần tủ lạnh tiết kiệm điện",
-  "Cần máy lạnh cho phòng 20m2, tầm 12 triệu, chạy êm",
-  "Nhà 5 người cần máy giặt cửa trước 9kg dưới 15 triệu có sấy",
-  "Đồng hồ thông minh dưới 3 triệu, nghe gọi, theo dõi sức khỏe",
-  "Máy tính bảng dưới 8 triệu, pin trâu, có lắp sim",
-];
-
-function agentClass(name: string) {
-  const n = name.toLowerCase();
-  if (["lead", "catalog", "knowledge", "crm", "order", "escalation"].includes(n)) return n;
-  return "plain";
+function generateId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
 export default function ChatPage() {
   const [externalId, setExternalId] = useState("");
   const [input, setInput] = useState("");
   const [msgs, setMsgs] = useState<Msg[]>([GREETING]);
-  const [trace, setTrace] = useState<TraceStep[]>([]);
-  const [agents, setAgents] = useState<string[]>([]);
-  const [memoryHit, setMemoryHit] = useState("");
-  const [runId, setRunId] = useState("");
-  const [decision, setDecision] = useState<DecisionContract | null>(null);
+  const [selectedMsgId, setSelectedMsgId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
@@ -58,7 +46,7 @@ export default function ChatPage() {
       id = localStorage.getItem(LS_ID) || "";
     } catch {}
     if (!id) {
-      id = `web-${crypto.randomUUID()}`;
+      id = WEB_ID_PREFIX + generateId();
       try {
         localStorage.setItem(LS_ID, id);
       } catch {}
@@ -78,9 +66,12 @@ export default function ChatPage() {
   // so we never overwrite saved history with the default greeting).
   useEffect(() => {
     if (!loaded) return;
-    try {
-      localStorage.setItem(LS_MSGS, JSON.stringify(msgs));
-    } catch {}
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(LS_MSGS, JSON.stringify(msgs));
+      } catch {}
+    }, 500);
+    return () => clearTimeout(timer);
   }, [msgs, loaded]);
 
   // Keep the conversation scrolled to the latest message.
@@ -89,19 +80,28 @@ export default function ChatPage() {
     if (el) el.scrollTop = el.scrollHeight;
   }, [msgs, loading]);
 
+  // Evidence follows the SELECTED assistant message (default: latest with
+  // evidence) instead of a single overwritten panel — survives refresh.
+  const evidenceMsgs = msgs.filter((m) => m.role === "assistant" && m.meta);
+  const selectedEvidence =
+    evidenceMsgs.find((m) => m.id === selectedMsgId) ??
+    evidenceMsgs[evidenceMsgs.length - 1] ??
+    null;
+  const trace = selectedEvidence?.meta?.trace ?? [];
+  const agents = selectedEvidence?.meta?.used_agents ?? [];
+  const memoryHit = selectedEvidence?.meta?.memory_summary ?? "";
+  const runId = selectedEvidence?.meta?.run_id ?? "";
+  const decision = selectedEvidence?.meta?.decision ?? null;
+
   function newSession() {
-    const id = `web-${crypto.randomUUID()}`;
+    const id = WEB_ID_PREFIX + generateId();
     try {
       localStorage.setItem(LS_ID, id);
       localStorage.removeItem(LS_MSGS);
     } catch {}
     setExternalId(id);
     setMsgs([GREETING]);
-    setTrace([]);
-    setAgents([]);
-    setMemoryHit("");
-    setRunId("");
-    setDecision(null);
+    setSelectedMsgId(null);
     setError("");
   }
 
@@ -110,33 +110,33 @@ export default function ChatPage() {
     if (!text || loading || !externalId) return;
     setInput("");
     setError("");
-    setDecision(null);
+    setSelectedMsgId(null);
     setStreamStarted(false);
-    setMsgs((m) => [...m, { id: crypto.randomUUID(), role: "user", content: text }]);
+    setMsgs((m) => [...m, { id: generateId(), role: "user", content: text }]);
     setLoading(true);
 
     // Live assistant bubble that grows as tokens stream in.
-    const replyId = crypto.randomUUID();
+    const replyId = generateId();
     let received = false;
     let streamed = "";
     let bubbleCreated = false;
-    const appendAssistant = (content: string) =>
-      setMsgs((m) => [...m, { id: replyId, role: "assistant", content }]);
+    let liveMemory = "";
+    const appendAssistant = (content: string, meta?: MsgMeta) =>
+      setMsgs((m) => [...m, { id: replyId, role: "assistant", content, meta }]);
     const updateAssistant = (content: string) =>
       setMsgs((m) => m.map((msg) => (msg.id === replyId ? { ...msg, content } : msg)));
 
-    const applyDone = (done: {
-      trace?: TraceStep[];
-      used_agents?: string[];
-      memory_summary?: string | null;
-      run_id?: string | null;
-      decision?: DecisionContract | null;
-    }) => {
-      setTrace(done.trace || []);
-      setAgents(done.used_agents || []);
-      setMemoryHit(done.memory_summary || "");
-      setRunId(done.run_id || "");
-      setDecision(done.decision || null);
+    // Evidence attaches to THIS message (not a global panel), so each turn
+    // keeps its own trace/decision and refreshes restore it.
+    const applyDone = (done: MsgMeta) => {
+      const meta: MsgMeta = {
+        trace: done.trace || [],
+        used_agents: done.used_agents || [],
+        memory_summary: done.memory_summary || liveMemory || "",
+        run_id: done.run_id || "",
+        decision: done.decision || null,
+      };
+      setMsgs((m) => m.map((msg) => (msg.id === replyId ? { ...msg, meta } : msg)));
     };
 
     try {
@@ -151,7 +151,7 @@ export default function ChatPage() {
           }
           setStreamStarted(true);
         } else if (ev.type === "memory") {
-          setMemoryHit(ev.summary);
+          liveMemory = ev.summary;
         }
       });
       if (!streamed) appendAssistant(done.reply);
@@ -173,7 +173,7 @@ export default function ChatPage() {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg);
       if (!streamed) {
-        appendAssistant("Lỗi gọi API. Kiểm tra kết nối backend và CORS.");
+        appendAssistant(CHAT_ERROR_MESSAGE);
       }
     } finally {
       setLoading(false);
@@ -195,6 +195,15 @@ export default function ChatPage() {
               </div>
             </div>
           </div>
+          <button
+            type="button"
+            className="btn ghost sm"
+            onClick={() => downloadMarkdown(msgs, externalId)}
+            disabled={loading || msgs.length <= 1}
+            title="Tải toàn bộ hội thoại kèm bằng chứng ra file Markdown"
+          >
+            Xuất hội thoại
+          </button>
           <button
             type="button"
             className="btn ghost sm"
@@ -223,7 +232,14 @@ export default function ChatPage() {
 
         <div className="chat-log" ref={logRef}>
           {msgs.map((m) => (
-            <div key={m.id} className={`msg ${m.role === "user" ? "user" : "bot"}`}>
+            <div
+              key={m.id}
+              className={`msg ${m.role === "user" ? "user" : "bot"}${
+                m.id === selectedEvidence?.id ? " selected" : ""
+              }`}
+              onClick={() => m.meta && setSelectedMsgId(m.id)}
+              title={m.meta ? "Bấm để xem bằng chứng của lượt này" : undefined}
+            >
               <span className="msg-avatar" aria-hidden>
                 {m.role === "user" ? <IconUser width={16} height={16} /> : <IconBot width={16} height={16} />}
               </span>
@@ -262,7 +278,7 @@ export default function ChatPage() {
             value={input}
             placeholder="Mô tả nhu cầu bằng tiếng Việt…"
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && send()}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) send(); }}
             disabled={!externalId}
           />
           <button className="btn" onClick={() => send()} disabled={loading || !externalId}>
@@ -293,7 +309,7 @@ export default function ChatPage() {
         {memoryHit && (
           <div className="memory-note" style={{ marginTop: 12 }}>
             <b>Memory</b>
-            <div style={{ marginTop: 4 }}>{memoryHit.slice(0, 160)}</div>
+            <div style={{ marginTop: 4 }}>{memoryHit.slice(0, MEMORY_PREVIEW_CAP)}</div>
           </div>
         )}
 

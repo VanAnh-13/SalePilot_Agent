@@ -24,25 +24,38 @@ def numbers(value: Any) -> list[float]:
         return []
     out: list[float] = []
     for token in re.findall(r"-?\d[\d.,]*", text):
-        out.append(_parse_number_token(token))
+        parsed = _parse_number_token(token)
+        if parsed is not None:
+            out.append(parsed)
     return out
 
 
-def _parse_number_token(number: str) -> float:
+def _parse_number_token(number: str) -> float | None:
     separators = [i for i, ch in enumerate(number) if ch in ".,"]
     if not separators:
-        return float(number)
-    last = separators[-1]
-    decimals = len(number) - last - 1
-    if len(separators) == 1:
-        if decimals == 3:
-            return float(number.replace(".", "").replace(",", ""))
-        return float(number.replace(",", "."))
-    if decimals not in {1, 2}:
-        return float(number.replace(".", "").replace(",", ""))
-    dec_sep = number[last]
-    thou_sep = "," if dec_sep == "." else "."
-    return float(number.replace(thou_sep, "").replace(dec_sep, "."))
+        cleaned = number
+    else:
+        last = separators[-1]
+        decimals = len(number) - last - 1
+        if len(separators) == 1:
+            if decimals == 3:
+                cleaned = number.replace(".", "").replace(",", "")
+            else:
+                cleaned = number.replace(",", ".")
+        elif decimals in {1, 2}:
+            dec_sep = number[last]
+            thou_sep = "," if dec_sep == "." else "."
+            cleaned = number.replace(thou_sep, "").replace(dec_sep, ".")
+        else:
+            cleaned = number.replace(".", "").replace(",", "")
+    try:
+        return float(cleaned)
+    except ValueError:
+        # Multi-separator tokens like "17.2.1" (an OS/firmware version) leave
+        # multiple dots after stripping thousand separators — unparseable. Honor
+        # the module contract ("returns None rather than raising") instead of
+        # aborting the whole catalog import with a ValueError.
+        return None
 
 
 def number(value: Any) -> float | None:
@@ -113,8 +126,8 @@ def split_features(value: Any) -> list[str]:
 
 
 _PEOPLE_RE = re.compile(
-    r"(?:từ|tu\s)?\s*(trên|tren|hơn|hon|dưới|duoi)?\s*(\d+)\s*(?:[-–]\s*(\d+)\s*)?"
-    r"ng[uươ]ờ?i",
+    r"(?:từ|tu\s)?\s*(trên|tren|hơn|hon|dưới|duoi)?\s*(\d+)\s*"
+    r"(?:(?:[-–]|đến|den)\s*(\d+)\s*)?ng[uươ]ờ?i",
 )
 
 

@@ -8,6 +8,18 @@ cd "$ROOT_DIR"
 export CATALOG_BACKEND=snapshot
 export CATALOG_SNAPSHOT="$ROOT_DIR/experiments/fixtures/catalog_dev_fixture.json"
 export SALEPILOT_CATALOG_REGISTRY=workbook
+# shellcheck disable=SC1091
+# Support both POSIX venvs (Linux/Mac/Docker: .venv/bin/activate) and Windows
+# venvs (.venv/Scripts/activate) — python -m venv lays these out differently
+# per platform, and this script must work on both (2026-08-01: previously
+# only checked bin/activate, so it silently fell through to system Python on
+# Windows and failed with ModuleNotFoundError instead of using backend/.venv).
+if [ -f backend/.venv/bin/activate ]; then
+  source backend/.venv/bin/activate
+elif [ -f backend/.venv/Scripts/activate ]; then
+  source backend/.venv/Scripts/activate
+fi
+
 # Use Python's own tempfile/pathlib (not bash mktemp -d) to create the temp
 # dir: on Windows under git-bash, `mktemp -d` returns an MSYS-virtual POSIX
 # path (e.g. /tmp/tmp.XXXX) that native-Windows Python/sqlite3 cannot open,
@@ -21,18 +33,6 @@ trap 'rm -rf "$VERIFY_TMP_DIR"' EXIT
 export DATABASE_URL="sqlite+aiosqlite:///$VERIFY_TMP_DIR/verify.db"
 
 echo "==> verify: imports + offline multi-agent smoke (multi-category catalog)"
-
-# shellcheck disable=SC1091
-# Support both POSIX venvs (Linux/Mac/Docker: .venv/bin/activate) and Windows
-# venvs (.venv/Scripts/activate) — python -m venv lays these out differently
-# per platform, and this script must work on both (2026-08-01: previously
-# only checked bin/activate, so it silently fell through to system Python on
-# Windows and failed with ModuleNotFoundError instead of using backend/.venv).
-if [ -f backend/.venv/bin/activate ]; then
-  source backend/.venv/bin/activate
-elif [ -f backend/.venv/Scripts/activate ]; then
-  source backend/.venv/Scripts/activate
-fi
 
 cd "$ROOT_DIR/backend"
 mkdir -p data
@@ -184,12 +184,22 @@ async def main() -> None:
     print("OK unsupported guardrail (laptop) + negation handling")
 
     # ---------------- Sandbox ----------------
+    # Sandbox is safe-by-default (sandbox_enabled=False): the smoke test
+    # opts in explicitly, mirroring how a deployment would enable it.
+    import os as _os
+
+    _os.environ["SANDBOX_ENABLED"] = "true"
+    from app.config import get_settings as _gs
+
+    _gs.cache_clear()
     from app.agent.sandbox.shell import run_sandbox_command
 
     s = await run_sandbox_command("date")
     assert s.get("ok") or s.get("stdout") is not None, s
     deny = await run_sandbox_command("rm -rf /")
     assert deny.get("ok") is False, deny
+    _os.environ.pop("SANDBOX_ENABLED", None)
+    _gs.cache_clear()
     print("OK sandbox allow/deny")
 
     # ---------------- Memory ----------------

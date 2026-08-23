@@ -23,8 +23,11 @@ async def remember_customer(
     interest: str = "",
     sku: str = "",
     note: str = "",
+    address: str = "",
+    purchased_sku: str = "",
+    marketing_consent: bool | None = None,
 ) -> str:
-    """Lưu/cập nhật memory khách (tên, SĐT, budget, interest, SKU quan tâm, ghi chú)."""
+    """Lưu/cập nhật memory khách: tên, SĐT, budget, interest, SKU quan tâm, ghi chú, địa chỉ giao hàng, SKU đã mua, đồng ý nhận tin marketing (chỉ True khi khách nói rõ)."""
     note_tool("remember_customer")
     ctx = get_ctx()
     profile = await merge_profile(
@@ -37,5 +40,8 @@ async def remember_customer(
         sku=sku,
         note=note,
         last_intent=note or interest,
+        address=address,
+        purchase_sku=purchased_sku,
+        marketing_consent=marketing_consent,
     )
     return json.dumps({"ok": True, "profile": profile}, ensure_ascii=False)

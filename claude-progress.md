@@ -734,3 +734,26 @@
 - LICENSE now contains the official CC plain-text legal code downloaded from creativecommons.org (never hand-write legal text). README license section rewritten (code+docs = CC BY-NC 4.0, attribution + non-commercial; DMX data rights excluded, still Dataset Card + manifest). backend/pyproject.toml declares LicenseRef-CC-BY-NC-4.0.
 - Note: CC licenses are not OSI open-source licenses (NC restriction) — consistent with the repo's research-prototype positioning and the forbidden commercial-claims list in tasks/plan.md.
 - Verification: scope guard check-files PASS; backend 108/108 PASS; verify.sh PASS.
+
+### Session 034 — code-simplification pass on the scope guard (code-simplification skill)
+
+- Date: 2026-08-22. Scope limited to the active feature's allowed files; `scripts/validate_agent_scope.py` was the only code file eligible.
+- Change (behavior-preserving): `run_self_test` repeated the same try/except/else rejection pattern five times; extracted a generic `_expect_scope_error(label, message, call)` helper, reworked `_expect_rejected` on top of it, and asserted the actual error messages instead of "any ScopeError". The inactive-feature case now pins the real message ("requires exactly one in-progress feature"), which is a slight strengthening, not a behavior change.
+- Considered and rejected: inlining `_same_path` (names a concept), touching other modules (outside `audit-hygiene-001` whitelist).
+- Verification: `--self-test` PASS, plain guard PASS, `--check-files scripts/validate_agent_scope.py` PASS, `./scripts/verify.sh` PASS.
+
+### Session 035 — fix audit findings end-to-end (audit-hygiene-001 + audit-remediation-001)
+
+- Date: 2026-08-23. Owner request: "fix toàn bộ lỗi" sau audit read-only 2026-08-23.
+- Harness (audit-hygiene-001 → passing): whitelisted .env.example (drift = đúng 1 dòng SANDBOX_ENABLED true→false, secure default); enumerated toàn bộ 35-path drift so với baseline 08-19 (work đã-verify-chưa-commit + eol renormalization); reset baseline stale theo tiền lệ owner-approved 08-19 rồi --start-session lại; verification bundle xanh (119 tests, verify.sh, git diff --check) trước khi mark passing.
+- Product fixes (audit-remediation-001, 11 file, không đụng protected):
+  - Zalo soft mode giờ log warning khi chữ ký SAI (strict vẫn fail-closed) — channels/zalo/webhook.py.
+  - Rate limit mới backend/app/services/ratelimit.py (SlidingWindowLimiter stdlib, clock injectable): /chat + /chat/stream theo external_id/IP, webhook theo IP; knobs CHAT_RATE_LIMIT_PER_MINUTE=60, WEBHOOK_RATE_LIMIT_PER_MINUTE=120 (0=tắt); trả 429.
+  - Scheduler claim nguyên tử pending→claimed bằng conditional UPDATE (rowcount 0 → skip) — hết double-send khi chạy multi-worker.
+  - Sandbox: shutil.which resolve binary qua PATH (chặn cwd-shadowing trên Windows) + reap process sau khi kill.
+  - /chat/stream: snapshot history TRƯỚC khi append (bỏ history[:-1] mong manh); try/except quanh pipeline phát SSE {"type":"error"} và log server-side; lib/client.ts bỏ qua frame malformed, nhận AbortSignal tùy chọn, surface Stream error.
+  - CORS: cors_origin_list không bao giờ rỗng → fallback ["*"]+allow_credentials không thể xảy ra (sửa trong config.py để không chạm main.py — protected).
+  - Admin BFF: bỏ check OWNER_TOKEN thừa (đã guard 503 ở dòng trên).
+- StreamEvent union thêm {type:"error"; detail?} — frontend/lib/types.ts.
+- Verification: backend 124/124 PASS (119 cũ + 5 unit mới cho limiter); scripts/verify.sh PASS (gồm MCP smoke); npx tsc --noEmit 0 lỗi; scope --check-files 11 file PASS; --check-session PASS.
+- Known/remaining: cây làm việc vẫn CHƯA commit (chờ owner ra lệnh); dev-split B2 custody mismatch từ audit trước vẫn mở; rate limiter in-process chỉ đúng cho deployment 1 worker (đúng mô hình compose hiện tại).

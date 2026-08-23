@@ -16,4 +16,4 @@ RUN mkdir -p /app/data/chroma
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8000
 
-CMD ["sh", "-c", "python -m scripts.seed_db && python -m scripts.ingest_kb && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+CMD ["sh", "-c", "sleep 2 && python -m scripts.seed_db && python -m scripts.ingest_kb && uvicorn app.main:app --host 0.0.0.0 --port 8000"]

@@ -29,13 +29,16 @@ LEGACY_PASSING_FEATURE_IDS = {
 SKIPPED_DIR_NAMES = {
     ".claude",
     ".git",
+    ".idea",
     ".mypy_cache",
     ".pytest_cache",
     ".ruff_cache",
     ".turbo",
     ".venv",
+    ".vscode",
     "__pycache__",
     "node_modules",
+    "tmp",
 }
 SKIPPED_DIR_PATHS = {".pnpm-store", "backend/data/chroma", "backend/data/trajectories", "frontend/.next"}
 SKIPPED_FILE_PATTERNS = ["*.db", "*.db-*", "*.log", "*.pid", "*.pyc", "*.swp", "*.tsbuildinfo", "*~"]
@@ -111,6 +114,15 @@ RECORDED_PROTECTED_APPROVALS = {
     # editing this dict (same mechanism audit-fix-001 used above).
     "refactor-main-imports-001": {
         "backend/app/main.py",
+        "scripts/validate_agent_scope.py",
+    },
+    # 2026-08-19: owner approved editing this protected script to add .idea,
+    # .vscode, and tmp to SKIPPED_DIR_NAMES so the baseline hash walk stops
+    # tripping on IDE churn and tmp/ scratch (the recurring stale-baseline /
+    # .idea issue from Sessions 028-029), and to record this approval.
+    # Owner's approval was captured via AskUserQuestion during the 2026-08-19
+    # audit-hygiene reconciliation (scope guard fix, recommendation #3).
+    "audit-hygiene-001": {
         "scripts/validate_agent_scope.py",
     },
 }
@@ -525,14 +537,18 @@ def start_session(data: dict[str, Any]) -> tuple[str | None, list[str]]:
     return feature["id"], previous_changes
 
 
-def _expect_rejected(data: dict[str, Any], path: str, message: str) -> None:
+def _expect_scope_error(label: str, message: str, call) -> None:
     try:
-        validate_files(data, None, [path])
+        call()
     except ScopeError as exc:
         if message not in str(exc):
-            raise AssertionError(f"{path} rejected for wrong reason: {exc}") from exc
+            raise AssertionError(f"{label} rejected for wrong reason: {exc}") from exc
         return
-    raise AssertionError(f"self-test expected rejection: {path}")
+    raise AssertionError(f"self-test expected rejection: {label}")
+
+
+def _expect_rejected(data: dict[str, Any], path: str, message: str) -> None:
+    _expect_scope_error(path, message, lambda: validate_files(data, None, [path]))
 
 
 def run_self_test() -> None:
@@ -571,40 +587,32 @@ def run_self_test() -> None:
             "test_evidence": [{"command": "test", "result": "passed", "date": "2026-07-24"}],
         }
     )
-    try:
-        validate_files(inactive, "harness-001", ["src/feature.py"])
-    except ScopeError:
-        pass
-    else:
-        raise AssertionError("self-test expected inactive feature rejection")
+    _expect_scope_error(
+        "inactive feature",
+        "requires exactly one in-progress feature",
+        lambda: validate_files(inactive, "harness-001", ["src/feature.py"]),
+    )
 
     wildcard = json.loads(json.dumps(data))
     wildcard["features"][0]["approved_protected_files"] = ["**"]
-    try:
-        validate_metadata(wildcard)
-    except ScopeError:
-        pass
-    else:
-        raise AssertionError("self-test expected wildcard approval rejection")
+    _expect_scope_error(
+        "wildcard approval", "must be exact paths", lambda: validate_metadata(wildcard)
+    )
 
     failed_tests = json.loads(json.dumps(inactive))
     failed_tests["features"][0]["test_evidence"][0]["result"] = "failed"
-    try:
-        validate_metadata(failed_tests)
-    except ScopeError:
-        pass
-    else:
-        raise AssertionError("self-test expected failed test evidence rejection")
+    _expect_scope_error(
+        "failed test evidence", "non-passing test evidence", lambda: validate_metadata(failed_tests)
+    )
 
     stripped_scope = json.loads(json.dumps(inactive))
     stripped_scope["features"][0].pop("allowed_files")
     stripped_scope["features"][0].pop("approved_protected_files")
-    try:
-        validate_metadata(stripped_scope)
-    except ScopeError:
-        pass
-    else:
-        raise AssertionError("self-test expected governed passing scope rejection")
+    _expect_scope_error(
+        "governed passing scope",
+        "requires allowed_files",
+        lambda: validate_metadata(stripped_scope),
+    )
 
     windows_spelling = json.loads(json.dumps(data))
     windows_spelling["features"][0]["allowed_files"][0] = "src\\feature.py"
@@ -615,12 +623,9 @@ def run_self_test() -> None:
     two_active["features"].append(
         {"id": "test-002", "status": "in_progress", "allowed_files": ["src/other.py"], "evidence": []}
     )
-    try:
-        validate_metadata(two_active)
-    except ScopeError:
-        pass
-    else:
-        raise AssertionError("self-test expected WIP limit rejection")
+    _expect_scope_error(
+        "two active features", "WIP limit exceeded", lambda: validate_metadata(two_active)
+    )
 
 
 def parse_args() -> argparse.Namespace:

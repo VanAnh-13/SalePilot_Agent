@@ -78,12 +78,16 @@ class EntityExtractor:
         return _PHONE_RE.findall(text)
 
     def extract_skus(self, text: str) -> list[str]:
-        # Exclude numbers that are part of a detected phone or price
+        # Exclude numbers that are part of a detected phone or price. Bare ≥7-digit
+        # numbers are prices (millions+), not catalog SKUs (≤6 digits or dash-coded).
         phone_digits = {m for m in _PHONE_RE.findall(text)}
+        price_digits = {m.strip().replace(".", "").replace(",", "") for m in _PRICE_RE.findall(text)}
         return [
             m
             for m in _SKU_RE.findall(text)
             if m not in phone_digits
+            and m not in price_digits
+            and not (m.isdigit() and len(m) >= 7)
         ]
 
     def extract_prices(self, text: str) -> list[str]:

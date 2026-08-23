@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import json
+import logging
 
 from fastapi import APIRouter, Header, HTTPException, Request
 
@@ -11,6 +12,9 @@ from app.config import get_settings
 from app.services import zalo_events
 from app.services.escalation import is_taken_over
 from app.services.gateway import ingest_message
+from app.services.ratelimit import enforce_rate_limit
+
+logger = logging.getLogger("salepilot.zalo")
 
 router = APIRouter(prefix="/webhooks/zalo", tags=["zalo"])
 
@@ -32,6 +36,13 @@ def _verify_signature(raw_body: bytes, signature: str | None) -> bool:
     digest = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
     ok = hmac.compare_digest(digest, signature.replace("sha256=", ""))
     if mode == "soft":
+        # Soft mode must not silently swallow forgeries: accept the payload but
+        # leave a warning trail so operators notice a broken/absent secret.
+        if not ok:
+            logger.warning(
+                "Zalo webhook signature mismatch accepted in soft mode "
+                "(check ZALO_WEBHOOK_SECRET/ZALO_OA_SECRET or switch to strict)"
+            )
         return True
     return ok
 
@@ -45,6 +56,9 @@ async def zalo_webhook(
     settings = get_settings()
     if not settings.zalo_enabled:
         raise HTTPException(status_code=503, detail="Zalo channel disabled")
+
+    # Flood guard before any parsing/DB work (host-keyed; identity unknown yet).
+    await enforce_rate_limit(request, scope="webhook")
 
     raw = await request.body()
     if not _verify_signature(raw, x_zalo_signature):
@@ -77,7 +91,7 @@ async def zalo_webhook(
     if event.event_name == "follow":
         reply = (
             f"Cảm ơn bạn đã follow {settings.shop_name}! "
-            "Em là SalePilot — cho em biết số người, ngân sách hoặc kiểu tủ lạnh cần tìm nhé."
+            "Em là SalePilot — cho em biết nhu cầu sản phẩm, ngân sách hoặc số người trong gia đình nhé."
         )
         client = get_zalo_client()
         await client.send_text(mapped["external_id"], reply)

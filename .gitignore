@@ -57,6 +57,10 @@ experiments/results/**
 *.swp
 *~
 
+# Scratch / analysis work area (never commit — a dangling gitlink and PNGs
+# were swept in here by an earlier baseline; de-indexed 2026-08-19)
+tmp/
+
 # Docker
 *.pid
 

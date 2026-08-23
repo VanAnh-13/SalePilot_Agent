@@ -1,11 +1,16 @@
 import type { ReactNode } from "react";
+import type { StatusTone } from "@/lib/api";
 
-export function statusPillClass(status?: string | null) {
+// Status keywords bucketed by the pill colour they resolve to.
+const POSITIVE_STATUS = ["won", "done", "completed", "success", "qualified", "active"];
+const PENDING_STATUS = ["pending", "new", "open", "queued", "running"];
+const NEGATIVE_STATUS = ["lost", "failed", "error", "escalated"];
+
+export function statusPillClass(status?: string | null): StatusTone {
   const s = (status || "").toLowerCase();
-  if (["won", "done", "completed", "success", "qualified", "active"].some((k) => s.includes(k)))
-    return "green";
-  if (["pending", "new", "open", "queued", "running"].some((k) => s.includes(k))) return "amber";
-  if (["lost", "failed", "error", "escalated"].some((k) => s.includes(k))) return "red";
+  if (POSITIVE_STATUS.some((k) => s.includes(k))) return "green";
+  if (PENDING_STATUS.some((k) => s.includes(k))) return "amber";
+  if (NEGATIVE_STATUS.some((k) => s.includes(k))) return "red";
   return "blue";
 }
 

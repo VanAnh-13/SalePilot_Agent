@@ -24,7 +24,7 @@ async def list_categories() -> str:
     note_tool("list_categories")
     counts = repository.category_counts()
     return json.dumps(
-        {"categories": list(counts.values()), "source": "mongodb:catalog"},
+        {"categories": list(counts.values()), "source": f"{repository.source()}:catalog"},
         ensure_ascii=False,
     )
 
@@ -67,7 +67,7 @@ async def search_products(
         limit=limit,
     )
     return json.dumps(
-        {"results": results, "source": "mongodb:catalog"},
+        {"results": results, "source": f"{repository.source()}:catalog"},
         ensure_ascii=False,
     )
 

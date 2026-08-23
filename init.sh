@@ -34,7 +34,7 @@ else
   exit 1
 fi
 pip install -q -r backend/requirements.txt
-(cd backend && python -m scripts.seed_db && python -m scripts.ingest_kb)
+(cd backend && python3 -m scripts.seed_db && python3 -m scripts.ingest_kb)
 
 echo "==> Frontend dependencies"
 if [ ! -d frontend/node_modules ]; then

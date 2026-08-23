@@ -91,6 +91,8 @@ async def takeover_conversation(
         raise HTTPException(status_code=404, detail="Conversation not found")
     async with async_session() as session:
         managed = await session.get(Conversation, conv.id)
+        if managed is None:
+            raise HTTPException(status_code=404, detail="Conversation not found")
         managed.status = "escalated"
         managed.needs_human = True
         await session.commit()

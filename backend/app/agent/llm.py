@@ -1,17 +1,18 @@
 import logging
+from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 
-from app.config import get_settings
+from app.config import DEFAULT_MODEL_OPENAI, get_settings
 
 logger = logging.getLogger(__name__)
 
 # Sensible current defaults used only when MODEL_NAME doesn't match the resolved
 # provider (e.g. LLM_PROVIDER=anthropic but MODEL_NAME left as an OpenAI id).
 _DEFAULT_MODEL = {
-    "openai": "gpt-4o-mini",
+    "openai": DEFAULT_MODEL_OPENAI,
     "anthropic": "claude-haiku-4-5",  # current, valid; set MODEL_NAME=claude-sonnet-5/claude-opus-4-8 for higher quality
 }
 
@@ -104,8 +105,12 @@ class _FailoverModel(BaseChatModel):
     this wrapper only catches exhausted failures.
     """
 
-    primary: BaseChatModel
-    secondary: BaseChatModel
+    # primary/secondary may be a BaseChatModel or the RunnableBinding returned by
+    # its .bind_tools() — typed Any so pydantic accepts both. A RunnableBinding is
+    # not a BaseChatModel, which previously raised ValidationError during graph
+    # construction whenever both provider keys were configured (both-keys mode).
+    primary: Any
+    secondary: Any
 
     @property
     def _llm_type(self) -> str:
@@ -132,6 +137,24 @@ class _FailoverModel(BaseChatModel):
             logger.warning("primary LLM failed, failing over", exc_info=True)
             ai = await self.secondary.ainvoke(messages, stop=stop)
         return ChatResult(generations=[ChatGeneration(message=ai)])
+
+    async def _astream(self, messages, stop=None, run_manager=None, **kwargs):
+        try:
+            async for chunk in self.primary.astream(messages, stop=stop):
+                yield chunk
+        except Exception:
+            logger.warning("primary LLM streaming failed, failing over", exc_info=True)
+            async for chunk in self.secondary.astream(messages, stop=stop):
+                yield chunk
+
+    async def _astream(self, messages, stop=None, run_manager=None, **kwargs):
+        try:
+            async for chunk in self.primary.astream(messages, stop=stop):
+                yield chunk
+        except Exception:
+            logger.warning("primary LLM streaming failed, failing over", exc_info=True)
+            async for chunk in self.secondary.astream(messages, stop=stop):
+                yield chunk
 
 
 def get_chat_model() -> BaseChatModel:

@@ -1,62 +1,17 @@
 "use client";
 
-import type {
-  DecisionConstraint,
-  DecisionContract,
-  DecisionItem,
-} from "@/lib/api";
-
-const KEY_LABELS: Record<string, string> = {
-  budget_vnd: "Ngân sách",
-  household_size: "Số người dùng",
-  area_m2: "Diện tích phòng",
-  max_width_cm: "Chiều ngang tối đa",
-  max_height_cm: "Chiều cao tối đa",
-  max_depth_cm: "Chiều sâu tối đa",
-  capacity_l: "Dung tích",
-  load_kg: "Khối lượng giặt",
-  ram_gb: "RAM",
-  storage_gb: "Bộ nhớ",
-};
-
-function shortHash(value?: string | null) {
-  if (!value) return "chưa có";
-  return value.length > 14 ? `${value.slice(0, 10)}…${value.slice(-4)}` : value;
-}
-
-function formatMoney(value?: number | null) {
-  if (value == null) return "Chưa có giá";
-  return new Intl.NumberFormat("vi-VN").format(value) + " ₫";
-}
-
-function formatValue(key: string, value: unknown): string {
-  if (value == null) return "không có dữ liệu";
-  if (key === "budget_vnd" && typeof value === "number") return formatMoney(value);
-  if (typeof value === "boolean") return value ? "có" : "không";
-  if (typeof value === "object" && !Array.isArray(value)) {
-    const range = value as { min?: unknown; max?: unknown };
-    if ("min" in range || "max" in range) {
-      return `${range.min ?? "?"} – ${range.max ?? "?"}`;
-    }
-    return JSON.stringify(value);
-  }
-  return String(value);
-}
-
-function constraintLabel(constraint: DecisionConstraint) {
-  return KEY_LABELS[constraint.key] || constraint.key.replaceAll("_", " ");
-}
-
-function statusLabel(status?: string) {
-  if (status === "matched") return "Đạt";
-  if (status === "violated") return "Không đạt";
-  return "Chưa rõ";
-}
-
-function sourceRow(item: DecisionItem) {
-  const row = item.provenance?.source_row;
-  return row == null ? "không rõ dòng" : `dòng ${row}`;
-}
+import type { DecisionContract } from "@/lib/api";
+import {
+  constraintLabel,
+  decisionStatusText,
+  decisionTone,
+  formatMoney,
+  formatValue,
+  KEY_LABELS,
+  shortHash,
+  sourceRow,
+  statusLabel,
+} from "@/lib/decision";
 
 export function DecisionEvidence({
   decision,
@@ -78,19 +33,8 @@ export function DecisionEvidence({
   }
 
   const items = (decision.top3 || []).slice(0, 3);
-  const hardViolation = items.some((item) =>
-    (item.constraints || []).some(
-      (constraint) => constraint.hardness === "hard" && constraint.status === "violated",
-    ),
-  );
-  const tone = hardViolation ? "danger" : decision.need_more ? "warn" : decision.ok ? "success" : "warn";
-  const status = hardViolation
-    ? "Có đề xuất vi phạm ràng buộc cứng"
-    : decision.need_more
-      ? "Cần thêm thông tin"
-      : decision.ok
-        ? "Có đề xuất kèm bằng chứng"
-        : "Không đủ bằng chứng để đề xuất";
+  const tone = decisionTone(decision);
+  const status = decisionStatusText(decision);
 
   return (
     <div className="decision-evidence">
@@ -122,7 +66,7 @@ export function DecisionEvidence({
           <div className="constraint-chips">
             {(decision.missing_slots || []).map((slot) => (
               <span key={slot} className="constraint-pill unknown">
-                {KEY_LABELS[slot] || slot.replaceAll("_", " ")}
+                {(slot && KEY_LABELS[slot]) || (typeof slot === "string" ? slot.replaceAll("_", " ") : String(slot))}
               </span>
             ))}
           </div>
@@ -147,7 +91,7 @@ export function DecisionEvidence({
               {item.why && <p className="decision-why">{item.why}</p>}
 
               <div className="constraint-chips">
-                {(item.constraints || []).map((constraint, constraintIndex) => (
+                {(item?.constraints || []).map((constraint, constraintIndex) => (
                   <span
                     className={`constraint-pill ${constraint.status || "unknown"}`}
                     key={`${constraint.key}-${constraintIndex}`}
