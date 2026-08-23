@@ -757,3 +757,22 @@
 - StreamEvent union thêm {type:"error"; detail?} — frontend/lib/types.ts.
 - Verification: backend 124/124 PASS (119 cũ + 5 unit mới cho limiter); scripts/verify.sh PASS (gồm MCP smoke); npx tsc --noEmit 0 lỗi; scope --check-files 11 file PASS; --check-session PASS.
 - Known/remaining: cây làm việc vẫn CHƯA commit (chờ owner ra lệnh); dev-split B2 custody mismatch từ audit trước vẫn mở; rate limiter in-process chỉ đúng cho deployment 1 worker (đúng mô hình compose hiện tại).
+
+### Session 036 — remove Zalo integration entirely (zalo-removal-001)
+
+- Date: 2026-08-23. Owner request: "loại bỏ tích hợp Zalo"; AskUserQuestion duyệt xóa sạch + 5 protected files.
+- Deleted: channels/zalo/* (5 modules), services/zalo_events.py, scripts/simulate_zalo.py, api/outbox.py (zalo-only), docs/ZALO_INTEGRATION.md.
+- Edited: main.py (bỏ 2 router wiring — protected, đã pin approval trong guard registry), models/entities.py (OutboxMessage.channel default web — protected), config.py (drop ZALO_* block), seed_db.py (seed lead qua web), test_api_smoke.py (-2 zalo tests, dọn env/imports), .env.example (-Zalo section), AGENTS.md + backend/AGENTS.md (channels constraint/map/lệnh), docs/{ARCHITECTURE,HARNESS,RIVF_TRACK2_RESEARCH,FRONTEND_V2_SPEC}.md (channel mentions).
+- Guard: RECORDED_PROTECTED_APPROVALS["zalo-removal-001"] pin 5 paths; baseline re-anchor sau khi hoàn tất; --check-files PASS với 27 paths (gồm cả file đã xóa).
+- Verification: backend 122/122 PASS; verify.sh PASS (MCP smoke green); compileall OK; grep worktree còn đúng các tham chiếu frontend cố ý dời sang fe-redesign-001.
+- Note: OutboxMessage model giữ nguyên làm audit trail generic; scheduler vẫn ghi row nhưng không còn API đọc riêng cho zalo.
+
+### Session 037 — modern-minimal frontend refresh (fe-redesign-001)
+
+- Date: 2026-08-23. Owner request: "thiết kế lại frontend"; AskUserQuestion chốt hướng plain-CSS minimal, cả 3 trang + error page, không thêm dependency.
+- De-Zalo UI hoàn tất: dashboard bỏ panel/fetch/state Zalo, "Latest agent run" chiếm slot grid; client.ts/types.ts dọn sạch — grep frontend/lib|app|components = 0 kết quả.
+- Design refresh: token accent mới indigo/teal (dark + light), radius/shadow/ring/selection/glow; lớp refresh cuối globals.css (composer pill, user bubble gradient, bot bubble radius lệch, chip hover lift, trace hover accent); error.tsx dựng lại theo design system; Nav thêm aria-current.
+- Guard: phát hiện & xử lý minh bạch frontend/AGENTS.md là protected bị bỏ sót — owner duyệt retroactive qua AskUserQuestion, pin vào registry cùng script guard; --check-files PASS 28 paths.
+- Verification: tsc --noEmit 0 lỗi; backend 122/122 PASS; verify.sh PASS; guards PASS.
+- ⚠️ Build limitation (disclosed): next build không hoàn thành trong sandbox của coding-agent (jest-worker spawn qua named pipe timeout ở trần 10 phút, 3 lần thử kể cả escalated; node mồ côi đã được dọn). Owner cần chạy `npm run build` local một lần để xác nhận gói production.
+- Incident note: các tiến trình node mồ côi sau kill khiến executor treo ngẫu nhiên — Stop-Process PID 29392/30000 đã xử lý.

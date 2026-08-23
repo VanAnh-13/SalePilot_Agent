@@ -27,7 +27,7 @@ async def open_escalation(
     """Mark the conversation escalated and write the internal ticket row.
 
     The OutboxMessage row is the dispatch record a human/owner consumes;
-    pushing it to an external channel (email, Zalo OA to staff) is future
+    pushing it to an external channel (e.g. email to staff) is future
     work. Returns the ticket, or None when there is no conversation yet.
     """
     ticket: OutboxMessage | None = None

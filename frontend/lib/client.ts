@@ -16,7 +16,6 @@ import type {
   MemoryItem,
   StreamDone,
   StreamEvent,
-  ZaloOutboxItem,
 } from "./types";
 
 export async function chatOnce(message: string, externalId: string) {
@@ -145,10 +144,6 @@ export function resolveConversation(conv: Conversation): Promise<ConversationAct
     channel: conv.channel,
     external_id: conv.external_id,
   });
-}
-
-export async function fetchZaloOutbox(): Promise<ZaloOutboxItem[]> {
-  return adminFetch<ZaloOutboxItem[]>("/outbox/zalo");
 }
 
 export async function fetchMemory(): Promise<MemoryItem[]> {

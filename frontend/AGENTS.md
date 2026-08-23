@@ -25,7 +25,7 @@ Backend must be up on `:8000` for chat/dashboard.
 |------|------|
 | `app/page.tsx` | Landing |
 | `app/chat/page.tsx` | Customer chat + Agent Trace |
-| `app/dashboard/page.tsx` | Leads, conversations, Zalo outbox |
+| `app/dashboard/page.tsx` | Leads, conversations, jobs, agent runs |
 | `lib/api.ts` | Fetch helpers |
 | `components/Nav.tsx` | Nav |
 

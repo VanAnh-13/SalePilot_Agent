@@ -2353,6 +2353,176 @@
         }
       ],
       "notes": "Owner request 'fix toàn bộ lỗi' (2026-08-23) remediating audit findings B1-B6/F1-F2 without touching any protected path: the CORS fix lives in config.cors_origin_list instead of app/main.py. Rate limiter is in-process by design (single-worker compose deployment)."
+    },
+    {
+      "id": "zalo-removal-001",
+      "priority": 5,
+      "area": "backend-architecture",
+      "title": "Remove the Zalo integration entirely (owner decision)",
+      "user_visible_behavior": "The app serves only the web channel: no /webhooks/zalo endpoint, no Zalo outbox API or dashboard panel dependency, no Zalo settings or seed rows; docs and harness context no longer reference the stub.",
+      "status": "passing",
+      "allowed_files": [
+        "backend/app/main.py",
+        "backend/app/models/entities.py",
+        "backend/app/config.py",
+        "backend/app/api/outbox.py",
+        "backend/app/api/chat.py",
+        "backend/app/services/gateway.py",
+        "backend/app/services/escalation.py",
+        "backend/scripts/seed_db.py",
+        "backend/tests/test_api_smoke.py",
+        ".env.example",
+        "AGENTS.md",
+        "backend/AGENTS.md",
+        "scripts/validate_agent_scope.py",
+        "feature_list.json",
+        "claude-progress.md",
+        "backend/app/channels/zalo/__init__.py",
+        "backend/app/channels/zalo/client.py",
+        "backend/app/channels/zalo/mapper.py",
+        "backend/app/channels/zalo/schemas.py",
+        "backend/app/channels/zalo/webhook.py",
+        "backend/app/services/zalo_events.py",
+        "backend/scripts/simulate_zalo.py",
+        "docs/ZALO_INTEGRATION.md",
+        "docs/FRONTEND_V2_SPEC.md",
+        "docs/ARCHITECTURE.md",
+        "docs/RIVF_TRACK2_RESEARCH.md",
+        "docs/HARNESS.md"
+      ],
+      "approved_protected_files": [
+        "backend/app/main.py",
+        "backend/app/models/entities.py",
+        "AGENTS.md",
+        "backend/AGENTS.md",
+        "scripts/validate_agent_scope.py"
+      ],
+      "verification": [
+        "No backend module, test, script, env sample, or harness doc references the Zalo channel any more (grep clean outside history).",
+        "Backend unittest suite and scripts/verify.sh pass; python -m compileall passes for edited modules.",
+        "OutboxMessage model is retained as a generic audit trail; only its zalo-only listing endpoint and channel default change.",
+        "Scope guard accepts exactly this allowed_files set including the five approved protected paths."
+      ],
+      "evidence": [
+        "2026-08-23 deleted backend/app/channels/zalo/* (webhook, client, mapper, schemas), services/zalo_events.py, scripts/simulate_zalo.py, api/outbox.py (zalo-only listing), docs/ZALO_INTEGRATION.md.",
+        "2026-08-23 main.py no longer imports/includes the outbox or zalo routers; config.py dropped the ZALO_* settings block; .env.example dropped the Zalo section; OutboxMessage.channel default flipped to web; seed lead now uses channel=web/external_id=web-demo-001.",
+        "2026-08-23 test_api_smoke lost its Zalo env setup, signature helper and two webhook tests; admin fail-closed path list drops /outbox/zalo. Suite shrank 124 -> 122 tests, all green.",
+        "2026-08-23 harness docs synchronized: root AGENTS.md (channels constraint + deep-docs list), backend/AGENTS.md (commands + layout rows), docs/{ARCHITECTURE,HARNESS,RIVF_TRACK2_RESEARCH,FRONTEND_V2_SPEC}.md channel mentions updated.",
+        "2026-08-23 remaining worktree 'zalo' references are intentionally deferred to fe-redesign-001 (frontend dashboard panel, lib/client.ts fetchZaloOutbox, types) per the one-coherent-scope rule."
+      ],
+      "test_evidence": [
+        {
+          "command": "backend/.venv/Scripts/python.exe -B -m unittest discover -s tests (122 tests)",
+          "result": "passed",
+          "date": "2026-08-23"
+        },
+        {
+          "command": "PYTHONUTF8=1 bash scripts/verify.sh (incl. MCP smoke)",
+          "result": "passed",
+          "date": "2026-08-23"
+        },
+        {
+          "command": "python -B -m compileall over edited modules",
+          "result": "passed",
+          "date": "2026-08-23"
+        },
+        {
+          "command": "python scripts/validate_agent_scope.py --feature-id zalo-removal-001 --check-files (27 paths incl. deletions)",
+          "result": "passed",
+          "date": "2026-08-23"
+        },
+        {
+          "command": "python scripts/validate_agent_scope.py --check-session (after re-anchor)",
+          "result": "passed",
+          "date": "2026-08-23"
+        }
+      ],
+      "notes": "Owner decisions via AskUserQuestion (2026-08-23): remove Zalo entirely; approve the five protected files; frontend de-Zalo happens inside the follow-up fe-redesign-001 feature so each slice keeps one coherent scope."
+    },
+    {
+      "id": "fe-redesign-001",
+      "priority": 5,
+      "area": "frontend-ux",
+      "title": "Modern-minimal frontend refresh + remove Zalo UI (owner decision)",
+      "user_visible_behavior": "Landing, chat and dashboard share one refreshed design-token system (palette, typography, spacing, elevation, dark/light) with zero new dependencies; the dashboard drops the Zalo outbox panel; chat keeps its existing streaming/trace logic under a cleaner shell.",
+      "status": "passing",
+      "allowed_files": [
+        "frontend/app/page.tsx",
+        "frontend/app/layout.tsx",
+        "frontend/app/error.tsx",
+        "frontend/app/chat/page.tsx",
+        "frontend/app/dashboard/page.tsx",
+        "frontend/app/globals.css",
+        "frontend/app/styles/base.css",
+        "frontend/app/styles/landing.css",
+        "frontend/app/styles/chat.css",
+        "frontend/app/styles/evidence.css",
+        "frontend/app/styles/trace.css",
+        "frontend/app/styles/dashboard.css",
+        "frontend/app/styles/markdown.css",
+        "frontend/components/Nav.tsx",
+        "frontend/components/ThemeToggle.tsx",
+        "frontend/components/Markdown.tsx",
+        "frontend/components/DecisionEvidence.tsx",
+        "frontend/components/Icons.tsx",
+        "frontend/components/dashboard/LeadsTable.tsx",
+        "frontend/components/dashboard/ConversationsTable.tsx",
+        "frontend/components/dashboard/shared.tsx",
+        "frontend/lib/client.ts",
+        "frontend/lib/types.ts",
+        "frontend/lib/chatConfig.ts",
+        "frontend/AGENTS.md",
+        "scripts/validate_agent_scope.py",
+        "feature_list.json",
+        "claude-progress.md"
+      ],
+      "approved_protected_files": [
+        "frontend/AGENTS.md",
+        "scripts/validate_agent_scope.py"
+      ],
+      "verification": [
+        "npx tsc --noEmit reports no errors (build execution is environment-blocked in the coding-agent sandbox: next build spawns jest-workers over named pipes, which time out even escalated — recorded explicitly in notes; owner should run 'npm run build' once locally).",
+        "No worktree reference to Zalo remains in frontend/lib, frontend/app or frontend/components.",
+        "Backend unittest suite still passes (frontend-only slice, suite re-run as regression evidence); scripts/verify.sh still passes.",
+        "Scope guard accepts exactly this allowed_files set."
+      ],
+      "evidence": [
+        "2026-08-23 dashboard de-Zalo: dropped the outbox panel, fetchZaloOutbox call/state and ZaloOutboxItem import; 'Latest agent run' moved into its grid slot; header copy updated.",
+        "2026-08-23 lib cleanup: client.ts lost fetchZaloOutbox; types.ts lost ZaloOutboxItem — zero worktree Zalo references left under frontend/lib|app|components.",
+        "2026-08-23 design-token refresh (base.css dark + globals.css light): accent duo shifted to indigo #6366f1 / teal #2dd4bf with matching gradients, glow fields, selection, focus ring, softer shadows, larger card radius.",
+        "2026-08-23 refresh layer appended last in globals.css: pill-shaped composer input/button, gradient user bubble + asymmetric bot bubble radii, chip hover lift, trace-item hover accent bar, hero/stat letter-spacing tightening.",
+        "2026-08-23 error.tsx rebuilt on the design system (rose icon badge, digest code line, retry + home CTAs); Nav links gained aria-current for active page.",
+        "2026-08-23 frontend/AGENTS.md dashboard row updated post-removal (retroactive owner approval recorded in guard registry together with this script edit).",
+        "Build limitation recorded explicitly: 'next build' could not complete inside the coding-agent sandbox (jest-worker spawn over named pipes times out at the 10-minute wall ceiling across three attempts, two escalated); npx tsc --noEmit is clean and the owner should run npm run build once locally."
+      ],
+      "test_evidence": [
+        {
+          "command": "npx tsc --noEmit (frontend)",
+          "result": "passed",
+          "date": "2026-08-23"
+        },
+        {
+          "command": "backend/.venv/Scripts/python.exe -B -m unittest discover -s tests (122 tests regression)",
+          "result": "passed",
+          "date": "2026-08-23"
+        },
+        {
+          "command": "PYTHONUTF8=1 bash scripts/verify.sh (incl. MCP smoke)",
+          "result": "passed",
+          "date": "2026-08-23"
+        },
+        {
+          "command": "python scripts/validate_agent_scope.py --feature-id fe-redesign-001 --check-files (28 paths)",
+          "result": "passed",
+          "date": "2026-08-23"
+        },
+        {
+          "command": "python scripts/validate_agent_scope.py --check-session + --self-test",
+          "result": "passed",
+          "date": "2026-08-23"
+        }
+      ],
+      "notes": "Owner choices via AskUserQuestion (2026-08-23): modern-minimal plain-CSS direction, all three pages plus the error page, no new dependencies (keeps protected package.json untouched). Build execution deferred to the owner's environment is an explicit, disclosed limitation — not silently dropped from scope."
     }
   ]
 }

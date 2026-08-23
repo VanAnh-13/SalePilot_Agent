@@ -20,11 +20,11 @@
   --muted: #8493ac;
 
   /* brand */
-  --accent: #3b82f6;
-  --accent-2: #22d3a5;
+  --accent: #6366f1;
+  --accent-2: #2dd4bf;
   --accent-3: #8b5cf6;
-  --brand-grad: linear-gradient(135deg, #3b82f6 0%, #22d3a5 100%);
-  --brand-grad-soft: linear-gradient(135deg, rgba(59, 130, 246, 0.16), rgba(34, 211, 165, 0.16));
+  --brand-grad: linear-gradient(135deg, #6366f1 0%, #2dd4bf 100%);
+  --brand-grad-soft: linear-gradient(135deg, rgba(99, 102, 241, 0.16), rgba(45, 212, 191, 0.16));
 
   /* status */
   --warn: #f59e0b;
@@ -42,12 +42,12 @@
   /* shape */
   --r-sm: 10px;
   --r-md: 14px;
-  --r-lg: 20px;
-  --r-xl: 28px;
+  --r-lg: 22px;
+  --r-xl: 32px;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 12px 30px -12px rgba(0, 0, 0, 0.6);
-  --shadow-lg: 0 30px 70px -30px rgba(0, 0, 0, 0.75);
-  --ring: 0 0 0 3px rgba(59, 130, 246, 0.35);
+  --shadow-md: 0 14px 34px -14px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 34px 74px -32px rgba(0, 0, 0, 0.7);
+  --ring: 0 0 0 3px rgba(99, 102, 241, 0.35);
 
   --font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
     "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
@@ -71,8 +71,8 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   background:
-    radial-gradient(1100px 620px at 8% -12%, rgba(59, 130, 246, 0.22), transparent 55%),
-    radial-gradient(900px 560px at 100% 0%, rgba(34, 211, 165, 0.16), transparent 50%),
+    radial-gradient(1100px 620px at 8% -12%, rgba(99, 102, 241, 0.2), transparent 55%),
+    radial-gradient(900px 560px at 100% 0%, rgba(45, 212, 191, 0.14), transparent 50%),
     radial-gradient(700px 700px at 50% 120%, rgba(139, 92, 246, 0.12), transparent 55%),
     radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1.4px) 0 0 / 26px 26px,
     var(--bg);
@@ -93,7 +93,7 @@ select {
 }
 
 ::selection {
-  background: rgba(59, 130, 246, 0.35);
+  background: rgba(99, 102, 241, 0.35);
 }
 
 /* scrollbars */

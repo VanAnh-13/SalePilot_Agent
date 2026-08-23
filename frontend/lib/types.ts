@@ -95,15 +95,6 @@ export type Conversation = {
   summary?: string | null;
 };
 
-export type ZaloOutboxItem = {
-  id: number;
-  user_id: string;
-  direction: string;
-  content: string;
-  status?: string | null;
-  created_at?: string | null;
-};
-
 export type MemoryProfile = {
   phone?: string | null;
   interests?: string[];

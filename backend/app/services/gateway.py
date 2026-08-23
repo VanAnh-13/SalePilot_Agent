@@ -1,4 +1,4 @@
-"""Unified channel ingress: web + zalo share one path into the agent."""
+"""Unified channel ingress: every channel shares one path into the agent."""
 
 from __future__ import annotations
 

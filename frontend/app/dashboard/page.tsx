@@ -7,7 +7,6 @@ import {
   fetchLatestRun,
   fetchLeads,
   fetchMemory,
-  fetchZaloOutbox,
   resolveConversation,
   takeoverConversation,
   type AgentRun,
@@ -15,7 +14,6 @@ import {
   type Job,
   type Lead,
   type MemoryItem,
-  type ZaloOutboxItem,
 } from "@/lib/api";
 import { IconAlert, IconBrain, IconChat, IconClock, IconRefresh, IconUsers } from "@/components/Icons";
 import { ConversationsTable } from "@/components/dashboard/ConversationsTable";
@@ -39,7 +37,6 @@ type Stat = {
 export default function DashboardPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [convs, setConvs] = useState<Conversation[]>([]);
-  const [zalo, setZalo] = useState<ZaloOutboxItem[]>([]);
   const [memory, setMemory] = useState<MemoryItem[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [run, setRun] = useState<AgentRun | null>(null);
@@ -69,7 +66,6 @@ export default function DashboardPage() {
       const results = await Promise.allSettled([
         fetchLeads(),
         fetchConversations(),
-        fetchZaloOutbox(),
         fetchMemory(),
         fetchJobs(),
         fetchLatestRun(),
@@ -82,10 +78,9 @@ export default function DashboardPage() {
       };
       setLeads(val(results[0], []));
       setConvs(val(results[1], []));
-      setZalo(val(results[2], []));
-      setMemory(val(results[3], []));
-      setJobs(val(results[4], []));
-      setRun(val(results[5], null));
+      setMemory(val(results[2], []));
+      setJobs(val(results[3], []));
+      setRun(val(results[4], null));
       setLastUpdated(new Date());
       if (errors.includes("UNAUTHORIZED")) {
         try {
@@ -135,7 +130,7 @@ export default function DashboardPage() {
       <div className="dash-head">
         <div>
           <h1>Owner dashboard</h1>
-          <p className="muted">Leads · memory · jobs · agent runs · Zalo</p>
+          <p className="muted">Leads · memory · jobs · agent runs</p>
         </div>
         <div className="row" style={{ gap: 12 }}>
           {lastUpdated && (
@@ -239,45 +234,28 @@ export default function DashboardPage() {
 
         <section className="card">
           <h2 className="card-title">
-            <span className="dot" /> Zalo outbox (mock)
+            <span className="dot" /> Latest agent run
           </h2>
-          <div className="trace-list" style={{ marginTop: 14 }}>
-            {zalo.map((z) => (
-              <div key={z.id} className="trace-item">
-                <div className="meta">
-                  {z.direction} · {z.user_id}
-                </div>
-                <div className="detail">{z.content}</div>
+          {run ? (
+            <div style={{ marginTop: 14, fontSize: 14 }}>
+              <div className="meta muted" style={{ marginBottom: 10 }}>
+                <code className="md-code">{run.run_id}</code> · agents: {(run.agents || []).join(", ")}
               </div>
-            ))}
-            {!zalo.length && <div className="empty">Trống.</div>}
-          </div>
+              <p style={{ margin: "0 0 8px" }}>
+                <strong>User:</strong> {run.user_text}
+              </p>
+              <p style={{ margin: 0, color: "var(--text-soft)" }}>
+                <strong style={{ color: "var(--text)" }}>Reply:</strong> {run.reply?.slice(0, REPLY_PREVIEW_CAP)}
+                {(run.reply?.length || 0) > REPLY_PREVIEW_CAP ? "…" : ""}
+              </p>
+            </div>
+          ) : (
+            <div className="empty" style={{ marginTop: 14 }}>
+              Chưa có run — hãy chat trước.
+            </div>
+          )}
         </section>
       </div>
-
-      <section className="card">
-        <h2 className="card-title">
-          <span className="dot" /> Latest agent run
-        </h2>
-        {run ? (
-          <div style={{ marginTop: 14, fontSize: 14 }}>
-            <div className="meta muted" style={{ marginBottom: 10 }}>
-              <code className="md-code">{run.run_id}</code> · agents: {(run.agents || []).join(", ")}
-            </div>
-            <p style={{ margin: "0 0 8px" }}>
-              <strong>User:</strong> {run.user_text}
-            </p>
-            <p style={{ margin: 0, color: "var(--text-soft)" }}>
-              <strong style={{ color: "var(--text)" }}>Reply:</strong> {run.reply?.slice(0, REPLY_PREVIEW_CAP)}
-              {(run.reply?.length || 0) > REPLY_PREVIEW_CAP ? "…" : ""}
-            </p>
-          </div>
-        ) : (
-          <div className="empty" style={{ marginTop: 14 }}>
-            Chưa có run — hãy chat trước.
-          </div>
-        )}
-      </section>
     </main>
   );
 }

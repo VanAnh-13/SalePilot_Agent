@@ -52,16 +52,16 @@
   --text-soft: #33415c;
   --muted: #5f6f89;
 
-  --accent: #2563eb;
-  --accent-2: #0d9f74;
+  --accent: #4f46e5;
+  --accent-2: #0d9488;
   --accent-3: #7c3aed;
-  --brand-grad: linear-gradient(135deg, #2563eb 0%, #0d9f74 100%);
-  --brand-grad-soft: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(13, 159, 116, 0.1));
+  --brand-grad: linear-gradient(135deg, #4f46e5 0%, #0d9488 100%);
+  --brand-grad-soft: linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(13, 148, 136, 0.1));
 
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.08);
   --shadow-md: 0 12px 30px -14px rgba(15, 23, 42, 0.18);
   --shadow-lg: 0 30px 70px -30px rgba(15, 23, 42, 0.25);
-  --ring: 0 0 0 3px rgba(37, 99, 235, 0.3);
+  --ring: 0 0 0 3px rgba(79, 70, 229, 0.3);
 }
 
 :root[data-theme="light"],
@@ -139,4 +139,68 @@
 .theme-toggle:focus-visible {
   outline: none;
   box-shadow: var(--ring);
+}
+
+/* ============================================================
+   2026-08 modern-minimal refresh layer
+   Composer pill, gradient user bubble, chip/trace micro-interactions.
+   Imported last, so these compose with (and refine) page styles.
+   ============================================================ */
+
+.chat-header {
+  border-bottom: 1px solid var(--border);
+}
+
+.composer {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.composer .input {
+  border-radius: 999px;
+  padding: 12px 18px;
+}
+
+.composer .btn {
+  border-radius: 999px;
+  padding: 11px 20px;
+}
+
+.chip {
+  transition: color 0.16s ease, background 0.16s ease, border-color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.chip:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.msg.user .bubble {
+  background: var(--brand-grad);
+  color: #ffffff;
+  border-radius: 18px 18px 6px 18px;
+}
+
+.msg.bot .bubble {
+  border-radius: 18px 18px 18px 6px;
+}
+
+.trace-item {
+  border-left: 2px solid transparent;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.trace-item:hover {
+  border-left-color: var(--accent);
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.hero-title {
+  letter-spacing: -0.03em;
+}
+
+.stat-card .value {
+  letter-spacing: -0.02em;
 }
