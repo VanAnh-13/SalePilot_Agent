@@ -83,7 +83,7 @@ If the guard detects a concurrent change that the user owns, stop and ask. Only 
 ## Architecture constraints
 
 - Multi-agent: Lead orchestrates via `delegate` / `finalize`; specialists: catalog, knowledge, crm, order, escalation.
-- Channels: Web + Zalo stub only (no Feishu/Slack/Telegram unless explicitly requested).
+- Channels: Web only (the Zalo stub was removed by owner decision; no other channels unless explicitly requested).
 - Offline path must keep working without API keys (`backend/app/agent/offline.py`).
 - Do not break `/health`, seed, or chat smoke paths.
 
@@ -134,6 +134,5 @@ A feature is done only when all are true:
 
 - `docs/ARCHITECTURE.md` — multi-agent layout
 - `docs/DEMO_SCRIPT.md` — pitch path
-- `docs/ZALO_INTEGRATION.md` — OA stub → real
 - `docs/PIVOT_PLAYBOOK.md` — VAIC problem drop
 - `docs/HARNESS.md` — harness map + patterns + lecture links

@@ -21,7 +21,7 @@ Guardrail: numbers only from tools; never infer stock.
 | **Repository** | `app/catalog/repository.py` — MongoDB primary, in-memory cache, snapshot fallback |
 | **Knowledge** | FAQ policy |
 | **CRM / Escalation** | lead + human handoff |
-| **Channel bus** | web (+ Zalo stub) via gateway |
+| **Channel bus** | web via gateway |
 
 ## Critical path
 

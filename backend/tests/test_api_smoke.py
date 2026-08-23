@@ -7,9 +7,6 @@ service is needed. Trajectory writing is disabled to keep the repo clean.
 
 from __future__ import annotations
 
-import hashlib
-import hmac
-import json
 import os
 import tempfile
 import unittest
@@ -18,8 +15,6 @@ from pathlib import Path
 _TMP = tempfile.mkdtemp(prefix="salepilot_api_smoke_")
 os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{_TMP}/api_smoke.db"
 os.environ["ADMIN_API_KEY"] = "smoke-admin-key"
-os.environ.setdefault("ZALO_ENABLED", "true")
-os.environ["ZALO_WEBHOOK_SECRET"] = "smoke-zalo-secret"
 os.environ["TRAJECTORY_ENABLED"] = "false"
 
 from fastapi.testclient import TestClient  # noqa: E402
@@ -29,10 +24,6 @@ from app.main import app  # noqa: E402
 from tests.catalog_fixture import installed_catalog_fixture  # noqa: E402
 
 ADMIN_HEADERS = {"X-Admin-Token": "smoke-admin-key"}
-
-
-def _zalo_signature(body: bytes) -> str:
-    return "sha256=" + hmac.new(b"smoke-zalo-secret", body, hashlib.sha256).hexdigest()
 
 
 class ApiSmokeTests(unittest.TestCase):
@@ -80,7 +71,7 @@ class ApiSmokeTests(unittest.TestCase):
         self.assertNotIn("memory_summary", body)
 
     def test_admin_endpoints_fail_closed_without_token(self):
-        for path in ("/leads", "/memory", "/jobs", "/runs/latest", "/outbox/zalo"):
+        for path in ("/leads", "/memory", "/jobs", "/runs/latest"):
             res = self.client.get(path)
             self.assertIn(res.status_code, (401, 403), path)
 
@@ -92,35 +83,6 @@ class ApiSmokeTests(unittest.TestCase):
         res = self.client.get("/leads", headers=ADMIN_HEADERS)
         self.assertEqual(res.status_code, 200)
         self.assertIsInstance(res.json(), list)
-
-    def test_zalo_webhook_rejects_bad_signature(self):
-        res = self.client.post(
-            "/webhooks/zalo",
-            json={"event_name": "user_send_text", "content": "hello"},
-            headers={"X-Zalo-Signature": "sha256=deadbeef"},
-        )
-        self.assertEqual(res.status_code, 401)
-
-    def test_zalo_webhook_skips_non_message_events(self):
-        payload = json.dumps(
-            {
-                "event_name": "user_seen_message",
-                "tracking_id": "smoke-evt-1",
-                "sender": {"id": "zuser-1"},
-            }
-        ).encode("utf-8")
-        res = self.client.post(
-            "/webhooks/zalo",
-            content=payload,
-            headers={
-                "X-Zalo-Signature": _zalo_signature(payload),
-                "Content-Type": "application/json",
-            },
-        )
-        self.assertEqual(res.status_code, 200)
-        body = res.json()
-        self.assertTrue(body["ok"])
-        self.assertTrue(body["skipped"])
 
     def test_runs_metrics_endpoint(self):
         res = self.client.get("/runs/metrics", headers=ADMIN_HEADERS)

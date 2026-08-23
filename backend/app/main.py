@@ -10,10 +10,8 @@ from app.api.jobs import router as jobs_router
 from app.api.leads import router as leads_router
 from app.api.memory import router as memory_router
 from app.api.mcp import router as mcp_router
-from app.api.outbox import router as outbox_router
 from app.api.products import router as products_router
 from app.api.runs import router as runs_router
-from app.channels.zalo.webhook import router as zalo_router
 # catalog_repository (imported at module top): verified no import cycle —
 # app.catalog.repository only imports config + stdlib.
 from app.catalog import repository as catalog_repository
@@ -61,8 +59,6 @@ def create_app() -> FastAPI:
     app.include_router(chat_router)
     app.include_router(leads_router)
     app.include_router(products_router)
-    app.include_router(outbox_router)
-    app.include_router(zalo_router)
     app.include_router(memory_router)
     app.include_router(mcp_router)
     app.include_router(runs_router)

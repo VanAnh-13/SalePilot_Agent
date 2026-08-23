@@ -74,16 +74,6 @@ class Settings(BaseSettings):
     # Scripts that need raw DMX data read this value; no path is hardcoded in code.
     dmx_src_dir: str = ""
 
-
-    zalo_enabled: bool = True
-    zalo_client: str = "mock"
-    zalo_oa_access_token: str = ""
-    zalo_oa_secret: str = ""
-    zalo_webhook_secret: str = ""
-    # Default: strict — rejects any webhook payload without a valid HMAC-SHA256
-    # signature.  Set to "off" only in development / mock environments.
-    zalo_verify_mode: str = "strict"
-
     shop_name: str = "SalePilot Điện Máy"
     # Default category slug used when the user's intent is ambiguous.
     shop_category: str = "tu_lanh"

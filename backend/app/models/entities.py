@@ -144,7 +144,7 @@ class OutboxMessage(Base):
     __tablename__ = "outbox_messages"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    channel: Mapped[str] = mapped_column(String(32), default="zalo")
+    channel: Mapped[str] = mapped_column(String(32), default="web")
     user_id: Mapped[str] = mapped_column(String(128), index=True)
     direction: Mapped[str] = mapped_column(String(16), default="outbound")
     content: Mapped[str] = mapped_column(Text)

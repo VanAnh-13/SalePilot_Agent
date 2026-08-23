@@ -45,8 +45,8 @@ async def main() -> None:
                 Lead(
                     name="Chị Lan",
                     phone="0912345678",
-                    channel="zalo",
-                    external_id="zalo-demo-001",
+                    channel="web",
+                    external_id="web-demo-001",
                     interest="Tủ lạnh Multi Door cho gia đình 5 người",
                     budget_vnd=25000000,
                     status="new",

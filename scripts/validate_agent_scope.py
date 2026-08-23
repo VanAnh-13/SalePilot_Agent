@@ -125,6 +125,24 @@ RECORDED_PROTECTED_APPROVALS = {
     "audit-hygiene-001": {
         "scripts/validate_agent_scope.py",
     },
+    # 2026-08-23: owner approved removing the Zalo integration entirely
+    # ("xoa sach", AskUserQuestion), which requires protected app/main.py
+    # (router wiring), models/entities.py (channel default), both AGENTS.md
+    # context files (stale map/commands), and this script to record it.
+    "zalo-removal-001": {
+        "backend/app/main.py",
+        "backend/app/models/entities.py",
+        "AGENTS.md",
+        "backend/AGENTS.md",
+        "scripts/validate_agent_scope.py",
+    },
+    # 2026-08-23: owner retroactively approved (AskUserQuestion) the missed
+    # frontend/AGENTS.md row edit ("Zalo outbox" -> post-removal wording) plus
+    # this script edit to record it, during fe-redesign-001 closure.
+    "fe-redesign-001": {
+        "frontend/AGENTS.md",
+        "scripts/validate_agent_scope.py",
+    },
 }
 
 

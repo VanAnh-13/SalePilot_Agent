@@ -120,9 +120,9 @@ frontend-v2/
 - No protected API routes in v2 — shell is visual/demo only.
 
 ### Out of scope (v2.0)
-- Owner dashboard (leads, Zalo outbox, jobs, memory panels) — remains on `frontend/`.
+- Owner dashboard (leads, jobs, memory panels) — remains on `frontend/`.
 - Real authentication / RBAC.
-- Zalo channel UI.
+- Additional messaging channels (the Zalo stub was removed by owner decision).
 - Replacing docker-compose `frontend` service (ask first).
 - Changing backend contracts.
 

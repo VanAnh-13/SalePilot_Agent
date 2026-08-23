@@ -59,7 +59,7 @@ async def chat(req: ChatRequest, request: Request) -> ChatResponse:
     # Abuse guard: per-identity sliding window (falls back to client IP).
     await enforce_rate_limit(request, scope="chat", identity=req.external_id or None)
     # The web ingress always speaks the web channel — ignoring a client-supplied
-    # channel closes the IDOR path (a web caller impersonating a zalo customer).
+    # channel closes the IDOR path (a web caller impersonating another channel).
     result = await ingest_message(
         channel=WEB_CHANNEL,
         external_id=external_id,
