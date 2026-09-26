@@ -136,3 +136,8 @@ A feature is done only when all are true:
 - `docs/DEMO_SCRIPT.md` — pitch path
 - `docs/PIVOT_PLAYBOOK.md` — VAIC problem drop
 - `docs/HARNESS.md` — harness map + patterns + lecture links
+
+## External Agent Skills and Rules
+
+- All general coding and agent skills must be accessed directly from `D:\.agents` (specifically `D:\.agents\skills`).
+- Strictly DO NOT copy, clone, vendor, or duplicate external skills or agent configs into this repository. Retrieve and invoke them directly in-place from `D:\.agents`.
