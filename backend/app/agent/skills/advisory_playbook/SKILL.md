@@ -60,4 +60,4 @@ Nguyên tắc chung cho MỌI ngành: (1) hỏi đúng **slot chính** trước,
 
 ---
 ## Ngành ngoài 8 nhóm trên
-Vẫn tư vấn được (hơn 100 ngành: quạt, nồi cơm, bếp, lọc nước, camera...). Hỏi **ngân sách + mục đích**, rồi `recommend_top3` — engine xếp theo giá + đánh giá ★ + lượt bán. Nếu catalog không có ngành đó → nói thật, đừng ép SP sai ngành (xem `grounding_guardrail`).
+Chỉ tư vấn khi catalog hiện tại có dữ liệu cho ngành khách hỏi. Hỏi **ngân sách + mục đích**, rồi `recommend_top3` — engine xếp theo giá + đánh giá ★ + lượt bán. Nếu catalog không có ngành đó → nói thật, đừng ép SP sai ngành (xem `grounding_guardrail`).

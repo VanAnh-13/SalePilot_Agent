@@ -1,0 +1,4 @@
+# Normalize line endings: treat all text files as LF in the repo regardless of
+# the OS used to check out. Stops the noisy LF<->CRLF rewrites Git reports on
+# Windows (added 2026-08-19). Binary files are auto-detected and left alone.
+* text=auto eol=lf

@@ -1,0 +1,30 @@
+{
+  "schema_version": "salepilot-seal-v1",
+  "status": "scored",
+  "created_at": "2026-07-25",
+  "split_seed": 20260723,
+  "manifest_path": "experiments/manifest.json",
+  "catalog_normalized_hash": "e2afdf38ed2df5599611e6f8285643f727e2c06c721b1a055b7baeea797df15c",
+  "catalog_family": "dmx_crawl_products_detail",
+  "sample_size_rationale": "Dev tracer uses 20 DMX-aligned episodes across deep and generic categories with clarify/abstain/faq/negation branches. Sealed test uses 40 held-out episodes stratified by category and difficulty to target primary hard-constraint CI width near +/-0.08 at 95% bootstrap under the frozen catalog hash.",
+  "release_procedure": [
+    "Freeze protocol + ready manifest catalog hash",
+    "Register sealed dev/test file and inputs-only hashes in SEAL_RECORD",
+    "Freeze code/conditions hash before prediction",
+    "Run deterministic conditions predict-only; lock prediction hash",
+    "Score once against frozen labels; write CHAIN_OF_CUSTODY"
+  ],
+  "notes": "Labels are colocated in JSONL for single-machine reproducibility. inputs_sha256 isolates turn text from labels for custody audits.",
+  "dev": {
+    "path": "experiments/benchmark/dev.jsonl",
+    "episodes": 20,
+    "file_sha256": "71dc6be4cfc0d4e0d231f9ffb933ab45ffb638171e8b995bb42e0cd7416a30ed",
+    "inputs_sha256": "03c62f1651e863963539a58de5484a1d6371e4239ba9b7b3ac27e9202b685c69"
+  },
+  "test": {
+    "path": "experiments/benchmark/test.jsonl",
+    "episodes": 40,
+    "file_sha256": "6871e1b0067d389b690f602683a98aa709b7f40699fd02ed4473fd70d1123586",
+    "inputs_sha256": "17defbc8841af0d270251a8da3d2722a44cb30016abe94ebe28b0e62abe4758e"
+  }
+}

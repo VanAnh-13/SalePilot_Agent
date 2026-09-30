@@ -89,7 +89,7 @@ async def schedule_followup(lead_id: int = 0, hours_from_now: int = 24, note: st
             if lead:
                 lead.status = "follow_up"
                 stamp = when.strftime("%Y-%m-%d %H:%M UTC")
-                lead.notes = (lead.notes + f"\n[Follow-up {stamp} job#{job_id}] {note}").strip()
+                lead.notes = ((lead.notes or "") + f"\n[Follow-up {stamp} job#{job_id}] {note}").strip()
                 await session.commit()
     return json.dumps(
         {
@@ -107,26 +107,27 @@ async def schedule_followup(lead_id: int = 0, hours_from_now: int = 24, note: st
 async def escalate_to_human(reason: str, summary: str = "") -> str:
     """Chuyển hội thoại cho nhân viên thật (khiếu nại, yêu cầu gặp người, deal phức tạp)."""
     note_tool("escalate_to_human")
+    from app.services.escalation import open_escalation
+
     ctx = get_ctx()
     ctx.needs_human = True
-    async with async_session() as session:
-        if ctx.conversation_id:
-            conv = await session.get(Conversation, ctx.conversation_id)
-            if conv:
-                conv.needs_human = True
-                conv.status = "escalated"
-                conv.summary = summary or reason
-                await session.commit()
-        if ctx.lead_id:
-            lead = await session.get(Lead, ctx.lead_id)
-            if lead:
-                lead.notes = (lead.notes + f"\n[ESCALATE] {reason}").strip()
-                await session.commit()
+    ticket = await open_escalation(
+        conversation_id=ctx.conversation_id,
+        channel=ctx.channel,
+        external_id=ctx.external_id,
+        reason=reason,
+        summary=summary,
+        lead_id=ctx.lead_id,
+    )
     return json.dumps(
         {
             "escalated": True,
             "reason": reason,
-            "message": "Đã tạo ticket cho team CSKH. Phản hồi trong giờ 9:00–21:00.",
+            "ticket_id": ticket.id if ticket else None,
+            "message": (
+                "Em đã chuyển hội thoại cho tư vấn viên và ghi ticket nội bộ. "
+                "Bot tạm ngừng trả lời để anh/chị trao đổi trực tiếp ạ."
+            ),
         },
         ensure_ascii=False,
     )

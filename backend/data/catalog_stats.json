@@ -1,0 +1,72 @@
+{
+  "total_products": 13754,
+  "priced_products": 13739,
+  "total_categories": 119,
+  "total_brands": 436,
+  "price_min_vnd": 10000,
+  "price_max_vnd": 380000000,
+  "price_median_vnd": 1390000,
+  "price_mean_vnd": 6136812,
+  "top_15_categories": [
+    {
+      "name": "Đồng hồ thời trang",
+      "count": 3138
+    },
+    {
+      "name": "Ốp lưng, miếng dán",
+      "count": 1039
+    },
+    {
+      "name": "Phụ kiện nhà bếp",
+      "count": 830
+    },
+    {
+      "name": "Loa, Tai nghe",
+      "count": 641
+    },
+    {
+      "name": "Laptop",
+      "count": 468
+    },
+    {
+      "name": "Sạc, cáp",
+      "count": 445
+    },
+    {
+      "name": "Chuột, bàn phím",
+      "count": 400
+    },
+    {
+      "name": "Quạt các loại",
+      "count": 373
+    },
+    {
+      "name": "Làm đẹp, chăm sóc cá nhân",
+      "count": 307
+    },
+    {
+      "name": "Tivi",
+      "count": 307
+    },
+    {
+      "name": "Balo, túi chống sốc",
+      "count": 302
+    },
+    {
+      "name": "Tủ lạnh",
+      "count": 251
+    },
+    {
+      "name": "Máy hút bụi gia đình",
+      "count": 230
+    },
+    {
+      "name": "Pc, máy in",
+      "count": 229
+    },
+    {
+      "name": "Máy lạnh",
+      "count": 228
+    }
+  ]
+}

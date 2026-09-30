@@ -1,0 +1,52 @@
+{
+  "aggregates": {
+    "B0_price_popularity": {
+      "episodes": 20,
+      "category_accuracy": 0.95,
+      "action_accuracy": 0.65,
+      "slot_micro_f1": 0.9836,
+      "slot_tp": 30,
+      "slot_fp": 1,
+      "slot_fn": 0,
+      "hard_constraints_checked": 40,
+      "hard_constraint_violations": 5,
+      "hard_constraint_violation_rate": 0.125
+    },
+    "B1_lexical_filter": {
+      "episodes": 20,
+      "category_accuracy": 0.95,
+      "action_accuracy": 0.7,
+      "slot_micro_f1": 0.9836,
+      "slot_tp": 30,
+      "slot_fp": 1,
+      "slot_fn": 0,
+      "hard_constraints_checked": 33,
+      "hard_constraint_violations": 0,
+      "hard_constraint_violation_rate": 0.0
+    },
+    "S_hybrid_constraint": {
+      "episodes": 20,
+      "category_accuracy": 0.95,
+      "action_accuracy": 0.7,
+      "slot_micro_f1": 0.9836,
+      "slot_tp": 30,
+      "slot_fp": 1,
+      "slot_fn": 0,
+      "hard_constraints_checked": 33,
+      "hard_constraint_violations": 0,
+      "hard_constraint_violation_rate": 0.0
+    },
+    "B2_llm_single_agent": {
+      "episodes": 20,
+      "category_accuracy": 0.95,
+      "action_accuracy": 0.6,
+      "slot_micro_f1": 0.9836,
+      "slot_tp": 30,
+      "slot_fp": 1,
+      "slot_fn": 0,
+      "hard_constraints_checked": 39,
+      "hard_constraint_violations": 0,
+      "hard_constraint_violation_rate": 0.0
+    }
+  }
+}

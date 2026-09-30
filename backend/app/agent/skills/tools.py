@@ -3,7 +3,7 @@ import json
 from langchain_core.tools import tool
 
 from app.agent.run_bag import get_run_bag
-from app.agent.skills.loader import list_skills, load_skill_body
+from app.agent.skills.loader import SKILL_BODY_CAP, list_skills, load_skill_body
 from app.agent.tools.runtime import note_tool
 
 
@@ -32,7 +32,7 @@ async def activate_skill(name: str) -> str:
     active = bag.setdefault("active_skills", [])
     if name not in active:
         active.append(name)
-    bag.setdefault("skill_bodies", {})[name] = body[:8000]
+    bag.setdefault("skill_bodies", {})[name] = body[:SKILL_BODY_CAP]
     bag["trace"].append({"agent": "lead", "event": "skill", "detail": f"activate:{name}"})
     return json.dumps(
         {"ok": True, "name": name, "body_preview": body[:500], "chars": len(body)},

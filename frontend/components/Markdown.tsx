@@ -22,18 +22,27 @@ type InlineRule = {
 
 const INLINE_RULES: InlineRule[] = [
   { re: /^`([^`]+)`/, render: (m, key) => <code key={key} className="md-code">{m[1]}</code> },
-  { re: /^\*\*([^*]+)\*\*/, render: (m, key) => <strong key={key}>{inline(m[1], key)}</strong> },
+  { re: /^\*\*([\s\S]+?)\*\*/, render: (m, key) => <strong key={key}>{inline(m[1], key)}</strong> },
   { re: /^__([^_]+)__/, render: (m, key) => <strong key={key}>{inline(m[1], key)}</strong> },
-  { re: /^\*([^*]+)\*/, render: (m, key) => <em key={key}>{inline(m[1], key)}</em> },
+  { re: /^\*([\s\S]+?)\*/, render: (m, key) => <em key={key}>{inline(m[1], key)}</em> },
   { re: /^_([^_]+)_/, render: (m, key) => <em key={key}>{inline(m[1], key)}</em> },
   { re: /^~~([^~]+)~~/, render: (m, key) => <del key={key}>{inline(m[1], key)}</del> },
   {
     re: /^\[([^\]]+)\]\(([^)\s]+)\)/,
-    render: (m, key) => (
-      <a key={key} href={m[2]} target="_blank" rel="noopener noreferrer" className="md-link">
-        {inline(m[1], key)}
-      </a>
-    ),
+    render: (m, key) => {
+      // Allowlist link schemes: http/https/mailto only. React renders other
+      // schemes (e.g. javascript:) as live hrefs despite the dev warning, which
+      // is a prompt-injection → self-XSS vector into the app origin.
+      const href = m[2];
+      if (!/^(https?:|mailto:)/i.test(href)) {
+        return <span key={key}>{inline(m[1], key)}</span>;
+      }
+      return (
+        <a key={key} href={href} target="_blank" rel="noopener noreferrer" className="md-link">
+          {inline(m[1], key)}
+        </a>
+      );
+    },
   },
 ];
 

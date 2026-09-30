@@ -1,0 +1,463 @@
+{
+  "aggregates": {
+    "B2_llm_single_agent": {
+      "action_accuracy": 0.65,
+      "category_accuracy": 0.95,
+      "episodes": 20,
+      "hard_constraint_violation_rate": 0.0,
+      "hard_constraint_violations": 0,
+      "hard_constraints_checked": 42,
+      "slot_fn": 0,
+      "slot_fp": 1,
+      "slot_micro_f1": 0.9836,
+      "slot_tp": 30
+    }
+  },
+  "episodes": [
+    {
+      "action_correct": true,
+      "category_correct": true,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-001",
+      "hard_constraints": {
+        "checked": 3,
+        "rate": 0.0,
+        "unknown": 0,
+        "violations": 0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "tu_lanh",
+      "slot_f1": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 2
+      }
+    },
+    {
+      "action_correct": false,
+      "category_correct": true,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-002",
+      "hard_constraints": {
+        "checked": 3,
+        "rate": 0.0,
+        "unknown": 0,
+        "violations": 0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_lanh",
+      "slot_f1": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 1
+      }
+    },
+    {
+      "action_correct": true,
+      "category_correct": true,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-003",
+      "hard_constraints": {
+        "checked": 6,
+        "rate": 0.0,
+        "unknown": 0,
+        "violations": 0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_lanh",
+      "slot_f1": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 2
+      }
+    },
+    {
+      "action_correct": true,
+      "category_correct": true,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-004",
+      "hard_constraints": {
+        "checked": 3,
+        "rate": 0.0,
+        "unknown": 0,
+        "violations": 0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_giat",
+      "slot_f1": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 3
+      }
+    },
+    {
+      "action_correct": false,
+      "category_correct": true,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-005",
+      "hard_constraints": {
+        "checked": 0,
+        "no_items": true,
+        "rate": 0.0,
+        "unknown": 0,
+        "violations": 0
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "dong_ho_thong_minh",
+      "slot_f1": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 1
+      }
+    },
+    {
+      "action_correct": true,
+      "category_correct": true,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-006",
+      "hard_constraints": {
+        "checked": 3,
+        "rate": 0.0,
+        "unknown": 0,
+        "violations": 0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_tinh_bang",
+      "slot_f1": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 1
+      }
+    },
+    {
+      "action_correct": true,
+      "category_correct": true,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-007",
+      "hard_constraints": {
+        "checked": 3,
+        "rate": 0.0,
+        "unknown": 0,
+        "violations": 0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "laptop",
+      "slot_f1": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 2
+      }
+    },
+    {
+      "action_correct": false,
+      "category_correct": true,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-008",
+      "hard_constraints": {
+        "checked": 0,
+        "no_items": true,
+        "rate": 0.0,
+        "unknown": 0,
+        "violations": 0
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "dien_thoai",
+      "slot_f1": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 1
+      }
+    },
+    {
+      "action_correct": false,
+      "category_correct": true,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-009",
+      "hard_constraints": {
+        "checked": 0,
+        "no_items": true,
+        "rate": 0.0,
+        "unknown": 0,
+        "violations": 0
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tivi",
+      "slot_f1": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 2
+      }
+    },
+    {
+      "action_correct": false,
+      "category_correct": true,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-010",
+      "hard_constraints": {
+        "checked": 0,
+        "no_items": true,
+        "rate": 0.0,
+        "unknown": 0,
+        "violations": 0
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tai_nghe",
+      "slot_f1": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 1
+      }
+    },
+    {
+      "action_correct": false,
+      "category_correct": true,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-011",
+      "hard_constraints": {
+        "checked": 0,
+        "no_items": true,
+        "rate": 0.0,
+        "unknown": 0,
+        "violations": 0
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "may_hut_bui",
+      "slot_f1": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 1
+      }
+    },
+    {
+      "action_correct": true,
+      "category_correct": true,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-012",
+      "hard_constraints": {
+        "checked": 6,
+        "rate": 0.0,
+        "unknown": 0,
+        "violations": 0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "tu_lanh",
+      "slot_f1": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 3
+      }
+    },
+    {
+      "action_correct": true,
+      "category_correct": true,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-013",
+      "hard_constraints": {
+        "checked": 0,
+        "no_items": true,
+        "rate": 0.0,
+        "unknown": 0,
+        "violations": 0
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tu_lanh",
+      "slot_f1": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 2
+      }
+    },
+    {
+      "action_correct": true,
+      "category_correct": true,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-014",
+      "hard_constraints": {
+        "checked": 0,
+        "rate": 0.0,
+        "violations": 0
+      },
+      "predicted_action": "abstain",
+      "predicted_category": null,
+      "slot_f1": {
+        "f1": 0.0,
+        "fn": 0,
+        "fp": 1,
+        "precision": 0.0,
+        "recall": 1.0,
+        "tp": 0
+      }
+    },
+    {
+      "action_correct": true,
+      "category_correct": false,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-015",
+      "hard_constraints": {
+        "checked": 0,
+        "rate": 0.0,
+        "violations": 0
+      },
+      "predicted_action": "faq",
+      "predicted_category": "tu_lanh",
+      "slot_f1": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 0
+      }
+    },
+    {
+      "action_correct": true,
+      "category_correct": true,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-016",
+      "hard_constraints": {
+        "checked": 6,
+        "rate": 0.0,
+        "unknown": 0,
+        "violations": 0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_lanh",
+      "slot_f1": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 2
+      }
+    },
+    {
+      "action_correct": true,
+      "category_correct": true,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-017",
+      "hard_constraints": {
+        "checked": 3,
+        "rate": 0.0,
+        "unknown": 0,
+        "violations": 0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_nuoc_nong",
+      "slot_f1": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 1
+      }
+    },
+    {
+      "action_correct": true,
+      "category_correct": true,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-018",
+      "hard_constraints": {
+        "checked": 3,
+        "rate": 0.0,
+        "unknown": 0,
+        "violations": 0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_giat",
+      "slot_f1": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 2
+      }
+    },
+    {
+      "action_correct": true,
+      "category_correct": true,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-019",
+      "hard_constraints": {
+        "checked": 3,
+        "rate": 0.0,
+        "unknown": 0,
+        "violations": 0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "tu_lanh",
+      "slot_f1": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 2
+      }
+    },
+    {
+      "action_correct": false,
+      "category_correct": true,
+      "condition": "B2_llm_single_agent",
+      "episode_id": "dev-020",
+      "hard_constraints": {
+        "checked": 0,
+        "no_items": true,
+        "rate": 0.0,
+        "unknown": 0,
+        "violations": 0
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "laptop",
+      "slot_f1": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 1
+      }
+    }
+  ]
+}

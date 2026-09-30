@@ -11,16 +11,31 @@ Guardrail: numbers only from tools; never infer stock.
 | Module | Role |
 |--------|------|
 | **Lead** | `delegate` / `finalize` + need loop (nhận diện ngành + hỏi ngược) |
-| **Catalog domain** | `list_categories`, `search`, `compare`, `recommend_top3` — category-aware |
-| **Category registry** | `app/catalog/categories.py` — rule sâu từng ngành dạng khai báo (aliases, specs chuẩn hóa, need slots + câu hỏi, priorities, trade-offs) |
+| **Catalog facade** | `app/agent/catalog_domain.py` — stable import surface cho API, tools, memory và evaluator |
+| **Catalog queries** | `app/agent/catalog_queries.py` — public product shape, search/filter và compare |
+| **Recommendation policy** | `app/agent/recommendation.py` — need extraction, follow-up, hard constraints, ranking và explanation |
+| **Consultation** | `app/agent/consultation.py` — rank một lần và đóng gói recommendation + decision evidence dùng chung cho các serving route |
+| **Category model** | `app/catalog/category_model.py` — dataclasses, generic factory và `CategoryRegistry` lookup/detection dùng chung |
+| **Category adapters** | `app/catalog/categories.py` (workbook) và `crawl_categories.py` (crawl) — declarations + normalization riêng từng nguồn |
+| **Runtime registry selector** | `app/catalog/registry.py` — chọn adapter qua `SALEPILOT_CATALOG_REGISTRY`, re-export stable registry interface |
 | **Repository** | `app/catalog/repository.py` — MongoDB primary, in-memory cache, snapshot fallback |
 | **Knowledge** | FAQ policy |
 | **CRM / Escalation** | lead + human handoff |
-| **Channel bus** | web (+ Zalo stub) via gateway |
+| **Channel bus** | web via gateway |
 
 ## Critical path
 
-User → gateway → run_agent (or offline) → detect category → catalog/knowledge tools → Vietnamese reply
+```text
+User → gateway → run_agent
+                  ├─ clear recommendation → consult → recommend_top3 → build_decision
+                  ├─ no API key           → offline → consult → same decision contract
+                  └─ ambiguous / policy    → LangGraph tools
+                                             ↓
+                                      Vietnamese reply + trace/evidence
+```
+
+`consult()` giữ một `ConsultationResult` gồm need, recommendation và decision.
+Route không gọi lại ranking engine khi cần lưu trajectory hoặc trả decision evidence.
 
 ## Data
 
@@ -46,4 +61,6 @@ User → gateway → run_agent (or offline) → detect category → catalog/know
 
 ## Thêm ngành hàng mới
 
-1 config `Category(...)` mới trong `app/catalog/categories.py` (aliases, specs, slots, priorities, tradeoffs) → chạy lại importer. Engine, tools, API, offline path tự nhận.
+1. Chọn đúng adapter nguồn: `categories.py` cho workbook hoặc `crawl_categories.py` cho crawl.
+2. Thêm `Category(...)` (aliases, specs, slots, priorities, trade-offs); chỉ thêm primitive dùng chung vào `category_model.py`.
+3. Chạy importer tương ứng và contract/regression tests. Engine, tools, API và offline path nhận category qua stable runtime registry.

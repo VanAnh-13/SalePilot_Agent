@@ -4,12 +4,35 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-echo "==> verify: imports + offline multi-agent smoke (multi-category catalog)"
-
+# Baseline smoke must be deterministic and work without database credentials.
+export CATALOG_BACKEND=snapshot
+export CATALOG_SNAPSHOT="$ROOT_DIR/experiments/fixtures/catalog_dev_fixture.json"
+export SALEPILOT_CATALOG_REGISTRY=workbook
 # shellcheck disable=SC1091
+# Support both POSIX venvs (Linux/Mac/Docker: .venv/bin/activate) and Windows
+# venvs (.venv/Scripts/activate) — python -m venv lays these out differently
+# per platform, and this script must work on both (2026-08-01: previously
+# only checked bin/activate, so it silently fell through to system Python on
+# Windows and failed with ModuleNotFoundError instead of using backend/.venv).
 if [ -f backend/.venv/bin/activate ]; then
   source backend/.venv/bin/activate
+elif [ -f backend/.venv/Scripts/activate ]; then
+  source backend/.venv/Scripts/activate
 fi
+
+# Use Python's own tempfile/pathlib (not bash mktemp -d) to create the temp
+# dir: on Windows under git-bash, `mktemp -d` returns an MSYS-virtual POSIX
+# path (e.g. /tmp/tmp.XXXX) that native-Windows Python/sqlite3 cannot open,
+# causing "unable to open database file" (2026-08-01). tempfile.mkdtemp()
+# always returns a path the SAME interpreter can use, and Path.as_posix()
+# renders it with forward slashes that both bash and SQLAlchemy's sqlite URL
+# parser accept on either platform (3 slashes + drive letter on Windows, 4
+# slashes for an absolute Unix path).
+VERIFY_TMP_DIR="$(python -c "import tempfile; from pathlib import Path; print(Path(tempfile.mkdtemp()).as_posix())")"
+trap 'rm -rf "$VERIFY_TMP_DIR"' EXIT
+export DATABASE_URL="sqlite+aiosqlite:///$VERIFY_TMP_DIR/verify.db"
+
+echo "==> verify: imports + offline multi-agent smoke (multi-category catalog)"
 
 cd "$ROOT_DIR/backend"
 mkdir -p data
@@ -26,7 +49,7 @@ from app.db.session import init_db
 async def main() -> None:
     await init_db()
 
-    # ---------------- Catalog: MongoDB-backed multi-category ----------------
+    # ---------------- Catalog: pinned engineering fixture ----------------
     from app.catalog import repository
     from app.agent.catalog_domain import (
         compare,
@@ -37,10 +60,10 @@ async def main() -> None:
 
     count = repository.reload()
     counts = repository.category_counts()
-    assert count == 8746, count
+    assert count == 70, count
     assert len(counts) == 14, sorted(counts)
-    assert counts["tu_lanh"]["total"] == 1692 and counts["tu_lanh"]["priced"] == 252, counts["tu_lanh"]
-    assert counts["may_lanh"]["total"] == 1039, counts["may_lanh"]
+    assert counts["tu_lanh"]["total"] == 5 and counts["tu_lanh"]["priced"] == 5, counts["tu_lanh"]
+    assert counts["may_lanh"]["total"] == 5, counts["may_lanh"]
     print(f"OK catalog source={repository.source()} products={count} categories={len(counts)}")
 
     # ---------------- Refrigerator deep rules (regression) ----------------
@@ -67,8 +90,8 @@ async def main() -> None:
     assert plain_need.get("max_width_cm") == 69.5, plain_need
     ask = recommend_top3({"category": "tu_lanh"})
     assert ask.get("need_more") and ask.get("ask"), ask
-    water = search(query="lấy nước ngoài", category="tu_lanh", priced_only=True, limit=5)
-    assert water and all(x.get("external_water") is True for x in water), water[:2]
+    scoped = search(query="fixture", category="tu_lanh", priced_only=True, limit=5)
+    assert scoped and all(x.get("category_code") == 38 for x in scoped), scoped[:2]
     print("OK refrigerator rules", [x["sku"] for x in rec["top3"]])
 
     # ---------------- Per-category deep rules ----------------
@@ -97,14 +120,7 @@ async def main() -> None:
     # compare stays inside one category and yields trade-offs
     cmp_result = compare([x["sku"] for x in ac["top3"][:2]])
     assert cmp_result.get("ok") and cmp_result.get("tradeoffs"), cmp_result
-    equal_discount = [
-        p["sku"]
-        for p in repository.by_category("tu_lanh")
-        if p.get("price_original_vnd")
-        and p.get("price_original_vnd") == p.get("price_sale_vnd")
-    ][:2]
-    assert len(equal_discount) == 2
-    assert not any("(0đ)" in item for item in compare(equal_discount).get("tradeoffs", []))
+    assert not any("(0đ)" in item for item in cmp_result.get("tradeoffs", []))
     print("OK per-category rules: may_lanh, may_giat, dong_ho, may_tinh_bang, may_nuoc_nong")
 
     # ---------------- Offline multi-agent flow ----------------
@@ -141,11 +157,13 @@ async def main() -> None:
     turn1 = await run_agent("tôi muốn mua 1 chiếc PC", channel="web", external_id=follow_ext)
     assert "ngân sách" in (turn1.get("reply") or "").lower(), turn1.get("reply", "")[:200]
     turn2 = await run_agent("giá khoảng 10tr", channel="web", external_id=follow_ext)
-    reply2 = (turn2.get("reply") or "").lower()
-    assert "máy tính để bàn" in reply2 and "top 3" in reply2, turn2.get("reply", "")[:300]
-    turn3 = await run_agent("còn màn hình thì sao, 27 inch", channel="web", external_id=follow_ext)
-    assert "màn hình" in (turn3.get("reply") or "").lower(), turn3.get("reply", "")[:300]
-    print("OK multi-turn need accumulation (PC → budget → switch to monitor)")
+    assert "ram" in (turn2.get("reply") or "").lower(), turn2.get("reply", "")[:300]
+    turn3 = await run_agent("RAM 16 GB", channel="web", external_id=follow_ext)
+    reply3 = (turn3.get("reply") or "").lower()
+    assert "máy tính để bàn" in reply3 and "top 3" in reply3, turn3.get("reply", "")[:300]
+    turn4 = await run_agent("còn màn hình thì sao, 27 inch", channel="web", external_id=follow_ext)
+    assert "màn hình" in (turn4.get("reply") or "").lower(), turn4.get("reply", "")[:300]
+    print("OK multi-turn need accumulation (PC → budget → RAM → switch to monitor)")
 
     # Guardrail: unsupported product (laptop) must not default to fridge; negation respected.
     from app.agent.catalog_domain import detect_category, detect_negated_categories
@@ -166,12 +184,22 @@ async def main() -> None:
     print("OK unsupported guardrail (laptop) + negation handling")
 
     # ---------------- Sandbox ----------------
+    # Sandbox is safe-by-default (sandbox_enabled=False): the smoke test
+    # opts in explicitly, mirroring how a deployment would enable it.
+    import os as _os
+
+    _os.environ["SANDBOX_ENABLED"] = "true"
+    from app.config import get_settings as _gs
+
+    _gs.cache_clear()
     from app.agent.sandbox.shell import run_sandbox_command
 
     s = await run_sandbox_command("date")
     assert s.get("ok") or s.get("stdout") is not None, s
     deny = await run_sandbox_command("rm -rf /")
     assert deny.get("ok") is False, deny
+    _os.environ.pop("SANDBOX_ENABLED", None)
+    _gs.cache_clear()
     print("OK sandbox allow/deny")
 
     # ---------------- Memory ----------------

@@ -24,6 +24,7 @@ out/
 dist/
 .turbo/
 *.tsbuildinfo
+.pnpm-store/
 
 # App data (runtime)
 backend/data/*.db
@@ -34,15 +35,38 @@ backend/data/trajectories/
 
 # Large local data sources (regenerated via backend/scripts import/ETL — kept out of git)
 backend/data/catalog_snapshot.json
+backend/data/research/catalog_workbook_snapshot.json
+backend/data/research/catalog_dmx_snapshot.json
+products_detail.xlsx
+products_detail.json
 Spec_cate_gia.xlsx
 *.xlsx
+
+# Experiment runtime outputs (fixtures/scripts stay tracked)
+experiments/results/**
+!experiments/results/README.md
+!experiments/results/*_scores.json
+!experiments/results/*_summary.json
+!experiments/results/CHAIN_OF_CUSTODY.json
 
 # OS / IDE
 .DS_Store
 .idea/
 .vscode/
+.claude/
 *.swp
 *~
 
+# Scratch / analysis work area (never commit — a dangling gitlink and PNGs
+# were swept in here by an earlier baseline; de-indexed 2026-08-19)
+tmp/
+
 # Docker
 *.pid
+
+# LaTeX scratch files (keep paper sources, bibliography output, and PDFs)
+paper/*.aux
+paper/*.blg
+paper/*.fdb_latexmk
+paper/*.fls
+paper/*.synctex.gz

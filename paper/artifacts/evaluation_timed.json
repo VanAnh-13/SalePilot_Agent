@@ -1,0 +1,564 @@
+{
+  "catalog": {
+    "catalog_id": "salepilot-synthetic-v1",
+    "product_count": 24,
+    "schema_version": "1.0",
+    "sha256": "f3d5803344c320f5c6e1cb52c586f1d9c93af0015c1d57194aa77059b8817b4e"
+  },
+  "dataset": {
+    "dataset_id": "salepilot-scenarios-v1",
+    "scenario_count": 8,
+    "schema_version": "1.0",
+    "sha256": "2e69892d8e127bc4e73747d545bb973425be950844315f9907f03ef9c8f8dda0"
+  },
+  "evaluation_schema_version": "1.0",
+  "systems": {
+    "popularity_oracle_category": {
+      "metrics": {
+        "action_accuracy": 0.875,
+        "category_accuracy": 1.0,
+        "clarification_escalation_proxy_accuracy": 0.5,
+        "hard_constraint_satisfaction": 0.777778,
+        "hit_at_3": 1.0,
+        "latency_ms": {
+          "max": 0.009488,
+          "mean": 0.004656,
+          "p50": 0.004178,
+          "p95": 0.009488
+        },
+        "limited_claim_fidelity": {
+          "precision": null,
+          "scope": "Mechanically checked budget and configured range-fit claims only; not a measure of human explanation quality.",
+          "supported_claims": 0,
+          "verified_claims": 0
+        },
+        "ndcg_at_3": 0.682814,
+        "precision_at_1": 0.666667,
+        "recall_at_3": 1.0,
+        "support": {
+          "action": 8,
+          "all_scenarios": 8,
+          "category": 7,
+          "clarification_escalation": 2,
+          "recommendation": 6
+        }
+      },
+      "predictions": [
+        {
+          "action": "recommend",
+          "category": "tu_lanh",
+          "explanations": {},
+          "latency_ms": 0.009488,
+          "need": {
+            "category": "tu_lanh"
+          },
+          "recommended_skus": [
+            "FRIDGE-SYN-003",
+            "FRIDGE-SYN-002",
+            "FRIDGE-SYN-001"
+          ],
+          "scenario_id": "fridge_multiturn_budget_household",
+          "system_id": "popularity_oracle_category"
+        },
+        {
+          "action": "recommend",
+          "category": "may_lanh",
+          "explanations": {},
+          "latency_ms": 0.006042,
+          "need": {
+            "category": "may_lanh"
+          },
+          "recommended_skus": [
+            "AC-SYN-002",
+            "AC-SYN-001",
+            "AC-SYN-003"
+          ],
+          "scenario_id": "aircon_multiturn_room_budget",
+          "system_id": "popularity_oracle_category"
+        },
+        {
+          "action": "recommend",
+          "category": "may_giat",
+          "explanations": {},
+          "latency_ms": 0.004558,
+          "need": {
+            "category": "may_giat"
+          },
+          "recommended_skus": [
+            "WASHER-SYN-003",
+            "WASHER-SYN-001",
+            "WASHER-SYN-002"
+          ],
+          "scenario_id": "washer_multiturn_household_budget",
+          "system_id": "popularity_oracle_category"
+        },
+        {
+          "action": "recommend",
+          "category": "laptop",
+          "explanations": {},
+          "latency_ms": 0.004709,
+          "need": {
+            "category": "laptop"
+          },
+          "recommended_skus": [
+            "LAPTOP-SYN-003",
+            "LAPTOP-SYN-001",
+            "LAPTOP-SYN-002"
+          ],
+          "scenario_id": "laptop_multiturn_ram_budget",
+          "system_id": "popularity_oracle_category"
+        },
+        {
+          "action": "recommend",
+          "category": "tu_lanh",
+          "explanations": {},
+          "latency_ms": 0.004118,
+          "need": {
+            "category": "tu_lanh"
+          },
+          "recommended_skus": [
+            "FRIDGE-SYN-003",
+            "FRIDGE-SYN-002",
+            "FRIDGE-SYN-001"
+          ],
+          "scenario_id": "fridge_singleturn_complete",
+          "system_id": "popularity_oracle_category"
+        },
+        {
+          "action": "recommend",
+          "category": "may_hut_bui",
+          "explanations": {},
+          "latency_ms": 0.003817,
+          "need": {
+            "category": "may_hut_bui"
+          },
+          "recommended_skus": [
+            "VACUUM-SYN-003",
+            "VACUUM-SYN-002",
+            "VACUUM-SYN-001"
+          ],
+          "scenario_id": "vacuum_singleturn_complete",
+          "system_id": "popularity_oracle_category"
+        },
+        {
+          "action": "recommend",
+          "category": "tu_lanh",
+          "explanations": {},
+          "latency_ms": 0.004178,
+          "need": {
+            "category": "tu_lanh"
+          },
+          "recommended_skus": [
+            "FRIDGE-SYN-003",
+            "FRIDGE-SYN-002",
+            "FRIDGE-SYN-001"
+          ],
+          "scenario_id": "fridge_requires_clarification",
+          "system_id": "popularity_oracle_category"
+        },
+        {
+          "action": "escalate",
+          "category": null,
+          "explanations": {},
+          "latency_ms": 0.000341,
+          "need": {},
+          "recommended_skus": [],
+          "scenario_id": "unsupported_vehicle_escalation",
+          "system_id": "popularity_oracle_category"
+        }
+      ]
+    },
+    "stateful_need": {
+      "metrics": {
+        "action_accuracy": 1.0,
+        "category_accuracy": 1.0,
+        "clarification_escalation_proxy_accuracy": 1.0,
+        "hard_constraint_satisfaction": 0.888889,
+        "hit_at_3": 1.0,
+        "latency_ms": {
+          "max": 2.4002,
+          "mean": 0.824288,
+          "p50": 0.624742,
+          "p95": 2.4002
+        },
+        "limited_claim_fidelity": {
+          "precision": 1.0,
+          "scope": "Mechanically checked budget and configured range-fit claims only; not a measure of human explanation quality.",
+          "supported_claims": 27,
+          "verified_claims": 27
+        },
+        "ndcg_at_3": 0.947609,
+        "precision_at_1": 1.0,
+        "recall_at_3": 1.0,
+        "support": {
+          "action": 8,
+          "all_scenarios": 8,
+          "category": 7,
+          "clarification_escalation": 2,
+          "recommendation": 6
+        }
+      },
+      "predictions": [
+        {
+          "action": "recommend",
+          "category": "tu_lanh",
+          "explanations": {
+            "FRIDGE-SYN-001": "phù hợp số người dùng; tiet kiem dien; trong ngân sách; giảm 1.000.000đ; 4.8★; đã bán 740",
+            "FRIDGE-SYN-002": "phù hợp số người dùng; tiet kiem dien; trong ngân sách; giảm 1.000.000đ; 4.7★; đã bán 980",
+            "FRIDGE-SYN-003": "phù hợp số người dùng; trong ngân sách; giảm 1.000.000đ; 4.5★; đã bán 1.6k"
+          },
+          "latency_ms": 2.4002,
+          "need": {
+            "budget_vnd": 15000000,
+            "category": "tu_lanh",
+            "household_size": 4,
+            "priority": [
+              "tiet_kiem_dien"
+            ]
+          },
+          "recommended_skus": [
+            "FRIDGE-SYN-002",
+            "FRIDGE-SYN-001",
+            "FRIDGE-SYN-003"
+          ],
+          "scenario_id": "fridge_multiturn_budget_household",
+          "system_id": "stateful_need"
+        },
+        {
+          "action": "recommend",
+          "category": "may_lanh",
+          "explanations": {
+            "AC-SYN-001": "phù hợp diện tích phòng (m²); tiet kiem dien; trong ngân sách; giảm 1.000.000đ; 4.8★; đã bán 870",
+            "AC-SYN-002": "phù hợp diện tích phòng (m²); tiet kiem dien; trong ngân sách; giảm 1.000.000đ; 4.6★; đã bán 1.4k",
+            "AC-SYN-003": "phù hợp diện tích phòng (m²); tiet kiem dien; trong ngân sách; giảm 3.000.000đ; 4.7★; đã bán 650"
+          },
+          "latency_ms": 1.032189,
+          "need": {
+            "area_m2": 20,
+            "budget_vnd": 12000000,
+            "category": "may_lanh",
+            "priority": [
+              "tiet_kiem_dien",
+              "chay_em"
+            ]
+          },
+          "recommended_skus": [
+            "AC-SYN-001",
+            "AC-SYN-003",
+            "AC-SYN-002"
+          ],
+          "scenario_id": "aircon_multiturn_room_budget",
+          "system_id": "stateful_need"
+        },
+        {
+          "action": "recommend",
+          "category": "may_giat",
+          "explanations": {
+            "WASHER-SYN-001": "phù hợp số người dùng; tiet kiem dien; trong ngân sách; giảm 1.000.000đ; 4.8★; đã bán 910",
+            "WASHER-SYN-003": "phù hợp số người dùng; trong ngân sách; giảm 1.000.000đ; 4.5★; đã bán 1.7k"
+          },
+          "latency_ms": 0.777273,
+          "need": {
+            "budget_vnd": 10000000,
+            "category": "may_giat",
+            "household_size": 5,
+            "priority": [
+              "tiet_kiem_dien"
+            ]
+          },
+          "recommended_skus": [
+            "WASHER-SYN-001",
+            "WASHER-SYN-003"
+          ],
+          "scenario_id": "washer_multiturn_household_budget",
+          "system_id": "stateful_need"
+        },
+        {
+          "action": "recommend",
+          "category": "laptop",
+          "explanations": {
+            "LAPTOP-SYN-001": "16 GB; trong ngân sách; giảm 2.000.000đ; 4.8★; đã bán 760",
+            "LAPTOP-SYN-002": "16 GB; trong ngân sách; giảm 2.000.000đ; 4.7★; đã bán 530"
+          },
+          "latency_ms": 0.739491,
+          "need": {
+            "budget_vnd": 20000000,
+            "category": "laptop",
+            "priority": [
+              "van_phong"
+            ],
+            "ram_gb": 16
+          },
+          "recommended_skus": [
+            "LAPTOP-SYN-001",
+            "LAPTOP-SYN-002"
+          ],
+          "scenario_id": "laptop_multiturn_ram_budget",
+          "system_id": "stateful_need"
+        },
+        {
+          "action": "recommend",
+          "category": "tu_lanh",
+          "explanations": {
+            "FRIDGE-SYN-001": "phù hợp số người dùng; tiet kiem dien; trong ngân sách; giảm 1.000.000đ; 4.8★; đã bán 740",
+            "FRIDGE-SYN-002": "phù hợp số người dùng; tiet kiem dien; trong ngân sách; giảm 1.000.000đ; 4.7★; đã bán 980",
+            "FRIDGE-SYN-003": "phù hợp số người dùng; trong ngân sách; giảm 1.000.000đ; 4.5★; đã bán 1.6k"
+          },
+          "latency_ms": 0.615114,
+          "need": {
+            "budget_vnd": 15000000,
+            "category": "tu_lanh",
+            "household_size": 4,
+            "priority": [
+              "tiet_kiem_dien"
+            ]
+          },
+          "recommended_skus": [
+            "FRIDGE-SYN-002",
+            "FRIDGE-SYN-001",
+            "FRIDGE-SYN-003"
+          ],
+          "scenario_id": "fridge_singleturn_complete",
+          "system_id": "stateful_need"
+        },
+        {
+          "action": "recommend",
+          "category": "may_hut_bui",
+          "explanations": {
+            "VACUUM-SYN-001": "robot; trong ngân sách; giảm 1.000.000đ; 4.8★; đã bán 840",
+            "VACUUM-SYN-002": "trong ngân sách; giảm 1.000.000đ; 4.7★; đã bán 1.3k",
+            "VACUUM-SYN-003": "trong ngân sách; giảm 500.000đ; 4.5★; đã bán 2.2k"
+          },
+          "latency_ms": 0.624742,
+          "need": {
+            "budget_vnd": 8000000,
+            "category": "may_hut_bui",
+            "priority": [
+              "robot"
+            ]
+          },
+          "recommended_skus": [
+            "VACUUM-SYN-001",
+            "VACUUM-SYN-002",
+            "VACUUM-SYN-003"
+          ],
+          "scenario_id": "vacuum_singleturn_complete",
+          "system_id": "stateful_need"
+        },
+        {
+          "action": "clarify",
+          "category": "tu_lanh",
+          "explanations": {},
+          "latency_ms": 0.175324,
+          "need": {
+            "category": "tu_lanh",
+            "priority": []
+          },
+          "recommended_skus": [],
+          "scenario_id": "fridge_requires_clarification",
+          "system_id": "stateful_need"
+        },
+        {
+          "action": "escalate",
+          "category": null,
+          "explanations": {},
+          "latency_ms": 0.229969,
+          "need": {
+            "priority": []
+          },
+          "recommended_skus": [],
+          "scenario_id": "unsupported_vehicle_escalation",
+          "system_id": "stateful_need"
+        }
+      ]
+    },
+    "stateless_last_turn": {
+      "metrics": {
+        "action_accuracy": 0.5,
+        "category_accuracy": 0.428571,
+        "clarification_escalation_proxy_accuracy": 1.0,
+        "hard_constraint_satisfaction": 0.222222,
+        "hit_at_3": 0.333333,
+        "latency_ms": {
+          "max": 0.553215,
+          "mean": 0.243326,
+          "p50": 0.151589,
+          "p95": 0.553215
+        },
+        "limited_claim_fidelity": {
+          "precision": 1.0,
+          "scope": "Mechanically checked budget and configured range-fit claims only; not a measure of human explanation quality.",
+          "supported_claims": 9,
+          "verified_claims": 9
+        },
+        "ndcg_at_3": 0.307138,
+        "precision_at_1": 0.333333,
+        "recall_at_3": 0.333333,
+        "support": {
+          "action": 8,
+          "all_scenarios": 8,
+          "category": 7,
+          "clarification_escalation": 2,
+          "recommendation": 6
+        }
+      },
+      "predictions": [
+        {
+          "action": "clarify",
+          "category": null,
+          "explanations": {},
+          "latency_ms": 0.162761,
+          "need": {
+            "budget_vnd": 15000000,
+            "priority": []
+          },
+          "recommended_skus": [],
+          "scenario_id": "fridge_multiturn_budget_household",
+          "system_id": "stateless_last_turn"
+        },
+        {
+          "action": "clarify",
+          "category": null,
+          "explanations": {},
+          "latency_ms": 0.151589,
+          "need": {
+            "budget_vnd": 12000000,
+            "priority": []
+          },
+          "recommended_skus": [],
+          "scenario_id": "aircon_multiturn_room_budget",
+          "system_id": "stateless_last_turn"
+        },
+        {
+          "action": "clarify",
+          "category": null,
+          "explanations": {},
+          "latency_ms": 0.148052,
+          "need": {
+            "budget_vnd": 10000000,
+            "priority": []
+          },
+          "recommended_skus": [],
+          "scenario_id": "washer_multiturn_household_budget",
+          "system_id": "stateless_last_turn"
+        },
+        {
+          "action": "clarify",
+          "category": null,
+          "explanations": {},
+          "latency_ms": 0.148904,
+          "need": {
+            "budget_vnd": 20000000,
+            "priority": []
+          },
+          "recommended_skus": [],
+          "scenario_id": "laptop_multiturn_ram_budget",
+          "system_id": "stateless_last_turn"
+        },
+        {
+          "action": "recommend",
+          "category": "tu_lanh",
+          "explanations": {
+            "FRIDGE-SYN-001": "phù hợp số người dùng; tiet kiem dien; trong ngân sách; giảm 1.000.000đ; 4.8★; đã bán 740",
+            "FRIDGE-SYN-002": "phù hợp số người dùng; tiet kiem dien; trong ngân sách; giảm 1.000.000đ; 4.7★; đã bán 980",
+            "FRIDGE-SYN-003": "phù hợp số người dùng; trong ngân sách; giảm 1.000.000đ; 4.5★; đã bán 1.6k"
+          },
+          "latency_ms": 0.553215,
+          "need": {
+            "budget_vnd": 15000000,
+            "category": "tu_lanh",
+            "household_size": 4,
+            "priority": [
+              "tiet_kiem_dien"
+            ]
+          },
+          "recommended_skus": [
+            "FRIDGE-SYN-002",
+            "FRIDGE-SYN-001",
+            "FRIDGE-SYN-003"
+          ],
+          "scenario_id": "fridge_singleturn_complete",
+          "system_id": "stateless_last_turn"
+        },
+        {
+          "action": "recommend",
+          "category": "may_hut_bui",
+          "explanations": {
+            "VACUUM-SYN-001": "robot; trong ngân sách; giảm 1.000.000đ; 4.8★; đã bán 840",
+            "VACUUM-SYN-002": "trong ngân sách; giảm 1.000.000đ; 4.7★; đã bán 1.3k",
+            "VACUUM-SYN-003": "trong ngân sách; giảm 500.000đ; 4.5★; đã bán 2.2k"
+          },
+          "latency_ms": 0.51888,
+          "need": {
+            "budget_vnd": 8000000,
+            "category": "may_hut_bui",
+            "priority": [
+              "robot"
+            ]
+          },
+          "recommended_skus": [
+            "VACUUM-SYN-001",
+            "VACUUM-SYN-002",
+            "VACUUM-SYN-003"
+          ],
+          "scenario_id": "vacuum_singleturn_complete",
+          "system_id": "stateless_last_turn"
+        },
+        {
+          "action": "clarify",
+          "category": "tu_lanh",
+          "explanations": {},
+          "latency_ms": 0.099971,
+          "need": {
+            "category": "tu_lanh",
+            "priority": []
+          },
+          "recommended_skus": [],
+          "scenario_id": "fridge_requires_clarification",
+          "system_id": "stateless_last_turn"
+        },
+        {
+          "action": "escalate",
+          "category": null,
+          "explanations": {},
+          "latency_ms": 0.163232,
+          "need": {
+            "priority": []
+          },
+          "recommended_skus": [],
+          "scenario_id": "unsupported_vehicle_escalation",
+          "system_id": "stateless_last_turn"
+        }
+      ]
+    }
+  },
+  "validity": {
+    "candidate_count_by_category": {
+      "dien_thoai": 3,
+      "laptop": 3,
+      "may_giat": 3,
+      "may_hut_bui": 3,
+      "may_lanh": 3,
+      "tai_nghe": 3,
+      "tivi": 3,
+      "tu_lanh": 3
+    },
+    "categories_with_candidate_count_le_3": [
+      "dien_thoai",
+      "laptop",
+      "may_giat",
+      "may_hut_bui",
+      "may_lanh",
+      "tai_nghe",
+      "tivi",
+      "tu_lanh"
+    ],
+    "recommendation_efficacy_supported": false,
+    "tier": "functional_reproducibility",
+    "warnings": [
+      "Synthetic-v1 is a functional fixture, not an external effectiveness benchmark.",
+      "Hit@3 and Recall@3 are non-discriminative when a category has at most three candidates.",
+      "Do not use these synthetic-v1 scores alone to claim real-world recommendation efficacy."
+    ]
+  }
+}

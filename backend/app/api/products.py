@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 from app.agent.catalog_domain import search
 from app.catalog import repository
-from app.catalog.categories import get_category
+from app.catalog.registry import get_category
 
 router = APIRouter(prefix="/products", tags=["products"])
 

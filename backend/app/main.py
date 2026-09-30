@@ -10,10 +10,11 @@ from app.api.jobs import router as jobs_router
 from app.api.leads import router as leads_router
 from app.api.memory import router as memory_router
 from app.api.mcp import router as mcp_router
-from app.api.outbox import router as outbox_router
 from app.api.products import router as products_router
 from app.api.runs import router as runs_router
-from app.channels.zalo.webhook import router as zalo_router
+# catalog_repository (imported at module top): verified no import cycle —
+# app.catalog.repository only imports config + stdlib.
+from app.catalog import repository as catalog_repository
 from app.config import get_settings
 from app.db.session import init_db
 from app.services.scheduler import scheduler_loop
@@ -25,8 +26,6 @@ async def lifespan(_app: FastAPI):
     Path("data/trajectories").mkdir(parents=True, exist_ok=True)
     await init_db()
     # Warm the catalog cache (MongoDB primary, snapshot fallback) off the event loop.
-    from app.catalog import repository as catalog_repository
-
     count = await asyncio.to_thread(catalog_repository.load)
     print(f"[catalog] loaded {count} products from {catalog_repository.source()}")
     stop = asyncio.Event()
@@ -42,9 +41,12 @@ async def lifespan(_app: FastAPI):
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(
-        title="SalePilot",
-        description="AI so sánh & tư vấn tủ lạnh theo nhu cầu — VAIC Điện Máy Xanh / SME",
-        version="0.6.0",
+        title="SalePilot-R",
+        description=(
+            "Constraint-first, evidence-grounded Vietnamese retail decision-support "
+            "research prototype"
+        ),
+        version="0.7.0",
         lifespan=lifespan,
     )
     app.add_middleware(
@@ -57,27 +59,33 @@ def create_app() -> FastAPI:
     app.include_router(chat_router)
     app.include_router(leads_router)
     app.include_router(products_router)
-    app.include_router(outbox_router)
-    app.include_router(zalo_router)
     app.include_router(memory_router)
     app.include_router(mcp_router)
     app.include_router(runs_router)
     app.include_router(jobs_router)
 
+    @app.get("/")
+    async def ping():
+        """Lightweight liveness probe — no DB/catalog access, trả lời tức thì."""
+        return {"ping": "pong", "ok": True}
+
     @app.get("/health")
     async def health():
-        from app.catalog import repository as catalog_repository
-
+        catalog_identity = catalog_repository.catalog_identity()
+        category_count = len(catalog_repository.category_counts())
         return {
             "ok": True,
+            "ready": bool(catalog_identity.get("products") and catalog_identity.get("sha256")),
             "service": "salepilot",
-            "architecture": "product-advisor-multi-agent",
+            "profile": "research-prototype",
+            "architecture": "constraint-first-hybrid-decision-support",
             "shop": settings.shop_name,
             "default_category": settings.shop_category,
             "catalog": {
-                "source": catalog_repository.source(),
-                "products": len(catalog_repository.all_products()),
-                "categories": len(catalog_repository.category_counts()),
+                "source": catalog_identity.get("backend"),
+                "products": catalog_identity.get("products"),
+                "categories": category_count,
+                "sha256": catalog_identity.get("sha256"),
             },
             "llm_provider": settings.llm_provider,
             "features": {
@@ -94,3 +102,6 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

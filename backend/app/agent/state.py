@@ -16,3 +16,4 @@ class AgentState(TypedDict, total=False):
     subagent_results: list[dict[str, Any]]
     trace: list[dict[str, Any]]
     final_reply: str
+    decision: dict[str, Any] | None

@@ -15,15 +15,38 @@ class ToolContext:
     needs_human: bool = False
 
 
-tool_context: ContextVar[ToolContext] = ContextVar("tool_context", default=ToolContext())
+tool_context: ContextVar[ToolContext] = ContextVar("tool_context")
 
 
 def get_ctx() -> ToolContext:
-    return tool_context.get()
+    try:
+        return tool_context.get()
+    except LookupError:
+        return ToolContext()
 
 
 def set_ctx(ctx: ToolContext) -> None:
     tool_context.set(ctx)
+
+
+def prepare_ctx(
+    *,
+    channel: str,
+    external_id: str,
+    conversation_id: int | None,
+    lead_id: int | None,
+    customer_name: str,
+) -> ToolContext:
+    """Build and install the request-scoped context for this turn."""
+    ctx = ToolContext(
+        channel=channel,
+        external_id=external_id,
+        conversation_id=conversation_id,
+        lead_id=lead_id,
+        customer_name=customer_name,
+    )
+    set_ctx(ctx)
+    return ctx
 
 
 def note_tool(name: str) -> None:

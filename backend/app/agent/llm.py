@@ -1,11 +1,18 @@
-from langchain_core.language_models.chat_models import BaseChatModel
+import logging
+from typing import Any
 
-from app.config import get_settings
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import AIMessage
+from langchain_core.outputs import ChatGeneration, ChatResult
+
+from app.config import DEFAULT_MODEL_OPENAI, get_settings
+
+logger = logging.getLogger(__name__)
 
 # Sensible current defaults used only when MODEL_NAME doesn't match the resolved
 # provider (e.g. LLM_PROVIDER=anthropic but MODEL_NAME left as an OpenAI id).
 _DEFAULT_MODEL = {
-    "openai": "gpt-4o-mini",
+    "openai": DEFAULT_MODEL_OPENAI,
     "anthropic": "claude-haiku-4-5",  # current, valid; set MODEL_NAME=claude-sonnet-5/claude-opus-4-8 for higher quality
 }
 
@@ -48,9 +55,9 @@ def _pick_model(provider: str, model_name: str) -> str:
     return name if (name and not is_claude) else _DEFAULT_MODEL["openai"]
 
 
-def get_chat_model() -> BaseChatModel:
+def _build_provider_model(provider: str) -> BaseChatModel:
+    """Construct one provider's model, or the offline _FallbackModel."""
     settings = get_settings()
-    provider = _resolve_provider()
 
     if provider == "anthropic":
         if not settings.anthropic_api_key:
@@ -63,23 +70,23 @@ def get_chat_model() -> BaseChatModel:
             temperature=0.3,
             max_tokens=settings.llm_max_tokens,
             timeout=settings.llm_timeout_s,
-            max_retries=1,
+            max_retries=settings.llm_max_retries,
         )
 
     if not settings.openai_api_key:
         return _FallbackModel()
     from langchain_openai import ChatOpenAI
 
-    # max_retries=1 + tight timeout: slow/rate-limited compatible endpoints must
-    # fail fast instead of silently retrying into 100s+ waits. max_tokens caps
-    # reply length — chat answers don't need essays and slow endpoints charge
-    # wall-clock per token.
+    # Tight timeout + bounded retries (LLM_MAX_RETRIES): transient 429/5xx get
+    # retried, but a genuinely dead endpoint still fails fast into the friendly
+    # fallback instead of hanging the chat. max_tokens caps reply length — chat
+    # answers don't need essays and slow endpoints charge wall-clock per token.
     kwargs: dict = {
         "api_key": settings.openai_api_key,
         "temperature": 0.3,
         "max_tokens": settings.llm_max_tokens,
         "timeout": settings.llm_timeout_s,
-        "max_retries": 1,
+        "max_retries": settings.llm_max_retries,
     }
     if settings.openai_base_url:
         # OpenAI-compatible endpoint: trust MODEL_NAME verbatim (provider-specific
@@ -89,6 +96,77 @@ def get_chat_model() -> BaseChatModel:
     else:
         kwargs["model"] = _pick_model("openai", settings.model_name)
     return ChatOpenAI(**kwargs)
+
+
+class _FailoverModel(BaseChatModel):
+    """Try the primary provider; on a hard failure, use the secondary.
+
+    Each inner model already retries transient errors at the SDK level, so
+    this wrapper only catches exhausted failures.
+    """
+
+    # primary/secondary may be a BaseChatModel or the RunnableBinding returned by
+    # its .bind_tools() — typed Any so pydantic accepts both. A RunnableBinding is
+    # not a BaseChatModel, which previously raised ValidationError during graph
+    # construction whenever both provider keys were configured (both-keys mode).
+    primary: Any
+    secondary: Any
+
+    @property
+    def _llm_type(self) -> str:
+        return "failover"
+
+    def bind_tools(self, tools, **kwargs):
+        return _FailoverModel(
+            primary=self.primary.bind_tools(tools, **kwargs),
+            secondary=self.secondary.bind_tools(tools, **kwargs),
+        )
+
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+        try:
+            ai = self.primary.invoke(messages, stop=stop)
+        except Exception:
+            logger.warning("primary LLM failed, failing over", exc_info=True)
+            ai = self.secondary.invoke(messages, stop=stop)
+        return ChatResult(generations=[ChatGeneration(message=ai)])
+
+    async def _agenerate(self, messages, stop=None, run_manager=None, **kwargs):
+        try:
+            ai = await self.primary.ainvoke(messages, stop=stop)
+        except Exception:
+            logger.warning("primary LLM failed, failing over", exc_info=True)
+            ai = await self.secondary.ainvoke(messages, stop=stop)
+        return ChatResult(generations=[ChatGeneration(message=ai)])
+
+    async def _astream(self, messages, stop=None, run_manager=None, **kwargs):
+        try:
+            async for chunk in self.primary.astream(messages, stop=stop):
+                yield chunk
+        except Exception:
+            logger.warning("primary LLM streaming failed, failing over", exc_info=True)
+            async for chunk in self.secondary.astream(messages, stop=stop):
+                yield chunk
+
+    async def _astream(self, messages, stop=None, run_manager=None, **kwargs):
+        try:
+            async for chunk in self.primary.astream(messages, stop=stop):
+                yield chunk
+        except Exception:
+            logger.warning("primary LLM streaming failed, failing over", exc_info=True)
+            async for chunk in self.secondary.astream(messages, stop=stop):
+                yield chunk
+
+
+def get_chat_model() -> BaseChatModel:
+    provider = _resolve_provider()
+    other = "anthropic" if provider == "openai" else "openai"
+    primary = _build_provider_model(provider)
+    secondary = _build_provider_model(other)
+    if isinstance(primary, _FallbackModel):
+        return secondary
+    if isinstance(secondary, _FallbackModel):
+        return primary
+    return _FailoverModel(primary=primary, secondary=secondary)
 
 
 class _FallbackModel(BaseChatModel):

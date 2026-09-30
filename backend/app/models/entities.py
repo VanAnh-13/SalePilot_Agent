@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, Integer, String, Text, func
+from sqlalchemy import JSON, Boolean, DateTime, Float, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -52,6 +52,7 @@ class CatalogProduct(Base):
     source: Mapped[str] = mapped_column(String(64), default="")
     norm: Mapped[dict] = mapped_column(JSON, default=dict)   # parsed numeric/text specs
     specs: Mapped[dict] = mapped_column(JSON, default=dict)  # raw Vietnamese spec_product
+    source_row: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
 
 class ProductSpec(Base):
@@ -143,7 +144,7 @@ class OutboxMessage(Base):
     __tablename__ = "outbox_messages"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    channel: Mapped[str] = mapped_column(String(32), default="zalo")
+    channel: Mapped[str] = mapped_column(String(32), default="web")
     user_id: Mapped[str] = mapped_column(String(128), index=True)
     direction: Mapped[str] = mapped_column(String(16), default="outbound")
     content: Mapped[str] = mapped_column(Text)
@@ -162,6 +163,12 @@ class ProcessedEvent(Base):
 
 class CustomerMemory(Base):
     __tablename__ = "customer_memories"
+    # Enforce one profile per (channel, external_id). Without this, two concurrent
+    # first-time writes both INSERT and every later load_profile crashes with
+    # MultipleResultsFound (scalar_one_or_none on a 2-row result).
+    __table_args__ = (
+        UniqueConstraint("channel", "external_id", name="uq_customer_memory_channel_external"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     channel: Mapped[str] = mapped_column(String(32), default="web", index=True)
