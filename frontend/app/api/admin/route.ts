@@ -66,7 +66,6 @@ async function proxyToBackend(req: NextRequest) {
     "/leads",
     "/memory",
     "/jobs",
-    "/outbox",
     "/runs",
   ];
   const normalised = path.startsWith("/") ? path : `/${path}`;

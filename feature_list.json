@@ -1,6 +1,6 @@
 {
   "project": "salepilot",
-  "last_updated": "2026-08-19",
+  "last_updated": "2026-09-30",
   "rules": {
     "single_active_feature": true,
     "wip_limit": 1,
@@ -50,6 +50,89 @@
     "passing": "Required verification has passed and evidence is recorded."
   },
   "features": [
+    {
+      "id": "readme-cleanup-001",
+      "priority": -3,
+      "area": "documentation-maintenance",
+      "title": "Rewrite README and remove unused scaffolding before integration into dev",
+      "user_visible_behavior": "Vietnamese README explains the current web-only app, offline setup, catalog and admin configuration; unused scaffolding is removed without changing active workflows.",
+      "status": "in_progress",
+      "allowed_files": [
+        "README.md",
+        "backend/main.py",
+        "backend/app/channels/__init__.py",
+        "backend/app/channels/base.py",
+        "backend/app/agent/decision.py",
+        "backend/app/catalog/normalize.py",
+        "backend/app/agent/tools/catalog.py",
+        "backend/app/config.py",
+        "frontend/app/api/admin/route.ts",
+        "feature_list.json",
+        "claude-progress.md",
+        "backend/app/agent/graph.py",
+        "backend/app/services/leads.py",
+        "frontend/app/dashboard/page.tsx",
+        "frontend/app/globals.css",
+        "frontend/app/layout.tsx",
+        "frontend/components/Nav.tsx",
+        "frontend/components/ThemeToggle.tsx"
+      ],
+      "approved_protected_files": [],
+      "verification": [
+        "Backend unittest discovery and evaluator metric tests pass.",
+        "Offline smoke bodies from scripts/verify.sh and MCP smoke pass with the checked-in engineering fixture.",
+        "Frontend TypeScript and production build pass.",
+        "README relative links, scope self-test, session scope and git diff --check pass.",
+        "Independent checker reviews the completed diff."
+      ],
+      "evidence": [
+        "2026-09-30: rewrote Vietnamese README around current web-only behavior, 70-SKU/14-category engineering fixture, Bash/PowerShell startup, catalog configuration, admin tokens, Docker limitations, MCP and verification; removed stale research/deployment assertions.",
+        "2026-09-30: ponytail cleanup removed unused hello-world entrypoint, empty channels package and unused ChannelAdapter, recommend_with_decision, normalize.split_features, unused catalog help string/import and retired /outbox BFF allowlist entry. No new dependencies or behavior added.",
+        "2026-09-30: baseline and post-edit backend suite pass 122/122, evaluator 9/9, official verify.sh including MCP PASS, TypeScript and production Next build PASS.",
+        "2026-09-30: live seed + health (ready=true, 70 products) + README chat PASS; production frontend /chat and /dashboard return 200, unauthenticated admin 401 and authenticated retired /outbox 403.",
+        "2026-09-30: independent checker found no actionable issues; 22 local README links resolve, code fences balanced, scope self-test/session/exact-path and diff whitespace checks PASS.",
+        "2026-09-30: integration blocker found: dev has one unique commit de627b3, six textual merge conflicts. Widened exact allowlist before merge; current branch already incorporates dev consultation lead upsert, dashboard auto refresh and theme persistence."
+      ],
+      "test_evidence": [
+        {
+          "command": "python -B -m unittest discover -s tests (backend, canonical TEMP/TMP; 122 tests)",
+          "result": "passed",
+          "date": "2026-09-30"
+        },
+        {
+          "command": "python -B -m unittest experiments.evaluate.test_metrics (9 tests)",
+          "result": "passed",
+          "date": "2026-09-30"
+        },
+        {
+          "command": "PYTHONUTF8=1 bash scripts/verify.sh (Git Bash; includes MCP)",
+          "result": "passed",
+          "date": "2026-09-30"
+        },
+        {
+          "command": "node node_modules/typescript/bin/tsc --noEmit (frontend)",
+          "result": "passed",
+          "date": "2026-09-30"
+        },
+        {
+          "command": "node node_modules/next/dist/bin/next build (frontend)",
+          "result": "passed",
+          "date": "2026-09-30"
+        },
+        {
+          "command": "Local seed, backend health/chat and production frontend/admin HTTP smoke",
+          "result": "passed",
+          "date": "2026-09-30"
+        },
+        {
+          "command": "README relative links; scope --self-test/--check-session/--check-files; git diff --check; independent checker",
+          "result": "passed",
+          "date": "2026-09-30"
+        }
+      ],
+      "notes": "Owner requested README rewrite, push and PR into dev, explicitly including already committed work from feat/zalo-removal-fe-redesign; then requested ponytail cleanup before push. Isolated worktree starts at 4b5dab4. Existing uncommitted PaperDraf work and lifecycle files in the original checkout are preserved. Merge dev into the PR branch before handoff; retain current implementations where dev intent is already present. Initial baseline issues were environment-only: Git Bash date was absent from PATH; Windows TEMP 8.3 spelling caused two path-equality failures, resolved by passing canonical TEMP/TMP. No test or verification rules changed."
+    },
+
     {
       "id": "audit-fix-001",
       "priority": -2,

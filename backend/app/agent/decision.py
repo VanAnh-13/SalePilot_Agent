@@ -207,8 +207,3 @@ def build_decision(need: dict[str, Any], rec: dict[str, Any] | None = None) -> d
             provenance.pop("catalog_backend", None)
     decision["decision_hash"] = _hash_obj(hash_payload)
     return decision
-
-
-def recommend_with_decision(need: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
-    rec = recommend_top3(need)
-    return rec, build_decision(need, rec)

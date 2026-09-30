@@ -12,11 +12,7 @@ from app.agent.catalog_domain import (
 from app.agent.decision import build_decision
 from app.agent.run_bag import get_run_bag
 from app.agent.tools.runtime import note_tool
-from app.catalog.registry import CATEGORIES
 from app.catalog import repository
-
-_CATEGORY_HELP = ", ".join(f"{c.slug} ({c.display})" for c in CATEGORIES)
-
 
 @tool
 async def list_categories() -> str:

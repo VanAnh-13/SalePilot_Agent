@@ -118,13 +118,6 @@ def price(value: Any) -> int | None:
     return result or None
 
 
-def split_features(value: Any) -> list[str]:
-    text = clean(value)
-    if not text:
-        return []
-    return [item.strip() for item in re.split(r"\s*\|\s*", text) if item.strip()]
-
-
 _PEOPLE_RE = re.compile(
     r"(?:từ|tu\s)?\s*(trên|tren|hơn|hon|dưới|duoi)?\s*(\d+)\s*"
     r"(?:(?:[-–]|đến|den)\s*(\d+)\s*)?ng[uươ]ờ?i",

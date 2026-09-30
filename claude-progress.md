@@ -757,3 +757,15 @@
 - Hành động: tạo nhánh `feat/zalo-removal-fe-redesign` @8c2ddc7 → push + tracking; local main reset về `1533c73`; `git push --force-with-lease=refs/heads/main:8c2ddc7 origin main` phục hồi remote main đúng về mốc cũ (xác nhận qua ls-remote).
 - Guard note: push -u ghi section tracking vào .git/config khiến check-session báo sensitive .git/config → re-anchor baseline; khi không còn feature in_progress, start-session không ghi baseline (by design) nên --check-session sẽ báo "no session baseline" cho tới phiên làm việc kế tiếp — plain validate/self-test vẫn là green check ở trạng thái nghỉ.
 - Bài học: luôn hỏi rõ nhánh đích trước khi push; mặc định đề xuất nhánh tính năng thay vì main.
+
+
+### Session 039 — README and ponytail cleanup for dev integration
+
+- Date: 2026-09-30. Owner requested README rewrite, push and PR into `dev`, explicitly including committed work from `feat/zalo-removal-fe-redesign`; then requested ponytail cleanup before pushing.
+- Worktree: `codex/readme-cleanup-dev`, based on `4b5dab4`. Original checkout, uncommitted `PaperDraf/`, and its lifecycle edits are preserved outside this branch.
+- README now documents current web-only capabilities, architecture, fixture-based SQLite setup (Bash/PowerShell), catalog/admin/Docker configuration, MCP and checks. Removed stale deployment/publication claims.
+- Cleanup: deleted unused `backend/main.py` and `app/channels/{__init__,base}.py`; removed unused `recommend_with_decision`, `normalize.split_features`, `_CATEGORY_HELP`/its import, and retired `/outbox` proxy allowance. Total source reduction: 30 lines, three files, no dependencies added.
+- Baseline and post-edit: backend 122/122; evaluator 9/9; actual Git Bash `scripts/verify.sh` including MCP PASS; frontend TypeScript and production build PASS. Live seed/health/chat and frontend route/admin boundary checks PASS. Independent checker: no findings. README 22 relative links, scope and whitespace checks PASS.
+- Environment corrections only: restored Git Bash utilities to PATH for the smoke sandbox command; used canonical long TEMP/TMP paths to avoid Windows 8.3 path-equality failures. No application/test changes for those issues.
+- Clean-state checklist: runtime/startup/health/chat/smoke/tests/TypeScript/source-scope items verified. Local full DMX catalog, raw trajectories and paper compile were not part of this task; fixture is explicitly technical test data, not publication evidence.
+- Remaining integration step: `dev` has one independent July commit with six textual conflicts; all its intent (lead upsert, dashboard refresh, persisted light/dark theme) is already present in current source. Exact merge files added to allowlist before merging; final resolution will be checked before push/PR.
