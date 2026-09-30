@@ -2,19 +2,15 @@
 
 ## Current Verified State
 
-- Repository root: `D:\Homeworks\SalePilot_Agent`
-- Date: 2026-08-23
-- Active feature: **none** — all product features are `passing`; `blocked`: paper-001/rivf-001 (authorized workbook pending); several legacy `not_started` scaffolds remain
-- Channel: **Web only** — Zalo integration removed entirely (Session 036, owner decision): no `/webhooks/zalo`, no `/outbox/zalo`, no `ZALO_*` settings
-- Backend tests: **122/122 pass**; evaluator tests **9/9 pass**; `scripts/verify.sh` **PASS** (incl. MCP smoke)
-- Frontend: TypeScript **0 errors** (`npx tsc --noEmit`). ⚠️ Production build could NOT be executed inside the coding-agent sandbox (next build jest-worker pipe timeout — Session 037); owner should run `npm run build` once on the feature branch
-- Rate limiting: in-process sliding window on `/chat[/stream]` (`CHAT_RATE_LIMIT_PER_MINUTE=60`, `WEBHOOK_RATE_LIMIT_PER_MINUTE=120` retained as a generic knob); scheduler claims jobs atomically; Zalo soft-mode logging removed along with the channel
-- Scope guard: `--self-test` + plain validate **PASS**. By design there is **no session baseline while zero features are in_progress**, so `--check-session` reports "no session baseline" until the next working session runs `--start-session`
-- Git: all recent work lives on branch **`feat/zalo-removal-fe-redesign`** (pushed, @8c2ddc7); remote **`main` restored to `1533c73`** by force-with-lease per owner instruction — never push feature work to main without an explicit ask
-- Research: sealed B0/B1/S results verified (40 episodes); the open known issue is the dev-split B2 custody mismatch recorded in earlier sessions
-- Security posture: admin endpoints fail-closed behind `ADMIN_API_KEY`; dashboard uses the double-token server-side BFF; public chat is rate-limited; sandbox/web-fetch default off; CORS never falls back to wildcard+credentials
-- Do not commit `.env` (contains cloud secrets)
-- Next best step: owner verifies `npm run build` locally on `feat/zalo-removal-fe-redesign`, then opens a PR into main
+- Date: 2026-09-30.
+- Branch: `codex/readme-cleanup-dev`, based on committed `feat/zalo-removal-fe-redesign` at `4b5dab4`, integrating `origin/dev` at `de627b3`. Target PR base is **dev** (owner instruction); do not push this work to main.
+- Active feature: **none** — `readme-cleanup-001` is passing. Existing research blockers remain recorded in feature_list.json. Original-checkout uncommitted PaperDraf work is outside this branch and preserved.
+- Channel: **Web only**. README reflects current product behavior, fixture setup, admin configuration and research limitations.
+- Verification: backend **122/122 PASS**, evaluator **9/9 PASS**, official `scripts/verify.sh` including MCP **PASS**, TypeScript **PASS**, frontend production build **PASS** (Next.js 14.2.35). This supersedes the Session 037 build-environment limitation for this branch.
+- Live checks: seed, `/health` (ready, 70 fixture products), `/chat`, frontend `/chat` and `/dashboard` PASS; admin authentication 401 and retired `/outbox` rejection 403 verified. Fixture is engineering test data.
+- Scope/self-test/README links/whitespace and independent checker PASS. Merge conflicts resolved by preserving the tested source after confirming all dev behavior is already incorporated; resolved tree byte-identical to pre-merge source.
+- Full catalog, public deployment and paper compilation were not reverified here; stored research results are historical evidence only. Do not commit `.env` or customer data.
+- Next step: push `codex/readme-cleanup-dev`, open PR into `dev`, and review the broad integration diff before merging.
 
 ### Session 002
 
@@ -768,4 +764,4 @@
 - Baseline and post-edit: backend 122/122; evaluator 9/9; actual Git Bash `scripts/verify.sh` including MCP PASS; frontend TypeScript and production build PASS. Live seed/health/chat and frontend route/admin boundary checks PASS. Independent checker: no findings. README 22 relative links, scope and whitespace checks PASS.
 - Environment corrections only: restored Git Bash utilities to PATH for the smoke sandbox command; used canonical long TEMP/TMP paths to avoid Windows 8.3 path-equality failures. No application/test changes for those issues.
 - Clean-state checklist: runtime/startup/health/chat/smoke/tests/TypeScript/source-scope items verified. Local full DMX catalog, raw trajectories and paper compile were not part of this task; fixture is explicitly technical test data, not publication evidence.
-- Remaining integration step: `dev` has one independent July commit with six textual conflicts; all its intent (lead upsert, dashboard refresh, persisted light/dark theme) is already present in current source. Exact merge files added to allowlist before merging; final resolution will be checked before push/PR.
+- Integration: merged the independent `dev` commit after reviewing all six conflicts. The current implementation preserves its lead upsert, dashboard refresh and persisted light/dark theme. Independent checker confirmed no lost intent; resolved index is byte-identical to the tested pre-merge tree. TypeScript and scope checks passed again after resolution. Exact merge files were allowlisted before the merge.

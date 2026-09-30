@@ -56,7 +56,7 @@
       "area": "documentation-maintenance",
       "title": "Rewrite README and remove unused scaffolding before integration into dev",
       "user_visible_behavior": "Vietnamese README explains the current web-only app, offline setup, catalog and admin configuration; unused scaffolding is removed without changing active workflows.",
-      "status": "in_progress",
+      "status": "passing",
       "allowed_files": [
         "README.md",
         "backend/main.py",
@@ -91,7 +91,8 @@
         "2026-09-30: baseline and post-edit backend suite pass 122/122, evaluator 9/9, official verify.sh including MCP PASS, TypeScript and production Next build PASS.",
         "2026-09-30: live seed + health (ready=true, 70 products) + README chat PASS; production frontend /chat and /dashboard return 200, unauthenticated admin 401 and authenticated retired /outbox 403.",
         "2026-09-30: independent checker found no actionable issues; 22 local README links resolve, code fences balanced, scope self-test/session/exact-path and diff whitespace checks PASS.",
-        "2026-09-30: integration blocker found: dev has one unique commit de627b3, six textual merge conflicts. Widened exact allowlist before merge; current branch already incorporates dev consultation lead upsert, dashboard auto refresh and theme persistence."
+        "2026-09-30: integration blocker found: dev has one unique commit de627b3, six textual merge conflicts. Widened exact allowlist before merge; current branch already incorporates dev consultation lead upsert, dashboard auto refresh and theme persistence.",
+        "2026-09-30: all six dev merge conflicts resolved after independent review verified dev intent was already present. Resolved index is byte-identical to the fully tested pre-merge tree; TypeScript and scope checks passed after resolution."
       ],
       "test_evidence": [
         {
@@ -128,9 +129,14 @@
           "command": "README relative links; scope --self-test/--check-session/--check-files; git diff --check; independent checker",
           "result": "passed",
           "date": "2026-09-30"
+        },
+        {
+          "command": "git diff --cached --exit-code HEAD (resolved merge tree identical); TypeScript and scope checks after merge resolution",
+          "result": "passed",
+          "date": "2026-09-30"
         }
       ],
-      "notes": "Owner requested README rewrite, push and PR into dev, explicitly including already committed work from feat/zalo-removal-fe-redesign; then requested ponytail cleanup before push. Isolated worktree starts at 4b5dab4. Existing uncommitted PaperDraf work and lifecycle files in the original checkout are preserved. Merge dev into the PR branch before handoff; retain current implementations where dev intent is already present. Initial baseline issues were environment-only: Git Bash date was absent from PATH; Windows TEMP 8.3 spelling caused two path-equality failures, resolved by passing canonical TEMP/TMP. No test or verification rules changed."
+      "notes": "Owner requested README rewrite, push and PR into dev, explicitly including already committed work from feat/zalo-removal-fe-redesign; then requested ponytail cleanup before push. Isolated worktree starts at 4b5dab4. Existing uncommitted PaperDraf work and lifecycle files in the original checkout are preserved. Merged dev into the PR branch; retained current implementations after both primary and independent checker verified dev intent is already present. Initial baseline issues were environment-only: Git Bash date was absent from PATH; Windows TEMP 8.3 spelling caused two path-equality failures, resolved by passing canonical TEMP/TMP. No test or verification rules changed."
     },
 
     {
