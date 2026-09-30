@@ -10,7 +10,7 @@
 - Live checks: seed, `/health` (ready, 70 fixture products), `/chat`, frontend `/chat` and `/dashboard` PASS; admin authentication 401 and retired `/outbox` rejection 403 verified. Fixture is engineering test data.
 - Scope/self-test/README links/whitespace and independent checker PASS. Merge conflicts resolved by preserving the tested source after confirming all dev behavior is already incorporated; resolved tree byte-identical to pre-merge source.
 - Full catalog, public deployment and paper compilation were not reverified here; stored research results are historical evidence only. Do not commit `.env` or customer data.
-- Next step: push `codex/readme-cleanup-dev`, open PR into `dev`, and review the broad integration diff before merging.
+- Pushed `codex/readme-cleanup-dev`; PR **#2** is open into **dev**: https://github.com/VanAnh-13/SalePilot_Agent/pull/2. Next step: review the broad integration diff and merge when approved.
 
 ### Session 002
 
@@ -765,3 +765,5 @@
 - Environment corrections only: restored Git Bash utilities to PATH for the smoke sandbox command; used canonical long TEMP/TMP paths to avoid Windows 8.3 path-equality failures. No application/test changes for those issues.
 - Clean-state checklist: runtime/startup/health/chat/smoke/tests/TypeScript/source-scope items verified. Local full DMX catalog, raw trajectories and paper compile were not part of this task; fixture is explicitly technical test data, not publication evidence.
 - Integration: merged the independent `dev` commit after reviewing all six conflicts. The current implementation preserves its lead upsert, dashboard refresh and persisted light/dark theme. Independent checker confirmed no lost intent; resolved index is byte-identical to the tested pre-merge tree. TypeScript and scope checks passed again after resolution. Exact merge files were allowlisted before the merge.
+
+- Delivery: branch pushed and PR #2 opened into `dev`: https://github.com/VanAnh-13/SalePilot_Agent/pull/2. No changes pushed to main; original checkout and uncommitted paper work preserved.
