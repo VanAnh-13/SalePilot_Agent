@@ -1,0 +1,201 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper,margin=25mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\setlength{\emergencystretch}{2em}
+\setlist[itemize]{leftmargin=1.6em,itemsep=0.25em,topsep=0.25em}
+\setlist[enumerate]{leftmargin=1.8em,itemsep=0.35em,topsep=0.3em}
+
+\title{Technical Review of ``SalePilot: Constraint-First Grounded Decision Support for Vietnamese Retail Consultation''}
+\author{}
+\date{26 September 2026}
+
+\begin{document}
+\maketitle
+
+\section*{Overall assessment}
+
+The manuscript has a useful constraint-safety focus, a commendably explicit evidence boundary, and generally careful reporting of limitations.  It is not ready for submission in its present form.  The central ranking equation has been lost from the source, one evaluation figure describes a different legacy experiment, and several headline claims attribute the safety result to filtering even though the compared systems also make different clarification/recommendation decisions.  These defects prevent a reviewer from reconstructing the method and from interpreting the principal comparison causally.
+
+The numerical table is internally consistent at the displayed precision: $10/117=0.08547\ldots$, which rounds to $0.0855$, and the category counts in the full-distribution figure sum to 13{,}754.  The manuscript is also unusually candid about the absent relevance labels, developer-authored benchmark, failed backend health check, and limited deployment evidence.  Preserving that restraint while repairing the items below would materially strengthen the paper.
+
+\section*{Major technical findings}
+
+\subsection*{1. The core scoring equation is missing and the source is visibly corrupted}
+
+\textbf{Classification: definite error.}
+
+\textbf{Location:} Section III-C, lines 155--156 of \texttt{main.tex}.
+
+\textbf{Problem:} The text reads, exactly, ``At a high level, the score groups budget, slot, preference, 104330'' and then refers to Equation~\texttt{\textbackslash eqref\{eq2\}}, but no equation carrying \texttt{\textbackslash label\{eq2\}} exists.  A clean compilation therefore prints ``Equation (??)'' and reports an unresolved reference.
+
+\textbf{Why it matters:} This is the mathematical definition of the production ranker, hence the most important implementation-facing content in the method.  Without it, the reader cannot inspect signs, weights, normalization, units, hard/soft separation, or the relation between the stated score and the implementation.
+
+\textbf{Suggested fix:} Restore the complete equation and its label, remove the stray \texttt{104330}, and define every term and coefficient.  State which terms are dimensionless, how VND and physical dimensions are normalized, whether bonuses and penalties are bounded, and which checks occur before scoring.  If the equation is only a schematic grouping, provide either pseudocode or an explicit table mapping every group to the relevant code/configuration fields.
+
+\subsection*{2. Figure 9 describes a different experiment from the one reported}
+
+\textbf{Classification: definite internal inconsistency.}
+
+\textbf{Location:} Section V-B, Fig.~9 (\texttt{figures/evaluation\_workflow.png}) and its caption.
+
+\textbf{Problem:} The figure states ``20 Vietnamese dev episodes,'' ``70 engineering fixture SKUs,'' ``14 normalized categories,'' multi-turn replay, and ``3-Way Action Acc.''  The surrounding manuscript instead reports 40 developer-authored single-turn episodes, 13{,}716 products in 118 categories, final-turn open-loop scoring, and four emitted action classes.  Fig.~8 presents the current 40-episode/13{,}716-product design, so the two evaluation figures also contradict each other.  The Fig.~9 caption nevertheless says that every comparator consumes the same sealed benchmark and hash-pinned snapshot.
+
+\textbf{Why it matters:} A reader cannot determine which data, action taxonomy, or replay protocol produced Table~III.  This is not a cosmetic issue: it changes the sample, metric definition, and experimental unit.
+
+\textbf{Suggested fix:} Regenerate Fig.~9 from the final experimental manifest, or remove it.  The replacement should show 40 episodes, 13{,}716 products, 118 snapshot categories, the exact action-label inventory, single-turn status, and the reason B2 is excluded.  Check every number against Fig.~8, Table~III, and the custody record before submission.
+
+\subsection*{3. The principal safety claim is not isolated from action-policy coverage}
+
+\textbf{Classification: unsupported causal attribution.}
+
+\textbf{Location:} Abstract; Section VI-A, especially the statements that explicit filtering ``removes every observed violation'' and ``eliminates the observed violations''; Conclusion.
+
+\textbf{Problem:} B0 produces 117 product--constraint checks whereas B1 and \texttt{S\_hybrid} produce 99 because the constraint-aware conditions clarify more often.  The manuscript itself correctly notes that violation removal combines filtering with a more conservative action policy.  Consequently, the current comparison supports a difference between complete policies, not the stronger conclusion that filtering alone caused the entire reduction.
+
+\textbf{Why it matters:} A system can lower a conditional violation rate by returning fewer products.  The higher B0 action accuracy (0.925 versus 0.850) shows a real safety--coverage trade-off that the headline claim currently compresses into a filtering result.
+
+\textbf{Suggested fix:} Either (i) run an ablation in which all systems receive the same action decisions and only the filter/ranker changes, or (ii) compare violations on a common set of recommendation episodes/products.  In all cases, report recommendation coverage, clarification rate, abstention rate, products returned, episode-level probability of at least one violation, and the pooled check rate.  Until such an ablation exists, write ``the evaluated constraint-aware policies produced no observed violations'' rather than attributing the full difference to filtering alone.
+
+\subsection*{4. The zero-violation uncertainty statement does not provide a cluster-aware upper bound}
+
+\textbf{Classification: likely statistical issue.}
+
+\textbf{Location:} Section VI-A, discussion of the degenerate bootstrap intervals and the rule of three; Section VI-D.
+
+\textbf{Problem:} Resampling episodes that contain no observed violations must produce a percentile interval of $[0,0]$ for B1 and \texttt{S\_hybrid}; this is a property of the empirical sample, not a useful upper confidence bound for an unseen violation rate.  The subsequent rule-of-three bound treats 99 product--constraint checks as independent even though checks are clustered within products and episodes, a dependence that the threats section acknowledges.
+
+\textbf{Why it matters:} Readers may interpret the degenerate interval or the approximate 0.03 bound as stronger safety evidence than the design supports.
+
+\textbf{Suggested fix:} Keep ``0 observed in 99 checks'' as the primary descriptive result.  If an upper bound is required, compute it at the episode level or with a justified clustered/binomial model and state the estimand.  Otherwise remove the rule-of-three number and explicitly say that the study cannot estimate a nonzero upper bound reliably from these clustered observations.
+
+\subsection*{5. Dataset figures and prose contain quantitative mismatches}
+
+\textbf{Classification: definite numerical and figure--text inconsistencies.}
+
+\textbf{Location:} Section IV-A, Figs.~5 and 7 and their captions.
+
+\textbf{Problem:}
+\begin{itemize}
+  \item In Fig.~7, the 500K--2M tier is 28.8\% and the 2M--10M tier is 25.8\%, so the plotted 500K--10M share is $28.8\%+25.8\%=54.6\%$, not 57\% as stated twice.
+  \item The prose says Fig.~5(c) shows 10 fields above 90\% coverage, but the displayed panel contains only five such fields (Product Name, Brand, Price, Warranty, and Color).  It also says the panel shows \texttt{description} and \texttt{accessories} as sparse, although neither appears in the panel.  Table~I reports four fields below 50\%, while the prose names only three.
+\end{itemize}
+
+\textbf{Why it matters:} These are directly visible contradictions in the descriptive evidence, and they undermine confidence in the programmatically computed summary.
+
+\textbf{Suggested fix:} Recompute the tier percentages from the plotted bin definitions and use 54.6\% (or 55\% when rounded to an integer) unless the figure itself is wrong.  For field coverage, either show all 29 fields or label the panel as a selected subset; then identify all four sub-50\% fields and move the 10-of-29 statement to Table~I unless the figure visibly supports it.
+
+\subsection*{6. The state equation contains an undefined symbol and an unsafe scope ambiguity}
+
+\textbf{Classification: definite definition gap; likely implementation issue.}
+
+\textbf{Location:} Section III-B, Equation~(1) and the paragraph immediately following it.
+
+\textbf{Problem:} The manuscript defines $H_t$, $n_t$, $E$, and $M$, but never defines $c_{t-1}$ in
+\[
+n_t=M\!\left(n_{t-1},E(u_t,c_{t-1})\right).
+\]
+It also states that a category switch discards category fields but retains the old budget when the new turn supplies none.  The paper does not say whether a budget is conversation-global, category-specific, or subject to confirmation after a switch.
+
+\textbf{Why it matters:} Implementers cannot tell whether $c_{t-1}$ is the previously active category, a detector output, or a field inside $n_{t-1}$.  Reusing a refrigerator budget for a later phone or accessory request can silently impose an unintended hard constraint.
+
+\textbf{Suggested fix:} Define $u_t$ and $c_{t-1}$ explicitly and show how a newly detected category enters the update.  Give every retained slot an explicit scope.  For category-scoped budgets, clear or confirm the budget on a switch; for a genuinely global budget, state that assumption and test it with a multi-turn switch case.
+
+\subsection*{7. ``Deterministic'' ranking still depends on backend order}
+
+\textbf{Classification: likely reproducibility issue and implementation ambiguity.}
+
+\textbf{Location:} Section III-C and Fig.~4.
+
+\textbf{Problem:} The prose says equal score/price ties inherit repository order and therefore are not repeatable across backends without fixed input order.  Fig.~4 nevertheless says ties are broken deterministically, and the surrounding discussion emphasizes a multi-backend catalog.
+
+\textbf{Why it matters:} PostgreSQL, MongoDB, and JSON loaders need not produce the same implicit ordering.  Equal candidates can therefore change the top three, evidence payload, and artifact hash even when normalized product content is identical.
+
+\textbf{Suggested fix:} Define a total ordering, for example score descending, price ascending, then normalized SKU/model identifier ascending.  Apply the same key after deduplication and diversity selection, and add a cross-backend equality test.  Revise Fig.~4 until that guarantee exists.
+
+\subsection*{8. The action-label and runtime/evaluation boundaries need a reconstructible definition}
+
+\textbf{Classification: definite metric ambiguity.}
+
+\textbf{Location:} Sections III-B and V-C, together with Fig.~9.
+
+\textbf{Problem:} The benchmark is said to allow five actions, including \texttt{compare}, while the adapter emits only four.  The metric section says action accuracy covers the four emitted classes, and the legacy figure says ``3-Way Action Acc.''  The paper does not provide gold-label counts or explain whether any \texttt{compare} examples occur and how they enter the denominator.  In addition, the keyed runtime path resolves bare numbers and room labels, whereas the evaluated offline coordinator does not.
+
+\textbf{Why it matters:} The reported 0.850 and 0.925 action accuracies are not independently reconstructible from the manuscript, and they should not be generalized to a runtime path with different transition logic.
+
+\textbf{Suggested fix:} List the complete gold label set and per-class support, specify the denominator and treatment of unsupported \texttt{compare} labels, and include a confusion matrix.  State prominently that parser/action results apply to the offline adapter only, or evaluate the keyed resolver under the same sealed protocol.
+
+\subsection*{9. The independent-rerun claim exceeds the pinned custody information}
+
+\textbf{Classification: unsupported reproducibility claim in the supplied package.}
+
+\textbf{Location:} Sections V-A, V-C, VI-B, and the final paragraph of the Conclusion.
+
+\textbf{Problem:} The manuscript says the artifacts support independent reruns, but also says the custody record omits the code revision and conditions-file hash.  Moreover, the materials supplied for this review contain the manuscript, bibliography, and figures but no \texttt{experiments/} directory, sealed episodes, snapshot, predictions, scores, bootstrap outputs, or executable evaluator.
+
+\textbf{Why it matters:} Hashing outputs can establish integrity of those outputs; it cannot identify the program and configuration needed to reproduce them.  Without the referenced files, a reviewer cannot even perform the more limited rerun claimed in Section VI-B.
+
+\textbf{Suggested fix:} Include the referenced artifacts and pin the code commit, conditions and configuration files, dependency/container environment, random seeds, evaluator version, and exact commands in the manifest.  Until this is done, replheader.payload.signatureace ``independent reruns'' with a narrower claim about traceability or integrity of the available output files.
+
+\section*{Notation, dimensional, branch, and implementation audit}
+
+The notation-drift check found the following.  $H_t$ is first described as the conversation, $n_t$ as the structured need dictionary, and $u_t$ as the current user turn by context; none later receives a conflicting initial/final, source/observer, or emission/reception descriptor.  The only direct symbol-definition failure is $c_{t-1}$, noted above.  System identifiers are broadly consistent except for the legacy names and protocol in Fig.~9.
+
+No inverse-trigonometric expression, coordinate transformation, or branch convention appears in the manuscript, so no concrete quadrant or branch error was identified.  The visible VND and centimetre quantities do not create an explicit dimensional contradiction.  A complete normalization, sign, and weighting audit of the ranker is impossible until Equation~(2) is restored.  The missing equation is therefore also the principal blocker for the required dimensional and implementation audit.
+
+\section*{Meaningful editorial and claim-scope issues}
+
+\begin{enumerate}
+  \item \textbf{Abstract and Section III-A:} ``Each recommendation carries'' decision evidence is broader than Section III-D, which limits the contract to deterministic recommendation routes.  Change this to ``Each deterministic recommendation'' and make clear what, if anything, an LLM-mediated route emits.
+
+  \item \textbf{Section IV-A:} A histogram drawn with a logarithmic price axis does not by itself establish a log-normal distribution.  Replace ``shows a log-normal price distribution'' with ``shows a strongly right-skewed price distribution over more than four orders of magnitude,'' or report a fitted distribution and goodness-of-fit evidence.
+
+  \item \textbf{Conclusion:} The statement that Vietnamese informal patterns are ones ``that standard tokenizers do not handle'' is unsupported and imprecise; tokenizers can encode such strings even when a downstream rule-based extractor fails to normalize them.  A safer rewrite is: ``the conversations contain abbreviations and orthographic variation that the current extractor normalizes explicitly.''
+
+  \item \textbf{Table II:} The total is 398 messages, while user and assistant messages sum to 332.  Tool-call invocations are not necessarily message records.  Add the missing role counts (for example, system and tool-response messages) or define exactly how ``messages'' and ``invocations'' are counted.  The numbers may be reconcilable, but the present table does not show how.
+
+  \item \textbf{Conclusion:} Order creation plus product search is $39/56=69.6\%$, which conventionally rounds to 70\%, not 69\%.  Report the count (39 of 56) or use a consistent rounding rule.
+
+  \item \textbf{Abstract:} ``Ranking differences need relevance labels, scoped to future work'' is compressed and awkward.  A clear replacement is: ``Assessing ranking differences requires relevance labels and is left to future work.''
+\end{enumerate}
+
+\section*{Proofing sweep}
+
+The mandatory pattern scan was run on both \texttt{main.tex} and the compiled manuscript PDF.  Its duplicated-punctuation, product-capitalization, malformed-frame, and \texttt{arctan(x/y)} checks produced no verified defect.  The semicolon hits were valid stage labels in a caption, and the double-period hit was the typeset ellipsis in $H_t=(u_1,\ldots,u_t)$.
+
+The following high-confidence production items still require correction:
+\begin{itemize}
+  \item \textbf{Author block, page 1:} both authors and affiliations are placeholders.  Replace them or apply the conference's required anonymous-review format before submission.
+  \item \textbf{Section III-C, page 2:} remove the fragment \texttt{104330} and restore Equation~(2); this is both a technical and a copy-production blocker.
+  \item \textbf{References:} all citation keys used in the manuscript resolve, and no duplicated punctuation or malformed quoted title was found.  The bibliography contains three unused entries: \path{herlocker2004evaluating}, \path{jacovi2020faithfulness}, and \path{jarvelin2002cumulated}.  They do not print under Bib\TeX, but may be removed for source hygiene.
+\end{itemize}
+
+\section*{Highest-priority fixes}
+
+\begin{enumerate}
+  \item Restore and fully define Equation~(2), then recompile until no unresolved reference remains.
+  \item Replace the legacy Fig.~9 and reconcile every experimental number and action definition across text, figures, tables, captions, and artifacts.
+  \item Separate filtering from clarification coverage experimentally, or narrow the causal language and report the complete safety--coverage trade-off.
+  \item Correct the 500K--10M percentage and field-coverage presentation.
+  \item Pin and include the exact code/configuration/artifact chain required for the claimed rerun.
+  \item Define $c_{t-1}$, budget scope, total tie-breaking, and the action-label denominator.
+  \item Tighten the abstract and conclusion so that multi-turn, runtime, evidence, tokenizer, and deployment statements do not exceed the evaluated scope.
+\end{enumerate}
+
+\section*{Items needing external verification}
+
+The following should not be treated as verified from the supplied manuscript package alone:
+\begin{itemize}
+  \item the reported predictions, bootstrap intervals, catalog hash, and chain of custody, because the referenced experimental artifacts and evaluator are absent;
+  \item the public HTTP measurements dated 25 July 2026, which require preserved logs, endpoint definitions, and probe configuration;
+  \item the crawl provenance, permission or terms governing reuse, collection dates, and the de-identification/consent basis for the 10 purchase conversations;
+  \item the applicable IEEE-RIVF 2026 author-anonymity policy, which must be checked before replacing or removing the placeholder author block.
+\end{itemize}
+
+\end{document}

@@ -1,6 +1,6 @@
 {
   "project": "salepilot",
-  "last_updated": "2026-08-19",
+  "last_updated": "2026-09-28",
   "rules": {
     "single_active_feature": true,
     "wip_limit": 1,
@@ -50,6 +50,65 @@
     "passing": "Required verification has passed and evidence is recorded."
   },
   "features": [
+    {
+      "id": "paper-current-code-001",
+      "priority": -3,
+      "area": "research-documentation",
+      "title": "Revise PaperDraf against current code and redraw all active flows",
+      "user_visible_behavior": "A complete revised manuscript accurately describes current Web routing, shared need updates, ranking and evidence semantics, and labels historical results according to their available provenance. All active flow diagrams are redrawn as vectors.",
+      "status": "in_progress",
+      "allowed_files": [
+        "PaperDraf/main.tex",
+        "PaperDraf/main.pdf",
+        "PaperDraf/ref.bib",
+        "PaperDraf/REVISION_NOTES.md",
+        "PaperDraf/REPRODUCIBILITY.md",
+        "PaperDraf/analysis_outputs/audit.py",
+        "PaperDraf/analysis_outputs/export_figures.py",
+        "PaperDraf/analysis_outputs/audit.json",
+        "PaperDraf/figures/current_architecture.svg",
+        "PaperDraf/figures/current_architecture.png",
+        "PaperDraf/figures/current_request_flow.svg",
+        "PaperDraf/figures/current_request_flow.png",
+        "PaperDraf/figures/current_need_flow.svg",
+        "PaperDraf/figures/current_need_flow.png",
+        "PaperDraf/figures/current_ranking_flow.svg",
+        "PaperDraf/figures/current_ranking_flow.png",
+        "PaperDraf/figures/current_evaluation_flow.svg",
+        "PaperDraf/figures/current_evaluation_flow.png"
+      ],
+      "approved_protected_files": [],
+      "verification": [
+        "All quantitative statements are checked against named local artifacts, with historical score hash mismatch and missing inputs explicitly disclosed.",
+        "Every active diagram and algorithm description agrees with inspected current source at the recorded revision.",
+        "Metric unit tests, manuscript reference and consistency checks, and scope checks pass.",
+        "The self-contained LaTeX manuscript compiles in the built-in editor; any unavailable PDF export or render verification is disclosed."
+      ],
+      "evidence": [
+        "2026-09-28: Rewrote PaperDraf/main.tex against inspected revision 4b5dab4; embedded five current-code TikZ flows and nine references, synchronized ref.bib, and added review response plus reproducibility notes.",
+        "Reaggregated 40 labels and 120 historical score rows. Common recommendation set: 28 episodes, B0 7/99 versus B1/hybrid 0/99. Score-custody mismatch and missing predictions/catalog/bootstrap explicitly disclosed; no historical inputs modified.",
+        "Independent source checker findings incorporated; all five SVG/PNG previews visually inspected with no overlapping node rectangles.",
+        "2026-09-28 second review: revised all six findings: paper-only derived-report scope; total score branches; final persistence transition and storage projection; exact B0/B1/hybrid action/payload policies; catalog/decision/snapshot digest semantics; per-condition TP=49 FP=3 FN=3. Updated need/evaluation diagrams and both companion documents.",
+        "2026-09-28 citation audit: all nine external works checked against author, institutional, conference, journal or publisher records; citation-context support assessed and primary links saved in PaperDraf/REVISION_NOTES.md. No definite bibliography error found.",
+        "2026-09-30 correction supersedes earlier unresolved score-mismatch claims: converting only exp_test_scores.json line endings from LF to CRLF exactly reproduces the custody SHA-256 c7af9f5cb1994886b6cd05a7f503195880e73b2ce35a4e03310703a3742901ff. Updated provenance paragraph and related manuscript claims; original predictions, bootstrap artifacts and historical generating-version records remain unavailable."
+      ],
+      "test_evidence": [
+        "PASS: python -m unittest experiments.evaluate.test_metrics -v (9/9).",
+        "PASS: PaperDraf/analysis_outputs/audit.py; stored aggregate arithmetic, sealed label hashes, citation/reference keys, unique labels, five inline diagrams and companion bibliography keys.",
+        "PASS: export_figures.py produced five SVG and PNG previews; node-overlap checks and visual inspection passed.",
+        "PASS: scope guard --check-session and git diff --check; final exact-path scope check recorded in claude-progress.md.",
+        "UNVERIFIED: native LaTeX compilation failed before source processing: Unable to find standard directories for platform. No new manuscript PDF or verified page count.",
+        "BLOCKED ENVIRONMENT: baseline backend smoke cannot import langchain_core in available runtime; application runtime and full backend/frontend suites not reverified for this documentation task.",
+        "PASS (second review): full audit with explicit --repo-root; regenerated report includes per-condition slot_counts and inspected memory-store hash.",
+        "PASS (second review): --check-report in an isolated paper-only directory containing only audit.py/audit.json; absent raw inputs fail clearly; deliberately altered slot counts are rejected.",
+        "PASS (second review): independent source check; corrected persistence projection/configuration and zero-rounded rating; diagram export, changed-preview inspection and scope/whitespace checks.",
+        "UNVERIFIED (second review): native compile still fails before source diagnostics with Unable to find standard directories for platform. Earlier six-page PDF mentioned by reviewer does not verify this revision.",
+        "PASS: 11 citation occurrences, nine unique cited works, nine unique embedded bibitems and nine matching ref.bib entries; no unused or missing keys. Full manuscript audit and exact-path scope check rerun after citation review.",
+        "PASS (2026-09-30): independently reproduced exact CRLF score digest; audit now records raw matches=false alongside matches_with_crlf=true. Full 40-label/120-row audit and report arithmetic pass; descriptive results and original score/custody bytes unchanged; evaluator tests 9/9 pass. Evaluation SVG/PNG regenerated and visually inspected; manuscript reference checks pass.",
+        "UNVERIFIED (2026-09-30): built-in LaTeX compile still fails before source parsing with Unable to find standard directories for platform; PDF layout remains unverified."
+      ],
+      "notes": "Second-review content revision complete; feature remains in_progress pending owner-supplied real author metadata and successful native compilation/PDF layout and page-count verification. The paper-only package intentionally contains a derived audit report, not distributable raw inputs; all repeatability claims are narrowed accordingly. The 2026-09-30 audit resolves the score-digest discrepancy as LF/CRLF representation; earlier unresolved-mismatch statements in historical evidence are superseded. Missing original inputs and historical generating-version records still limit reproduction. No application behavior or historical artifacts changed; no commit or push."
+    },
     {
       "id": "audit-fix-001",
       "priority": -2,

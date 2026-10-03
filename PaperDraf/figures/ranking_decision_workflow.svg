@@ -1,0 +1,73 @@
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" width="1500" height="650" viewBox="0 0 1500 650">
+  <ns0:defs>
+    <ns0:filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+      <ns0:feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" result="noise" />
+      <ns0:feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" />
+    </ns0:filter>
+    <ns0:marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <ns0:path d="M 0 1 L 10 5 L 0 9 Z" fill="#2d3748" filter="url(#rough)" />
+    </ns0:marker>
+    <ns0:style>
+      700&amp;display=swap');
+      text { font-family: 'Segoe Print', 'Comic Neue', 'Comic Sans MS', cursive, sans-serif; }
+      .title { font-size: 34px; font-weight: 700; fill: #1a202c; }
+      .subtitle { font-size: 21px; fill: #4a5568; }
+      .lane { font-size: 22px; font-weight: 700; fill: #2d3748; letter-spacing: 1.5px; }
+      .boxTitle { font-size: 24px; font-weight: 700; fill: #1a202c; }
+      .body { font-size: 20px; fill: #2d3748; }
+      .edge { stroke: #2d3748; stroke-width: 3; fill: none; marker-end: url(#arrow); filter: url(#rough); }
+      .box { filter: url(#rough); stroke-linecap: round; stroke-linejoin: round; }
+    </ns0:style>
+  </ns0:defs>
+
+  <ns0:rect width="1500" height="650" fill="#fcfbf9" />
+
+  <ns0:text class="title" x="50" y="52">Constraint-First Ranking &amp; Decision Contract</ns0:text>
+  <ns0:text class="subtitle" x="50" y="85">✏️ Hard constraint filtering followed by deterministic trade-off scoring and evidence payload</ns0:text>
+
+  <!-- Step 1 -->
+  <ns0:text class="lane" x="50" y="130">1. INPUT STATE</ns0:text>
+  <ns0:rect class="box" x="50" y="148" width="310" height="440" rx="18" fill="#dcfce7" stroke="#16a34a" stroke-width="3" />
+  <ns0:text class="boxTitle" x="75" y="195">Customer Need State</ns0:text>
+  <ns0:text class="body" x="75" y="240">• Category: e.g. tu_lanh</ns0:text>
+  <ns0:text class="body" x="75" y="280">• Budget: 15,000,000 VND</ns0:text>
+  <ns0:text class="body" x="75" y="320">• Household: 4 people</ns0:text>
+  <ns0:text class="body" x="75" y="360">• Max width: 70 cm</ns0:text>
+  <ns0:text class="body" x="75" y="400">• Style: Inverter</ns0:text>
+
+  <!-- Step 2 -->
+  <ns0:text class="lane" x="400" y="130">2. HARD FILTER</ns0:text>
+  <ns0:rect class="box" x="400" y="148" width="330" height="440" rx="18" fill="#ffedd5" stroke="#ea580c" stroke-width="3" />
+  <ns0:text class="boxTitle" x="425" y="195">Fail-Closed Filtering</ns0:text>
+  <ns0:text class="body" x="425" y="240">• Query category SKUs</ns0:text>
+  <ns0:text class="body" x="425" y="280">• Check price &lt;= budget</ns0:text>
+  <ns0:text class="body" x="425" y="320">• Check dimensions &lt;= max</ns0:text>
+  <ns0:text class="body" x="425" y="360">• Exclude non-matching</ns0:text>
+  <ns0:text class="body" x="425" y="400">• If 0 matching: ABSTAIN</ns0:text>
+
+  <ns0:path class="edge" d="M 360 368 L 395 368" />
+
+  <!-- Step 3 -->
+  <ns0:text class="lane" x="770" y="130">3. STABLE RANKING</ns0:text>
+  <ns0:rect class="box" x="770" y="148" width="330" height="440" rx="18" fill="#fef9c3" stroke="#ca8a04" stroke-width="3" />
+  <ns0:text class="boxTitle" x="795" y="195">Score &amp; Select Top-3</ns0:text>
+  <ns0:text class="body" x="795" y="240">• Soft spec match score</ns0:text>
+  <ns0:text class="body" x="795" y="280">• Brand preference bonus</ns0:text>
+  <ns0:text class="body" x="795" y="320">• Energy efficiency rank</ns0:text>
+  <ns0:text class="body" x="795" y="360">• Sort by score desc</ns0:text>
+  <ns0:text class="body" x="795" y="400">• Break ties deterministically</ns0:text>
+
+  <ns0:path class="edge" d="M 730 368 L 765 368" />
+
+  <!-- Step 4 -->
+  <ns0:text class="lane" x="1140" y="130">4. AUDIT PAYLOAD</ns0:text>
+  <ns0:rect class="box" x="1140" y="148" width="310" height="440" rx="18" fill="#e0f2fe" stroke="#0284c7" stroke-width="3" />
+  <ns0:text class="boxTitle" x="1165" y="195">Evidence Contract</ns0:text>
+  <ns0:text class="body" x="1165" y="240">• Top-3 product SKUs</ns0:text>
+  <ns0:text class="body" x="1165" y="280">• Verified specs norm</ns0:text>
+  <ns0:text class="body" x="1165" y="320">• Price &amp; snapshot row</ns0:text>
+  <ns0:text class="body" x="1165" y="360">• Trade-off notes</ns0:text>
+  <ns0:text class="body" x="1165" y="400">• Catalog hash signature</ns0:text>
+
+  <ns0:path class="edge" d="M 1100 368 L 1135 368" />
+</ns0:svg>

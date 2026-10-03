@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="594.17" height="212.86" viewBox="-64.64 -38.40 594.17 212.86">
+<title>Current Architecture</title>
+<desc>Preview exported from the corresponding TikZ block in main.tex; positions and text share that source.</desc>
+<rect x="-64.64409448818897" y="-38.4" width="594.1700787401575" height="212.86299212598425" fill="white"/>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#526477"/></marker></defs>
+<polyline points="52.64,0.00 76.80,0.00" fill="none" stroke="#526477" stroke-width=".9" marker-end="url(#arrow)"/>
+<polyline points="202.88,0.00 226.10,0.00" fill="none" stroke="#526477" stroke-width=".9" marker-end="url(#arrow)"/>
+<polyline points="363.51,0.00 389.56,0.00" fill="none" stroke="#526477" stroke-width=".9" marker-end="url(#arrow)"/>
+<polyline points="139.84,26.40 139.84,45.41" fill="none" stroke="#526477" stroke-width=".9" marker-end="url(#arrow)"/>
+<polyline points="294.80,26.40 294.80,45.41" fill="none" stroke="#526477" stroke-width=".9" marker-end="url(#arrow)"/>
+<polyline points="363.51,26.40 389.56,45.41" fill="none" stroke="#526477" stroke-width=".9" marker-end="url(#arrow)"/>
+<polyline points="226.10,26.40 202.88,71.81" fill="none" stroke="#526477" stroke-width=".9" marker-end="url(#arrow)"/>
+<polyline points="215.43,109.66 294.80,109.66 294.80,98.21" fill="none" stroke="#526477" stroke-width=".9" marker-end="url(#arrow)"/>
+<polyline points="389.56,71.81 363.51,71.81" fill="none" stroke="#526477" stroke-width=".9" marker-end="url(#arrow)"/>
+<rect x="-52.64" y="-26.40" width="105.29" height="52.80" rx="3" fill="#edf4fb" stroke="#526477" stroke-width=".7"/>
+<text x="0.00" y="-10.50" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Web chat interface</text>
+<text x="0.00" y="3.50" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Conversation +</text>
+<text x="0.00" y="17.50" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">trace</text>
+<rect x="76.80" y="-26.40" width="126.08" height="52.80" rx="3" fill="#edf4fb" stroke="#526477" stroke-width=".7"/>
+<text x="139.84" y="-10.50" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">FastAPI ingress</text>
+<text x="139.84" y="3.50" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Identity / validation</text>
+<text x="139.84" y="17.50" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">History / takeover</text>
+<rect x="226.10" y="-26.40" width="137.41" height="52.80" rx="3" fill="#edf4fb" stroke="#526477" stroke-width=".7"/>
+<text x="294.80" y="-10.50" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Agent routing</text>
+<text x="294.80" y="3.50" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Offline / fast path</text>
+<text x="294.80" y="17.50" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Lead--tools graph</text>
+<rect x="389.56" y="-26.40" width="127.97" height="52.80" rx="3" fill="#ebf5f0" stroke="#526477" stroke-width=".7"/>
+<text x="453.54" y="-10.50" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Response</text>
+<text x="453.54" y="3.50" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Reply / trace / decision</text>
+<text x="453.54" y="17.50" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">JSON or SSE delivery</text>
+<rect x="76.80" y="45.41" width="126.08" height="52.80" rx="3" fill="#ebf5f0" stroke="#526477" stroke-width=".7"/>
+<text x="139.84" y="61.31" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Conversation state</text>
+<text x="139.84" y="75.31" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Need / profile / history</text>
+<text x="139.84" y="89.31" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Stored trajectories</text>
+<rect x="226.10" y="45.41" width="137.41" height="52.80" rx="3" fill="#ebf5f0" stroke="#526477" stroke-width=".7"/>
+<text x="294.80" y="61.31" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Rank + evidence</text>
+<text x="294.80" y="75.31" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">recommend_top3</text>
+<text x="294.80" y="89.31" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">build_decision</text>
+<rect x="389.56" y="45.41" width="127.97" height="52.80" rx="3" fill="#fff5e6" stroke="#526477" stroke-width=".7"/>
+<text x="453.54" y="61.31" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Business tools</text>
+<text x="453.54" y="75.31" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Catalog / KB / CRM</text>
+<text x="453.54" y="89.31" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Order / escalation</text>
+<rect x="70.19" y="109.66" width="290.49" height="52.80" rx="3" fill="#edf4fb" stroke="#526477" stroke-width=".7"/>
+<text x="215.43" y="125.56" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Normalized catalog cache</text>
+<text x="215.43" y="139.56" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">PostgreSQL / MongoDB / JSON</text>
+<text x="215.43" y="153.56" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Configured fallbacks; snapshot mode uses only JSON</text>
+</svg>

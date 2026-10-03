@@ -1,0 +1,434 @@
+{
+  "revision_date": "2026-09-28",
+  "code_revision": "4b5dab4eb8420bdc4e42cee05557d66096bc4ae1",
+  "scope": "Author-side full-repository audit and reaggregation; not a new inference run or custody repair. Paper-only distribution includes this derived report, not its raw inputs.",
+  "label_support": {
+    "recommend": 32,
+    "abstain": 5,
+    "clarify": 1,
+    "faq": 2
+  },
+  "user_turn_counts": {
+    "1": 40
+  },
+  "action_matrix_order": [
+    "recommend",
+    "clarify",
+    "faq",
+    "abstain"
+  ],
+  "common_recommendation_ids": [
+    "test-001",
+    "test-003",
+    "test-005",
+    "test-007",
+    "test-008",
+    "test-009",
+    "test-010",
+    "test-012",
+    "test-013",
+    "test-014",
+    "test-015",
+    "test-016",
+    "test-017",
+    "test-018",
+    "test-019",
+    "test-021",
+    "test-022",
+    "test-023",
+    "test-024",
+    "test-025",
+    "test-026",
+    "test-027",
+    "test-028",
+    "test-033",
+    "test-034",
+    "test-035",
+    "test-038",
+    "test-039"
+  ],
+  "results": {
+    "B0_price_popularity": {
+      "category_accuracy": 0.95,
+      "action_accuracy": 0.925,
+      "slot_micro_f1": 0.9423076923076923,
+      "slot_counts": {
+        "tp": 49,
+        "fp": 3,
+        "fn": 3
+      },
+      "actions": {
+        "recommend": 32,
+        "abstain": 4,
+        "faq": 2,
+        "clarify": 2
+      },
+      "all_payloads": {
+        "episodes": 40,
+        "checks": 117,
+        "violations": 10,
+        "rate": 0.08547008547008547,
+        "episodes_with_checks": 34,
+        "episodes_with_violations": 4
+      },
+      "recommend_actions_only": {
+        "episodes": 32,
+        "checks": 111,
+        "violations": 7,
+        "rate": 0.06306306306306306,
+        "episodes_with_checks": 32,
+        "episodes_with_violations": 3
+      },
+      "common_recommendation_episodes": {
+        "episodes": 28,
+        "checks": 99,
+        "violations": 7,
+        "rate": 0.0707070707070707,
+        "episodes_with_checks": 28,
+        "episodes_with_violations": 3
+      },
+      "confusion_matrix_gold_rows_predicted_columns": [
+        [
+          31,
+          1,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          2,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          4
+        ]
+      ],
+      "non_recommendations_with_checks": [
+        {
+          "episode_id": "test-037",
+          "action": "clarify",
+          "checked": 3,
+          "violations": 3,
+          "unknown": 0,
+          "rate": 1.0
+        },
+        {
+          "episode_id": "test-040",
+          "action": "clarify",
+          "checked": 3,
+          "violations": 0,
+          "unknown": 0,
+          "rate": 0.0
+        }
+      ]
+    },
+    "B1_lexical_filter": {
+      "category_accuracy": 0.95,
+      "action_accuracy": 0.85,
+      "slot_micro_f1": 0.9423076923076923,
+      "slot_counts": {
+        "tp": 49,
+        "fp": 3,
+        "fn": 3
+      },
+      "actions": {
+        "recommend": 28,
+        "clarify": 7,
+        "faq": 2,
+        "abstain": 3
+      },
+      "all_payloads": {
+        "episodes": 40,
+        "checks": 99,
+        "violations": 0,
+        "rate": 0.0,
+        "episodes_with_checks": 28,
+        "episodes_with_violations": 0
+      },
+      "recommend_actions_only": {
+        "episodes": 28,
+        "checks": 99,
+        "violations": 0,
+        "rate": 0.0,
+        "episodes_with_checks": 28,
+        "episodes_with_violations": 0
+      },
+      "common_recommendation_episodes": {
+        "episodes": 28,
+        "checks": 99,
+        "violations": 0,
+        "rate": 0.0,
+        "episodes_with_checks": 28,
+        "episodes_with_violations": 0
+      },
+      "confusion_matrix_gold_rows_predicted_columns": [
+        [
+          28,
+          4,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          2,
+          0
+        ],
+        [
+          0,
+          2,
+          0,
+          3
+        ]
+      ],
+      "non_recommendations_with_checks": []
+    },
+    "S_hybrid_constraint": {
+      "category_accuracy": 0.95,
+      "action_accuracy": 0.85,
+      "slot_micro_f1": 0.9423076923076923,
+      "slot_counts": {
+        "tp": 49,
+        "fp": 3,
+        "fn": 3
+      },
+      "actions": {
+        "recommend": 28,
+        "clarify": 7,
+        "faq": 2,
+        "abstain": 3
+      },
+      "all_payloads": {
+        "episodes": 40,
+        "checks": 99,
+        "violations": 0,
+        "rate": 0.0,
+        "episodes_with_checks": 28,
+        "episodes_with_violations": 0
+      },
+      "recommend_actions_only": {
+        "episodes": 28,
+        "checks": 99,
+        "violations": 0,
+        "rate": 0.0,
+        "episodes_with_checks": 28,
+        "episodes_with_violations": 0
+      },
+      "common_recommendation_episodes": {
+        "episodes": 28,
+        "checks": 99,
+        "violations": 0,
+        "rate": 0.0,
+        "episodes_with_checks": 28,
+        "episodes_with_violations": 0
+      },
+      "confusion_matrix_gold_rows_predicted_columns": [
+        [
+          28,
+          4,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          2,
+          0
+        ],
+        [
+          0,
+          2,
+          0,
+          3
+        ]
+      ],
+      "non_recommendations_with_checks": []
+    }
+  },
+  "artifact_checks": {
+    "predictions": {
+      "path": "experiments/results/exp_test_predictions.jsonl",
+      "expected_sha256": "3b9074461eed85c81a332fb23d0be7dc47289c608f43c3c47fe56dcddb24b6e0",
+      "actual_sha256": null,
+      "matches": false
+    },
+    "scores": {
+      "path": "experiments/results/exp_test_scores.json",
+      "expected_sha256": "c7af9f5cb1994886b6cd05a7f503195880e73b2ce35a4e03310703a3742901ff",
+      "actual_sha256": "0345ec5c65720b586ce3e0c4e9b324a4c69cb13d20e6f54ca454ab0fd0d0e539",
+      "matches": false,
+      "crlf_sha256": "c7af9f5cb1994886b6cd05a7f503195880e73b2ce35a4e03310703a3742901ff",
+      "matches_with_crlf": true
+    },
+    "bootstrap": {
+      "path": "experiments/results/exp_test_bootstrap.json",
+      "expected_sha256": "005641ebe1c9b40fa71f55eda3432a5c60138d503e0256aaa7ce0bc164735d6f",
+      "actual_sha256": null,
+      "matches": false
+    },
+    "bootstrap_pooled": {
+      "path": "experiments/results/exp_test_bootstrap_pooled.json",
+      "expected_sha256": "70864ed0de2253abc845b008d590ced710e1010d6c207f144611dea5ef556571",
+      "actual_sha256": null,
+      "matches": false
+    },
+    "dev_labels": {
+      "actual_sha256": "71dc6be4cfc0d4e0d231f9ffb933ab45ffb638171e8b995bb42e0cd7416a30ed",
+      "matches": true
+    },
+    "test_labels": {
+      "actual_sha256": "6871e1b0067d389b690f602683a98aa709b7f40699fd02ed4473fd70d1123586",
+      "matches": true
+    },
+    "historic_catalog": {
+      "path": "backend/data/research/catalog_dmx_snapshot.json",
+      "exists": false,
+      "claimed_products": 13716,
+      "claimed_categories": 118
+    }
+  },
+  "catalog_summary_as_stored": {
+    "total_products": 13754,
+    "priced_products": 13739,
+    "total_categories": 119,
+    "total_brands": 436,
+    "price_min_vnd": 10000,
+    "price_max_vnd": 380000000,
+    "price_median_vnd": 1390000,
+    "price_mean_vnd": 6136812,
+    "top_15_categories": [
+      {
+        "name": "Đồng hồ thời trang",
+        "count": 3138
+      },
+      {
+        "name": "Ốp lưng, miếng dán",
+        "count": 1039
+      },
+      {
+        "name": "Phụ kiện nhà bếp",
+        "count": 830
+      },
+      {
+        "name": "Loa, Tai nghe",
+        "count": 641
+      },
+      {
+        "name": "Laptop",
+        "count": 468
+      },
+      {
+        "name": "Sạc, cáp",
+        "count": 445
+      },
+      {
+        "name": "Chuột, bàn phím",
+        "count": 400
+      },
+      {
+        "name": "Quạt các loại",
+        "count": 373
+      },
+      {
+        "name": "Làm đẹp, chăm sóc cá nhân",
+        "count": 307
+      },
+      {
+        "name": "Tivi",
+        "count": 307
+      },
+      {
+        "name": "Balo, túi chống sốc",
+        "count": 302
+      },
+      {
+        "name": "Tủ lạnh",
+        "count": 251
+      },
+      {
+        "name": "Máy hút bụi gia đình",
+        "count": 230
+      },
+      {
+        "name": "Pc, máy in",
+        "count": 229
+      },
+      {
+        "name": "Máy lạnh",
+        "count": 228
+      }
+    ]
+  },
+  "spec_keys_in_available_index": 1348,
+  "faq_chunks_in_available_file": 106,
+  "tool_call_counts_only": {
+    "create_order_dmx": 22,
+    "search_product_dmx_v3": 17,
+    "get-time-delivery-dmx": 11,
+    "check_infor_customer": 3,
+    "compare-search": 1,
+    "payment_process": 1,
+    "installment-links": 1
+  },
+  "tool_call_total": 56,
+  "source_sha256": {
+    "backend/app/agent/graph.py": "4b7c02b3bf0c831298255e1598f12eb48e80c20fb27eff67e110584b70867f92",
+    "backend/app/agent/offline.py": "89dced1e3b54449acf3fcc143ecf4a88c57a37e297ad5ef897f3da97e7aea3aa",
+    "backend/app/agent/fast_path.py": "3e9a97e76230f2afef3b84498be0268138050f04e6470dc9859221180c3bc9b1",
+    "backend/app/agent/intent.py": "708ee7465909395de60e95b76b6ad5597a3748099b915923e16067e7885e9e3d",
+    "backend/app/agent/recommendation.py": "679781dc03896526d6a4c26330c0aefd14c79da1b91f11d367e1405cca355215",
+    "backend/app/agent/consultation.py": "6248f0bf765b63e8f9330495eb3b3f9270d9254e7c6c090c80bd3aa5517ddb6e",
+    "backend/app/agent/decision.py": "51b13147cbdecfc62d9cc69e17add2ad7fbbf947d17349380aac92e8d75d3527",
+    "backend/app/agent/lead_tools.py": "353fc211885f828ef528bbaf32a814532bd53ef5b589cbe0eff0a245c9c7c2bf",
+    "backend/app/agent/subagents/base.py": "218c814b7f2824ff32fd77e7b03b6135ab800c6950efb6786c7f9dc6086ca326",
+    "backend/app/agent/tools/catalog.py": "503f9e23c9c49c7634e2aad6ae0765c4c64fde5b984734abb1ef690f256e69b1",
+    "backend/app/config.py": "6a4b00482e2191b1e2d767d3bade852148b67529d52337dab285aed5cc36eea9",
+    "backend/app/agent/memory/store.py": "63eed4c6ffd8d1dcd704c49097ddbd762bbf6fad69826ee791fa534fa18a48b9",
+    "backend/app/catalog/category_model.py": "f85b509523800349aec7d202354baf114fb1dcc09d0f3d0294b4aad493eb7736",
+    "backend/app/catalog/crawl_categories.py": "99d11688525e4582238e18e8a69dfbf15143acbf10d9023d97c874bf4687072d",
+    "backend/app/catalog/repository.py": "ec68eacf63bf0c0d803611cb3e6996f37c8e5d3e1c419d1e117056a0be1bd166",
+    "backend/app/api/chat.py": "36c69bb4e175602620e308a032235ab06f3b58093e99c2fd54c675321a8b9ec1",
+    "scripts/run_pilot.py": "c379f2655642dc797e30b4caab682ad41e9c50c641c04ede0c4e45105d6dcc2b",
+    "experiments/evaluate/runner.py": "318ae9402fdd3216540886c471e01abf166a3851b06ba7ebf31cf8e65511b03f",
+    "experiments/evaluate/metrics.py": "7fca464ea4fd7cc940da8bec7a5b33c26601727ee31c3f67f08e60d22a1a8389",
+    "experiments/benchmark/test.jsonl": "6871e1b0067d389b690f602683a98aa709b7f40699fd02ed4473fd70d1123586",
+    "experiments/results/exp_test_scores.json": "0345ec5c65720b586ce3e0c4e9b324a4c69cb13d20e6f54ca454ab0fd0d0e539",
+    "backend/data/catalog_stats.json": "ee36dcdc244f2de63445d6997ab839554068cbbb2c027fd7caf7ac482e310c11",
+    "backend/data/spec_index.json": "5e71e99dbeaebc7a91c2f7b8f62340571186db61a025ad6378697d8ecb2ab02d",
+    "backend/data/faq.json": "86914266a2937695aea0364ccc9cb9312f1c525132880c5a1b03160b9bf4ab70",
+    "experiments/conditions.json": "b8835f077977ad39dc8149552acce71a69ec1fec4e276f27ceb00f19011b28fd",
+    "experiments/manifest.json": "d4c41777d741183dbe8d08e16b784c2df9341cbb0967a4334ebcf55ce8d0d6fd",
+    "experiments/results/CHAIN_OF_CUSTODY.json": "1d04bb8c6ab4881b5a8ef0f88ca918ebd14b45fe22323dca1fbdfbcdba14ac22"
+  },
+  "manuscript_checks": {
+    "missing_citations": [],
+    "unused_bibliography": [],
+    "unresolved_references": [],
+    "duplicate_labels": [],
+    "external_input_commands": [],
+    "flow_diagrams": 5,
+    "companion_bibliography_key_difference": []
+  }
+}

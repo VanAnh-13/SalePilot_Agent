@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>clarify_loop</title>
+<style>
+  /* Same hand-drawn style family as system_architecture_v2 / evaluation_pipeline:
+     cream background, Segoe Print, pastel boxes with strong colored borders. */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1150px;
+    background: #fbf8f2;
+    font-family: "Segoe Print", "Comic Sans MS", cursive;
+    color: #26303e;
+    padding: 28px 30px 34px 30px;
+  }
+  h1 { font-size: 40px; margin-bottom: 20px; }
+  .panel {
+    border: 4px solid #3b4656;
+    border-radius: 22px;
+    background: #f4f5f7;
+    box-shadow: 4px 5px 0 rgba(38, 48, 62, .18);
+    padding: 18px 22px 20px 22px;
+    margin-bottom: 26px;
+  }
+  .panel.loop { border-color: #27a844; background: #eefaf0; }
+  .panel h2 { font-size: 31px; margin-bottom: 14px; }
+  .row { display: flex; margin: 10px 0; }
+  .row.agent { justify-content: flex-end; }
+  .bubble {
+    max-width: 78%;
+    border-radius: 16px;
+    padding: 8px 16px 10px 16px;
+    font-size: 26px;
+    line-height: 1.35;
+    background: #fff;
+  }
+  .user .bubble  { border: 3px solid #1e88c7; background: #e8f4fb; }
+  .agent .bubble { border: 3px solid #ef7c1a; background: #fdf1e2; }
+  .agent .bubble.final { border-color: #27a844; background: #e9f8ec; }
+  .who { font-size: 21px; opacity: .75; display: block; margin-bottom: 2px; }
+  .step {
+    text-align: center;
+    font-size: 23px;
+    color: #3b4656;
+    margin: 4px 0;
+  }
+  .step .arrow { font-size: 30px; font-weight: bold; }
+  .mono { font-family: Consolas, monospace; font-size: 23px; }
+  .warn { color: #b3541e; }
+</style>
+</head>
+<body>
+  <h1>One-Shot Reply vs. Clarify-Then-Recommend</h1>
+
+  <div class="panel">
+    <h2>(a) One-shot reply</h2>
+    <div class="row user"><div class="bubble"><span class="who">User</span>&ldquo;T&#432; v&#7845;n t&#7911; l&#7841;nh&rdquo; &mdash; fridge advice, no budget or size given</div></div>
+    <div class="step"><span class="arrow">&darr;</span></div>
+    <div class="row agent"><div class="bubble"><span class="who">System</span>Immediate top-k list. <span class="warn">Unstated budget and household size are never checked.</span></div></div>
+  </div>
+
+  <div class="panel loop">
+    <h2>(b) Clarify-then-recommend (SalePilot)</h2>
+    <div class="row user"><div class="bubble"><span class="who">User</span>&ldquo;T&#432; v&#7845;n t&#7911; l&#7841;nh&rdquo;</div></div>
+    <div class="step"><span class="arrow">&darr;</span> missing slots: <span class="mono">budget_vnd, household_size</span> &rarr; ask back</div>
+    <div class="row agent"><div class="bubble"><span class="who">Agent</span>&ldquo;Ng&#226;n s&#225;ch d&#7921; ki&#7871;n c&#7911;a m&#236;nh kho&#7843;ng bao nhi&#234;u &#7841;?&rdquo;<br>&ldquo;Nh&#224; m&#236;nh kho&#7843;ng m&#7845;y ng&#432;&#7901;i d&#249;ng &#7841;?&rdquo;</div></div>
+    <div class="row user"><div class="bubble"><span class="who">User</span>&ldquo;Gia &#273;&#236;nh 4 ng&#432;&#7901;i, ng&#226;n s&#225;ch d&#432;&#7899;i 15 tri&#7879;u&rdquo;</div></div>
+    <div class="step"><span class="arrow">&darr;</span> merged need <span class="mono">{tu_lanh, &le;15M VND, 4 people}</span></div>
+    <div class="row agent"><div class="bubble final"><span class="who">Agent</span>Constraint-first top-3 with evidence: constraint states, admission counts, catalog hash</div></div>
+  </div>
+</body>
+</html>

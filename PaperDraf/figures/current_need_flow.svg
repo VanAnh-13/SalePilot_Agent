@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="313.41" height="386.69" viewBox="-160.48 -38.40 313.41 386.69">
+<title>Current Need Flow</title>
+<desc>Preview exported from the corresponding TikZ block in main.tex; positions and text share that source.</desc>
+<rect x="-160.48346456692911" y="-38.4" width="313.407874015748" height="386.6929133858267" fill="white"/>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#526477"/></marker></defs>
+<polyline points="0.00,26.40 0.00,37.74" fill="none" stroke="#526477" stroke-width=".9" marker-end="url(#arrow)"/>
+<polyline points="0.00,104.54 0.00,115.88" fill="none" stroke="#526477" stroke-width=".9" marker-end="url(#arrow)"/>
+<polyline points="0.00,182.68 0.00,194.02" fill="none" stroke="#526477" stroke-width=".9" marker-end="url(#arrow)"/>
+<polyline points="0.00,232.82 -77.89,232.82 -77.89,255.49" fill="none" stroke="#526477" stroke-width=".9" marker-end="url(#arrow)"/>
+<polyline points="0.00,232.82 77.89,232.82 77.89,255.49" fill="none" stroke="#526477" stroke-width=".9" marker-end="url(#arrow)"/>
+<polyline points="-140.92,295.89 -148.48,295.89 -148.48,0.00 -130.12,0.00" fill="none" stroke="#526477" stroke-width=".9" marker-end="url(#arrow)"/>
+<rect x="-130.12" y="-26.40" width="260.25" height="52.80" rx="3" fill="#edf4fb" stroke="#526477" stroke-width=".7"/>
+<text x="0.00" y="-10.50" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Current text + stored need</text>
+<text x="0.00" y="3.50" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Offline only: clear and save negated category first</text>
+<text x="0.00" y="17.50" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Detect fresh category; otherwise use working prior</text>
+<rect x="-130.12" y="37.74" width="260.25" height="66.80" rx="3" fill="#edf4fb" stroke="#526477" stroke-width=".7"/>
+<text x="0.00" y="53.64" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Extract and merge</text>
+<text x="0.00" y="67.64" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Same category: overwrite fields, union priorities</text>
+<text x="0.00" y="81.64" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Switch: reset category fields; keep old budget if not</text>
+<text x="0.00" y="95.64" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">replaced</text>
+<rect x="-130.12" y="115.88" width="260.25" height="66.80" rx="3" fill="#ebf5f0" stroke="#526477" stroke-width=".7"/>
+<text x="0.00" y="131.78" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Runtime follow-up resolution</text>
+<text x="0.00" y="145.78" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Skip on switch; otherwise resolve number / room</text>
+<text x="0.00" y="159.78" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">label</text>
+<text x="0.00" y="173.78" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Fill absent budget from profile</text>
+<rect x="-130.12" y="194.02" width="260.25" height="38.80" rx="3" fill="#edf4fb" stroke="#526477" stroke-width=".7"/>
+<text x="0.00" y="209.92" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Shared consult: check category and required slots</text>
+<text x="0.00" y="223.92" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Apply force bypass only for a recognized category</text>
+<rect x="-140.92" y="255.49" width="126.08" height="80.80" rx="3" fill="#fff5e6" stroke="#526477" stroke-width=".7"/>
+<text x="-77.89" y="271.39" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Missing: clarification +</text>
+<text x="-77.89" y="285.39" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">decision</text>
+<text x="-77.89" y="299.39" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Save need if route</text>
+<text x="-77.89" y="313.39" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">permits</text>
+<text x="-77.89" y="327.39" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Wait for next user turn</text>
+<rect x="14.85" y="255.49" width="126.08" height="80.80" rx="3" fill="#ebf5f0" stroke="#526477" stroke-width=".7"/>
+<text x="77.89" y="271.39" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Ready: rank + decision</text>
+<text x="77.89" y="285.39" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Persist need on eligible</text>
+<text x="77.89" y="299.39" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">route</text>
+<text x="77.89" y="313.39" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">Store SKUs if list</text>
+<text x="77.89" y="327.39" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#18324d">nonempty</text>
+</svg>
