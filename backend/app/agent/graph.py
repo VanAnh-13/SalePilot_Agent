@@ -1,5 +1,6 @@
 import logging
 from collections.abc import AsyncIterator
+from dataclasses import dataclass, field
 from time import perf_counter
 from typing import Any
 
@@ -28,10 +29,7 @@ from app.observability.metrics import record_run
 
 logger = logging.getLogger(__name__)
 
-# Look-back windows and caps for the lead-node message injection (skill bodies
-# and sub-agent results) and the finalize trace entry.
-SKILL_MARKER_LOOKBACK = 4
-SUBAGENT_MARKER_LOOKBACK = 3
+# Caps for the sub-agent summaries injected into the lead prompt.
 SUBAGENT_RESULTS_KEEP = 5
 SUBAGENT_BRIEF_CAP = 400
 
@@ -55,6 +53,15 @@ def _mark_final_message(bag: dict[str, Any], content: str) -> None:
     )
 
 
+def _replace_context_message(messages: list, marker: str, content: str) -> None:
+    """Replace the first matching context message, or append it once."""
+    for index, message in enumerate(messages):
+        if isinstance(message, HumanMessage) and str(message.content).startswith(marker):
+            messages[index] = HumanMessage(content=content)
+            return
+    messages.append(HumanMessage(content=content))
+
+
 def _build_graph():
     model = get_chat_model().bind_tools(LEAD_TOOLS)
     tool_node = ToolNode(LEAD_TOOLS)
@@ -70,28 +77,14 @@ def _build_graph():
                 f"[Skill:{n}]\n{body}" for n, body in bag["skill_bodies"].items()
             )
             skill_content = f"[Active skills]\n{skill_blob}"
-            replaced = False
-            for i, m in enumerate(messages):
-                if isinstance(m, HumanMessage) and str(m.content).startswith("[Active skills]"):
-                    messages[i] = HumanMessage(content=skill_content)
-                    replaced = True
-                    break
-            if not replaced:
-                messages = [*messages, HumanMessage(content=skill_content)]
+            _replace_context_message(messages, "[Active skills]", skill_content)
         if bag["results"]:
             brief = "\n".join(
                 f"- {r['agent']}: {r['summary'][:SUBAGENT_BRIEF_CAP]}"
                 for r in bag["results"][-SUBAGENT_RESULTS_KEEP:]
             )
             result_content = f"[Sub-agent results]\n{brief}\n\nHãy tiếp tục delegate/delegate_many hoặc finalize."
-            replaced = False
-            for i, m in enumerate(messages):
-                if isinstance(m, HumanMessage) and str(m.content).startswith("[Sub-agent results]"):
-                    messages[i] = HumanMessage(content=result_content)
-                    replaced = True
-                    break
-            if not replaced:
-                messages = [*messages, HumanMessage(content=result_content)]
+            _replace_context_message(messages, "[Sub-agent results]", result_content)
         response = await model.ainvoke(messages)
         return {"messages": [response], "trace": list(bag["trace"])}
 
@@ -440,6 +433,51 @@ def _prepare_llm_graph(
     )
 
 
+@dataclass
+class _PreparedRun:
+    memory_before: dict[str, Any]
+    memory_summary: str
+    early_route: tuple[RunResult, str] | None
+    state: dict[str, Any] = field(default_factory=dict)
+
+
+async def _prepare_run(
+    user_text: str,
+    *,
+    history: list[dict[str, str]] | None,
+    channel: str,
+    external_id: str,
+    conversation_id: int | None,
+    lead_id: int | None,
+    customer_name: str,
+) -> _PreparedRun:
+    """Share memory loading, early routing and graph setup across both transports."""
+    memory_before, memory_summary = await _prelude(channel, external_id, user_text)
+    early_route = await _serve_early_routes(
+        user_text,
+        channel=channel,
+        external_id=external_id,
+        conversation_id=conversation_id,
+        lead_id=lead_id,
+        customer_name=customer_name,
+        memory_summary=memory_summary,
+        memory_before=memory_before,
+    )
+    prepared = _PreparedRun(memory_before, memory_summary, early_route)
+    if early_route is None:
+        prepared.state = _prepare_llm_graph(
+            user_text,
+            channel=channel,
+            external_id=external_id,
+            conversation_id=conversation_id,
+            lead_id=lead_id,
+            customer_name=customer_name,
+            history=history,
+            memory_summary=memory_summary,
+        )
+    return prepared
+
+
 async def run_agent(
     user_text: str,
     *,
@@ -451,37 +489,23 @@ async def run_agent(
     customer_name: str = "Khách",
 ) -> dict[str, Any]:
     started = perf_counter()
-    memory_before, memory_summary = await _prelude(channel, external_id, user_text)
-
-    early = await _serve_early_routes(
+    prepared = await _prepare_run(
         user_text,
-        channel=channel,
-        external_id=external_id,
-        conversation_id=conversation_id,
-        lead_id=lead_id,
-        customer_name=customer_name,
-        memory_summary=memory_summary,
-        memory_before=memory_before,
-    )
-    if early is not None:
-        result, route = early
-        return _record_route(result, route, started)
-
-    state = _prepare_llm_graph(
-        user_text,
-        channel=channel,
-        external_id=external_id,
-        conversation_id=conversation_id,
-        lead_id=lead_id,
-        customer_name=customer_name,
         history=history,
-        memory_summary=memory_summary,
+        channel=channel,
+        external_id=external_id,
+        conversation_id=conversation_id,
+        lead_id=lead_id,
+        customer_name=customer_name,
     )
+    if prepared.early_route is not None:
+        result, route = prepared.early_route
+        return _record_route(result, route, started)
 
     graph = get_graph()
     llm_error: Exception | None = None
     try:
-        await graph.ainvoke(state, config={"recursion_limit": GRAPH_RECURSION_LIMIT})
+        await graph.ainvoke(prepared.state, config={"recursion_limit": GRAPH_RECURSION_LIMIT})
     except Exception as exc:  # LLM timeout / rate-limit / endpoint down
         # Never surface a raw 500 to the customer: degrade to a friendly message
         # and keep serving. The deterministic recommend fast-path already handles
@@ -494,7 +518,7 @@ async def run_agent(
         channel=channel,
         external_id=external_id,
         conversation_id=conversation_id,
-        memory_before=memory_before,
+        memory_before=prepared.memory_before,
         started=started,
         llm_error=llm_error,
     )
@@ -511,42 +535,28 @@ async def run_agent_stream(
     customer_name: str = "Khách",
 ) -> AsyncIterator[dict[str, Any]]:
     started = perf_counter()
-    memory_before, memory_summary = await _prelude(channel, external_id, user_text)
-
-    early = await _serve_early_routes(
+    prepared = await _prepare_run(
         user_text,
+        history=history,
         channel=channel,
         external_id=external_id,
         conversation_id=conversation_id,
         lead_id=lead_id,
         customer_name=customer_name,
-        memory_summary=memory_summary,
-        memory_before=memory_before,
     )
-    if early is not None:
-        result, route = early
+    if prepared.early_route is not None:
+        result, route = prepared.early_route
         result = _record_route(result, route, started)
         for event in batched_events(result):
             yield event
         return
 
-    state = _prepare_llm_graph(
-        user_text,
-        channel=channel,
-        external_id=external_id,
-        conversation_id=conversation_id,
-        lead_id=lead_id,
-        customer_name=customer_name,
-        history=history,
-        memory_summary=memory_summary,
-    )
-
-    if memory_summary:
-        yield {"type": "memory", "summary": memory_summary}
+    if prepared.memory_summary:
+        yield {"type": "memory", "summary": prepared.memory_summary}
 
     llm_error: Exception | None = None
     try:
-        async for piece in _stream_graph_tokens(state):
+        async for piece in _stream_graph_tokens(prepared.state):
             yield {"type": "token", "content": piece}
     except Exception as exc:  # provider died mid-stream → friendly fallback
         llm_error = exc
@@ -556,7 +566,7 @@ async def run_agent_stream(
         channel=channel,
         external_id=external_id,
         conversation_id=conversation_id,
-        memory_before=memory_before,
+        memory_before=prepared.memory_before,
         started=started,
         llm_error=llm_error,
     )

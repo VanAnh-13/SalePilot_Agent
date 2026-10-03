@@ -312,7 +312,42 @@ def resolve_followup_answer(
     return need
 
 
-def _score(product: dict[str, Any], need: dict[str, Any], cat: Category, ctx: dict[str, Any]) -> float:
+def _slot_score(public: dict[str, Any], slot: Slot, value: float) -> float | None:
+    """Return a slot contribution, or None when the product must be excluded."""
+    spec = public.get(slot.spec_key) if slot.spec_key else None
+    if slot.kind == "range_fit":
+        low = public.get(f"{slot.range_key}_min")
+        high = public.get(f"{slot.range_key}_max")
+        hard = slot.hardness == "hard"
+        if low is None and high is None:
+            if hard and slot.missing_policy != "allow_unknown":
+                return None
+            return -slot.weight * 0.5
+        if (low is None or value >= float(low)) and (high is None or value <= float(high)):
+            return slot.weight
+        if hard:
+            return None
+        return -(slot.weight + 2.0)
+
+    if slot.kind in {"max_constraint", "min_constraint"}:
+        if spec is None:
+            if slot.hardness == "hard" and slot.missing_policy == "exclude":
+                return None
+            return -slot.weight * 0.5
+        if slot.kind == "max_constraint" and float(spec) > value:
+            return None
+        if slot.kind == "min_constraint" and float(spec) < value:
+            return None
+        return 1.0
+
+    # A proximity preference adjusts the score without excluding the product.
+    if spec is None:
+        return -slot.weight * 0.4
+    diff = abs(float(spec) - value)
+    return max(-slot.weight * 0.6, slot.weight - diff / max(value, 1) * slot.weight)
+
+
+def _score(product: dict[str, Any], need: dict[str, Any], ctx: dict[str, Any]) -> float:
     public = product_public(product)
     price = public.get("price_vnd")
     if price is None:
@@ -342,50 +377,13 @@ def _score(product: dict[str, Any], need: dict[str, Any], cat: Category, ctx: di
             score += 4.0
 
     for slot, value in ctx["slots"]:
-        spec = public.get(slot.spec_key) if slot.spec_key else None
-        if slot.kind == "range_fit":
-            low = public.get(f"{slot.range_key}_min")
-            high = public.get(f"{slot.range_key}_max")
-            hard = slot.hardness == "hard"
-            if low is None and high is None:
-                if hard and slot.missing_policy != "allow_unknown":
-                    return -1e9
-                score -= slot.weight * 0.5
-            elif (low is None or value >= float(low)) and (
-                    high is None or value <= float(high)
-            ):
-                score += slot.weight
-            else:
-                if hard:
-                    return -1e9
-                score -= slot.weight + 2.0
-        elif slot.kind == "max_constraint":
-            if spec is None:
-                if slot.hardness == "hard" and slot.missing_policy == "exclude":
-                    return -1e9
-                score -= slot.weight * 0.5
-            elif float(spec) > value:
-                return -1e9
-            else:
-                score += 1.0
-        elif slot.kind == "min_constraint":
-            if spec is None:
-                if slot.hardness == "hard" and slot.missing_policy == "exclude":
-                    return -1e9
-                score -= slot.weight * 0.5
-            elif float(spec) < value:
-                return -1e9
-            else:
-                score += 1.0
-        else:  # proximity
-            if spec is None:
-                score -= slot.weight * 0.4
-            else:
-                diff = abs(float(spec) - value)
-                score += max(-slot.weight * 0.6, slot.weight - diff / max(value, 1) * slot.weight)
+        contribution = _slot_score(public, slot, value)
+        if contribution is None:
+            return -1e9
+        score += contribution
 
     for prio in ctx["prio_objs"]:
-        score += _apply_priority(prio, public, ctx, need)
+        score += _apply_priority(prio, public, ctx)
 
     # Real-world signals from the crawl: rating, popularity, live promotion.
     # Kept small so they tie-break rather than override need/budget fit.
@@ -403,7 +401,7 @@ def _score(product: dict[str, Any], need: dict[str, Any], cat: Category, ctx: di
     return score
 
 
-def _apply_priority(prio: Priority, public: dict[str, Any], ctx: dict[str, Any], need: dict[str, Any]) -> float:
+def _apply_priority(prio: Priority, public: dict[str, Any], ctx: dict[str, Any]) -> float:
     if prio.mode == "cheap":
         lo, hi = ctx["price_range"]
         price = public.get("price_vnd")
@@ -424,18 +422,16 @@ def _apply_priority(prio: Priority, public: dict[str, Any], ctx: dict[str, Any],
     return 0.0
 
 
-def _why(public: dict[str, Any], need: dict[str, Any], cat: Category, ctx: dict[str, Any]) -> str:
+def _why(public: dict[str, Any], need: dict[str, Any], ctx: dict[str, Any]) -> str:
     bits: list[str] = []
     for slot, value in ctx["slots"]:
         if slot.kind == "range_fit":
-            label = public.get("household_label") if slot.range_key == "household" else public.get(
-                slot.range_key + "_min")
             if public.get(f"{slot.range_key}_min") is not None:
                 bits.append(f"phù hợp {slot.label}")
         elif slot.spec_key and public.get(slot.spec_key) is not None:
             bits.append(fmt_num(public[slot.spec_key], slot.unit))
     for prio in ctx["prio_objs"]:
-        contribution = _apply_priority(prio, public, ctx, need)
+        contribution = _apply_priority(prio, public, ctx)
         if contribution > 0 and prio.mode in {"bool", "present", "text"}:
             bits.append(prio.key.replace("_", " "))
     budget = need.get("budget_vnd")
@@ -450,6 +446,49 @@ def _why(public: dict[str, Any], need: dict[str, Any], cat: Category, ctx: dict[
     if public.get("sold"):
         bits.append(f"đã bán {fmt_sold(public['sold'])}")
     return "; ".join(dict.fromkeys(bits))
+
+
+def _select_top3(
+    scored: list[tuple[float, dict[str, Any]]],
+    need: dict[str, Any],
+    ctx: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Choose distinct models with brand diversity, then fill remaining places."""
+    def _add(product: dict[str, Any], score: float) -> None:
+        public = summarize_product(product)
+        public["match_score"] = round(score, 2)
+        public["why"] = _why(product_public(product), need, ctx)
+        top.append(public)
+
+    def _model(product: dict[str, Any]) -> str:
+        return str(product.get("model_code") or product.get("sku") or "")
+
+    top: list[dict[str, Any]] = []
+    brands: set[str] = set()
+    seen_models: set[str] = set()
+    # First pass: prefer brand diversity, skip near-duplicate models (colour variants).
+    for sc, product in scored:
+        if _model(product) in seen_models:
+            continue
+        brand = str(product.get("brand") or "")
+        if brand in brands and len(top) < 2:
+            continue
+        _add(product, sc)
+        brands.add(brand)
+        seen_models.add(_model(product))
+        if len(top) >= 3:
+            break
+    # Fallback: fill remaining slots (still de-duplicating by model).
+    if len(top) < 3:
+        for sc, product in scored:
+            if _model(product) in seen_models:
+                continue
+            _add(product, sc)
+            seen_models.add(_model(product))
+            if len(top) >= 3:
+                break
+
+    return top
 
 
 def recommend_top3(need: dict[str, Any]) -> dict[str, Any]:
@@ -497,42 +536,10 @@ def recommend_top3(need: dict[str, Any]) -> dict[str, Any]:
         if prio.mode in {"max_spec", "min_spec"} and prio.spec_key not in ctx["spec_ranges"]:
             ctx["spec_ranges"][prio.spec_key] = _spec_stats(products, prio.spec_key)
 
-    scored = [(sc, p) for p in products if (sc := _score(p, need, cat, ctx)) > -1e8]
+    scored = [(sc, p) for p in products if (sc := _score(p, need, ctx)) > -1e8]
     scored.sort(key=lambda item: (-item[0], int(item[1].get("price_vnd") or 10 ** 15)))
 
-    def _add(product: dict[str, Any], score: float) -> None:
-        public = summarize_product(product)
-        public["match_score"] = round(score, 2)
-        public["why"] = _why(product_public(product), need, cat, ctx)
-        top.append(public)
-
-    def _model(product: dict[str, Any]) -> str:
-        return str(product.get("model_code") or product.get("sku") or "")
-
-    top: list[dict[str, Any]] = []
-    brands: set[str] = set()
-    seen_models: set[str] = set()
-    # First pass: prefer brand diversity, skip near-duplicate models (colour variants).
-    for sc, product in scored:
-        if _model(product) in seen_models:
-            continue
-        brand = str(product.get("brand") or "")
-        if brand in brands and len(top) < 2:
-            continue
-        _add(product, sc)
-        brands.add(brand)
-        seen_models.add(_model(product))
-        if len(top) >= 3:
-            break
-    # Fallback: fill remaining slots (still de-duplicating by model).
-    if len(top) < 3:
-        for sc, product in scored:
-            if _model(product) in seen_models:
-                continue
-            _add(product, sc)
-            seen_models.add(_model(product))
-            if len(top) >= 3:
-                break
+    top = _select_top3(scored, need, ctx)
 
     tradeoffs = compare([it["sku"] for it in top]).get("tradeoffs", []) if len(top) >= 2 else []
     return {

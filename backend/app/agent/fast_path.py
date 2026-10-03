@@ -34,7 +34,7 @@ from app.agent.intent import (
 )
 from app.agent.llm import get_chat_model
 from app.agent.memory.store import get_memory_summary, load_need, load_profile, save_need
-from app.agent.offline import _format_top3
+from app.agent.responses import format_recommendation
 from app.agent.tools.runtime import prepare_ctx
 from app.agent.trajectory.export import save_trajectory
 from app.config import get_settings
@@ -151,7 +151,7 @@ async def try_fast_path(
                 except Exception:
                     reply = ""
             if not reply.strip():
-                reply = _format_top3(rec)
+                reply = format_recommendation(rec)
             need["last_skus"] = [p["sku"] for p in rec["top3"] if p.get("sku")]
             await save_need(channel, external_id, need)
             agents = ["lead", "catalog"]

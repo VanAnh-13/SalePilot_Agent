@@ -1,6 +1,6 @@
 {
   "project": "salepilot",
-  "last_updated": "2026-09-28",
+  "last_updated": "2026-10-04",
   "rules": {
     "single_active_feature": true,
     "wip_limit": 1,
@@ -51,12 +51,239 @@
   },
   "features": [
     {
+      "id": "refactor-ranking-stages-001",
+      "priority": -6,
+      "area": "backend-maintainability",
+      "title": "Separate constraint scoring and top-three selection",
+      "user_visible_behavior": "Product scores, rejection decisions, brand/model selection, explanations and result order stay identical while ranking stages become independently readable.",
+      "status": "passing",
+      "allowed_files": [
+        "backend/app/agent/recommendation.py",
+        "backend/tests/test_recommendation_selection.py"
+      ],
+      "approved_protected_files": [],
+      "verification": [
+        "Original-versus-refactored outputs and scores match across both category registries and constraint policies.",
+        "Selection regression tests cover diversity, duplicate models, fallback, score/price ties and exclusions.",
+        "Full backend suite and offline/MCP smoke pass.",
+        "Independent review, exact scope, session scope and whitespace checks pass."
+      ],
+      "evidence": [
+        "The recommendation engine combines four slot policies in _score and selection/formatting closures in recommend_top3; two parameters and one local binding are unused.",
+        "Extracted _slot_score for range/min/max/proximity rules and merged duplicate min/max missing-data handling; _score is 52 lines (was 89).",
+        "Extracted the unchanged two-pass brand/model selection into _select_top3; recommend_top3 is 70 lines (was 102). Removed unused private parameters and an unused explanation binding.",
+        "Independent checker confirmed exclusion policies, arithmetic, stable ties, model deduplication and diversity fallback preserve original semantics."
+      ],
+      "test_evidence": [
+        {
+          "command": "Seven public selection regression tests passed before/after refactor; 18 focused ranking/decision tests pass",
+          "result": "passed",
+          "date": "2026-10-04"
+        },
+        {
+          "command": "660 original-versus-refactored full recommendation comparisons across workbook/crawl registries; 1512 exact scoring/error comparisons",
+          "result": "passed",
+          "date": "2026-10-04"
+        },
+        {
+          "command": "Backend unittest discover: 133 tests in 15.835s",
+          "result": "passed",
+          "date": "2026-10-04"
+        },
+        {
+          "command": "PYTHONUTF8=1 bash scripts/verify.sh including MCP; evaluator metric tests 9/9",
+          "result": "passed",
+          "date": "2026-10-04"
+        },
+        {
+          "command": "Exact-file scope, --check-session and git diff --check",
+          "result": "passed",
+          "date": "2026-10-04"
+        }
+      ],
+      "notes": "Preserve scoring coefficients, arithmetic ordering, sentinel rejection, stable tie order, response shape and ranking policy. No paper or protected source changes."
+    },
+    {
+      "id": "refactor-frontend-state-001",
+      "priority": -5,
+      "area": "frontend-maintainability",
+      "title": "Separate chat and dashboard state from page rendering",
+      "user_visible_behavior": "Chat streaming, saved conversations, per-message evidence, dashboard refresh and human takeover retain their existing behavior with focused hooks and components.",
+      "status": "passing",
+      "allowed_files": [
+        "frontend/app/chat/page.tsx",
+        "frontend/app/dashboard/page.tsx",
+        "frontend/lib/useChatSession.ts",
+        "frontend/lib/useDashboard.ts",
+        "frontend/components/ChatEvidence.tsx",
+        "frontend/tests/conversation-ui.cjs"
+      ],
+      "approved_protected_files": [],
+      "verification": [
+        "Browser regression scenarios pass for streaming, fallback, partial failure, history persistence and evidence selection, dashboard partial loading, authentication and takeover/resolve.",
+        "Frontend TypeScript and production build pass.",
+        "Independent diff review, exact scope, session scope and whitespace checks pass."
+      ],
+      "evidence": [
+        "Frontend pages currently mix effects/network/session state with JSX; extraction will preserve existing effects and rendering.",
+        "Chat page reduced from 352 to 134 lines by extracting session state to useChatSession and evidence rendering to ChatEvidence.",
+        "Dashboard page reduced from 261 to 167 lines by extracting data loading, owner prompt, refresh and actions to useDashboard; stable callback removes stale effect suppression.",
+        "Independent reviewer confirmed storage timing, streaming/error behavior, evidence, DOM and Vietnamese strings are preserved."
+      ],
+      "test_evidence": [
+        {
+          "command": "Eight browser scenarios passed before extraction; all nine passed after, including refresh interval cleanup",
+          "result": "passed",
+          "date": "2026-10-04"
+        },
+        {
+          "command": "frontend TypeScript --noEmit and Next.js production build",
+          "result": "passed",
+          "date": "2026-10-04"
+        },
+        {
+          "command": "Scope self-test, eight exact paths, session scope and git diff --check",
+          "result": "passed",
+          "date": "2026-10-04"
+        }
+      ],
+      "notes": "No added dependencies or protected manifests. Browser regressions use installed Playwright/Chrome with deterministic mocked API responses."
+    },
+    {
+      "id": "refactor-serving-setup-001",
+      "priority": -5,
+      "area": "backend-maintainability",
+      "title": "Share serving-route setup and decouple response formatting",
+      "user_visible_behavior": "Batch and streaming chat retain the same route selection, memory ordering, errors and Vietnamese responses through shared setup and independent response formatters.",
+      "status": "passing",
+      "allowed_files": [
+        "backend/app/agent/graph.py",
+        "backend/app/agent/offline.py",
+        "backend/app/agent/fast_path.py",
+        "backend/app/agent/responses.py",
+        "backend/tests/test_serving_setup.py"
+      ],
+      "approved_protected_files": [],
+      "verification": [
+        "Existing backend unittest suite and offline/MCP smoke pass.",
+        "Batch/stream route parity, memory ordering, graph fallback and prompt replacement regression tests pass.",
+        "Formatter before/after output comparisons pass.",
+        "Scope self-test, exact-file scope, session scope and whitespace checks pass."
+      ],
+      "evidence": [
+        "2026-10-03: broader cleanup requested after the initial limited pass; reviewed agent graph, offline/fast routes, recommendation, memory, chat and dashboard.",
+        "Batch/stream initialization now shares _prepare_run; lead prompt context replacement shares one helper; removed two unused lookback constants.",
+        "Extracted identical recommendation/comparison formatter bodies into responses.py; fast_path no longer imports the offline executor.",
+        "Independent checker found no semantic regressions or unnecessary abstraction."
+      ],
+      "test_evidence": [
+        {
+          "command": "Backend unittest discover: 126 tests in 13.867s",
+          "result": "passed",
+          "date": "2026-10-03"
+        },
+        {
+          "command": "17 focused setup/streaming/decision/skill tests; four catalog messaging tests",
+          "result": "passed",
+          "date": "2026-10-03"
+        },
+        {
+          "command": "Original-versus-extracted formatter output comparisons",
+          "result": "passed",
+          "date": "2026-10-03"
+        },
+        {
+          "command": "PYTHONUTF8=1 bash scripts/verify.sh including MCP",
+          "result": "passed",
+          "date": "2026-10-03"
+        },
+        {
+          "command": "Exact-file scope, --check-session and git diff --check",
+          "result": "passed",
+          "date": "2026-10-03"
+        }
+      ],
+      "notes": "Refactor only; preserve prior uncommitted cleanup, protected files, ranking semantics and paper artifacts. Frontend state separation follows after this feature passes."
+    },
+    {
+      "id": "cleanup-code-simplification-001",
+      "priority": -4,
+      "area": "maintenance",
+      "title": "Remove unused scaffolding and simplify admin request handling",
+      "user_visible_behavior": "Existing web chat and dashboard behavior is preserved while unused backend scaffolding and duplicate admin request handling are removed.",
+      "status": "passing",
+      "allowed_files": [
+        "backend/main.py",
+        "backend/app/channels/__init__.py",
+        "backend/app/channels/base.py",
+        "frontend/lib/client.ts"
+      ],
+      "approved_protected_files": [],
+      "verification": [
+        "Backend unittest suite and scripts/verify.sh pass.",
+        "Frontend TypeScript checks and production build pass.",
+        "Mocked admin requests retain GET/POST headers, body, cache and error behavior.",
+        "Removed scaffolding has no runtime imports or entry-point references.",
+        "Scope self-test, exact changed-file scope, session scope and git diff --check pass."
+      ],
+      "evidence": [
+        "2026-10-03: user requested skill-guided boilerplate/folder cleanup and refactoring; code-simplification skill loaded directly from D:/.agents.",
+        "Repaired existing backend virtual environment with uv venv --allow-existing and installed Python 3.12.14; preserved existing packages.",
+        "Removed the unreferenced backend/main.py hello-world entry and backend/app/channels/{__init__,base}.py protocol scaffolding; deployment and startup use app.main:app.",
+        "Consolidated GET/POST admin request URL, owner headers, cache and response/error handling in frontend/lib/client.ts.",
+        "Independent read-only checker found no code issues; corrected the stale paper feature status sentence it identified."
+      ],
+      "test_evidence": [
+        {
+          "command": "PYTHONUTF8=1 bash scripts/verify.sh (before and after edits, including MCP smoke)",
+          "result": "passed",
+          "date": "2026-10-03"
+        },
+        {
+          "command": "frontend: node node_modules/typescript/bin/tsc --noEmit; node node_modules/next/dist/bin/next build (before and after edits)",
+          "result": "passed",
+          "date": "2026-10-03"
+        },
+        {
+          "command": "112 original-versus-refactored admin request cases across seven callers, four storage contexts and four response/error outcomes",
+          "result": "passed",
+          "date": "2026-10-03"
+        },
+        {
+          "command": "backend/.venv/Scripts/python.exe -B -m unittest experiments.evaluate.test_metrics (9 tests)",
+          "result": "passed",
+          "date": "2026-10-03"
+        },
+        {
+          "command": "Temporary live servers: backend /health and POST /chat; frontend /, /chat, /dashboard all return HTTP 200",
+          "result": "passed",
+          "date": "2026-10-03"
+        },
+        {
+          "command": "Independent code review and reference/entry-point search",
+          "result": "passed",
+          "date": "2026-10-03"
+        },
+        {
+          "command": "backend/.venv/Scripts/python.exe -B -m unittest discover -s tests (from backend; 122 tests in 425.072 seconds)",
+          "result": "passed",
+          "date": "2026-10-03"
+        },
+        {
+          "command": "scripts/validate_agent_scope.py --self-test, --check-session, exact six changed-file --check-files; git diff --check",
+          "result": "passed",
+          "date": "2026-10-03"
+        }
+      ],
+      "notes": "One focused cleanup feature; paper materials, data, dependencies and protected source files are preserved. No commit or push requested. Full suite passes unchanged; dependency deprecations, fixture embedding-dimension fallback warnings and an aiosqlite ResourceWarning were logged. Generated channel caches remain unmanaged by this source cleanup."
+    },
+    {
       "id": "paper-current-code-001",
       "priority": -3,
       "area": "research-documentation",
       "title": "Revise PaperDraf against current code and redraw all active flows",
       "user_visible_behavior": "A complete revised manuscript accurately describes current Web routing, shared need updates, ranking and evidence semantics, and labels historical results according to their available provenance. All active flow diagrams are redrawn as vectors.",
-      "status": "in_progress",
+      "status": "blocked",
       "allowed_files": [
         "PaperDraf/main.tex",
         "PaperDraf/main.pdf",
@@ -107,7 +334,7 @@
         "PASS (2026-09-30): independently reproduced exact CRLF score digest; audit now records raw matches=false alongside matches_with_crlf=true. Full 40-label/120-row audit and report arithmetic pass; descriptive results and original score/custody bytes unchanged; evaluator tests 9/9 pass. Evaluation SVG/PNG regenerated and visually inspected; manuscript reference checks pass.",
         "UNVERIFIED (2026-09-30): built-in LaTeX compile still fails before source parsing with Unable to find standard directories for platform; PDF layout remains unverified."
       ],
-      "notes": "Second-review content revision complete; feature remains in_progress pending owner-supplied real author metadata and successful native compilation/PDF layout and page-count verification. The paper-only package intentionally contains a derived audit report, not distributable raw inputs; all repeatability claims are narrowed accordingly. The 2026-09-30 audit resolves the score-digest discrepancy as LF/CRLF representation; earlier unresolved-mismatch statements in historical evidence are superseded. Missing original inputs and historical generating-version records still limit reproduction. No application behavior or historical artifacts changed; no commit or push."
+      "notes": "Second-review content revision complete; feature is blocked pending owner-supplied real author metadata and successful native compilation/PDF layout and page-count verification. The paper-only package intentionally contains a derived audit report, not distributable raw inputs; all repeatability claims are narrowed accordingly. The 2026-09-30 audit resolves the score-digest discrepancy as LF/CRLF representation; earlier unresolved-mismatch statements in historical evidence are superseded. Missing original inputs and historical generating-version records still limit reproduction. No application behavior or historical artifacts changed; no commit or push. 2026-10-03: marked blocked for the existing author metadata and native compilation/layout prerequisites while the owner-requested code cleanup is active."
     },
     {
       "id": "audit-fix-001",

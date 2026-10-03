@@ -99,10 +99,13 @@ function ownerHeaders(): Record<string, string> {
   }
 }
 
-async function adminFetch<T>(path: string): Promise<T> {
+async function adminFetch<T>(
+  path: string,
+  options: { method?: "POST"; headers?: Record<string, string>; body?: string } = {},
+): Promise<T> {
   const res = await fetch(
     `${ADMIN_PROXY_PATH}?path=${encodeURIComponent(path)}`,
-    { cache: "no-store", headers: { ...ownerHeaders() } },
+    { ...options, cache: "no-store", headers: { ...options.headers, ...ownerHeaders() } },
   );
   if (res.status === 401) throw new Error("UNAUTHORIZED");
   if (!res.ok) throw new Error(await res.text());
@@ -110,18 +113,11 @@ async function adminFetch<T>(path: string): Promise<T> {
 }
 
 async function adminPost<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(
-    `${ADMIN_PROXY_PATH}?path=${encodeURIComponent(path)}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...ownerHeaders() },
-      body: JSON.stringify(body),
-      cache: "no-store",
-    },
-  );
-  if (res.status === 401) throw new Error("UNAUTHORIZED");
-  if (!res.ok) throw new Error(await res.text());
-  return (await res.json()) as T;
+  return adminFetch<T>(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
 }
 
 export async function fetchLeads(): Promise<Lead[]> {

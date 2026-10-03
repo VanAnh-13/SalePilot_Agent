@@ -3,18 +3,18 @@
 ## Current Verified State
 
 - Repository root: `D:\Homeworks\SalePilot_Agent`
-- Date: 2026-08-23
-- Active feature: **none** — all product features are `passing`; `blocked`: paper-001/rivf-001 (authorized workbook pending); several legacy `not_started` scaffolds remain
+- Date: 2026-10-04
+- Active feature: **none** — ranking stages, frontend extraction, backend setup and initial cleanup are passing; paper-current-code-001 is blocked on author metadata and native PDF compilation/layout, with earlier paper-001/rivf-001 blockers retained
 - Channel: **Web only** — Zalo integration removed entirely (Session 036, owner decision): no `/webhooks/zalo`, no `/outbox/zalo`, no `ZALO_*` settings
-- Backend tests: **122/122 pass**; evaluator tests **9/9 pass**; `scripts/verify.sh` **PASS** (incl. MCP smoke)
-- Frontend: TypeScript **0 errors** (`npx tsc --noEmit`). ⚠️ Production build could NOT be executed inside the coding-agent sandbox (next build jest-worker pipe timeout — Session 037); owner should run `npm run build` once on the feature branch
+- Backend tests: **133/133 pass**; evaluator tests **9/9 pass**; `scripts/verify.sh` **PASS** (incl. MCP smoke), verified 2026-10-04. Backend suite includes health/chat HTTP tests; temporary live-server startup checks passed in Session 045.
+- Frontend: TypeScript **0 errors**, Next.js production build **PASS**, and **9 browser regression scenarios PASS** after state extraction (Sessions 045/047). Production startup and chat/dashboard routes verified. This supersedes the Session 037 build limitation.
 - Rate limiting: in-process sliding window on `/chat[/stream]` (`CHAT_RATE_LIMIT_PER_MINUTE=60`, `WEBHOOK_RATE_LIMIT_PER_MINUTE=120` retained as a generic knob); scheduler claims jobs atomically; Zalo soft-mode logging removed along with the channel
-- Scope guard: `--self-test` + plain validate **PASS**. By design there is **no session baseline while zero features are in_progress**, so `--check-session` reports "no session baseline" until the next working session runs `--start-session`
-- Git: all recent work lives on branch **`feat/zalo-removal-fe-redesign`** (pushed, @8c2ddc7); remote **`main` restored to `1533c73`** by force-with-lease per owner instruction — never push feature work to main without an explicit ask
+- Scope guard: self-test, per-feature exact-path validation and session checks **PASS** across all four cleanup/refactor features. No protected files edited; start the next feature with its own declared scope.
+- Git: current branch **`feat/zalo-removal-fe-redesign`**, inspected HEAD **`9be2e6b`**; cleanup changes uncommitted. Remote state was not rechecked this session; never push feature work to main without an explicit ask.
 - Research: sealed B0/B1/S results verified (40 episodes); the open known issue is the dev-split B2 custody mismatch recorded in earlier sessions
 - Security posture: admin endpoints fail-closed behind `ADMIN_API_KEY`; dashboard uses the double-token server-side BFF; public chat is rate-limited; sandbox/web-fetch default off; CORS never falls back to wildcard+credentials
 - Do not commit `.env` (contains cloud secrets)
-- Next best step: owner verifies `npm run build` locally on `feat/zalo-removal-fe-redesign`, then opens a PR into main
+- Next best step: review the uncommitted cleanup/refactor diff. Paper continuation requires author metadata, successful native PDF compilation/layout, and an updated source audit if describing this newer checkout.
 
 ### Session 002
 
@@ -809,3 +809,38 @@
 - Extended the existing paper audit to report the CRLF digest and `matches_with_crlf` separately from the unchanged raw-byte `matches` field. Regenerated the derived report and evaluation SVG/PNG; preview visually inspected without node overlaps. Descriptive result values are unchanged.
 - Verification: full 40-label/120-score-row audit and report arithmetic PASS; two label seals match; exact CRLF score digest PASS; original input bytes unchanged; evaluator metric tests 9/9 PASS; manuscript references/bibliography PASS. Scope guard passed before edits and after artifact generation; final exact-file and session checks run at handoff.
 - Built-in editor was opened at the revised paragraph; compilation again failed before source processing with `Unable to find standard directories for platform`. PDF layout/page count and author metadata remain incomplete. Clean-state checklist reviewed; backend/frontend runtime checks retain the earlier missing-environment limitation and were not rerun for this paper correction. Feature remains `in_progress`; no commit or push.
+
+### Session 045 — remove unused scaffolding and simplify admin requests
+
+- Date: 2026-10-03. Owner requested skill-guided boilerplate/folder cleanup and refactoring. Loaded code-simplification directly from D:/.agents/skills; no skill files copied into the repo.
+- Feature: cleanup-code-simplification-001. Marked the existing paper-current-code-001 task blocked on its already documented author metadata and native compilation/layout prerequisites; preserved all paper content and verification requirements.
+- Baseline repair: the backend virtual environment pointed to a missing uv-managed Python. Recreated its interpreter links with uv venv --allow-existing using the available Python 3.12.14, preserving installed packages. No dependency manifest or protected source changes.
+- Removed the unused backend/main.py hello-world entry and the two tracked backend/app/channels/ source files. Repository reference checks and independent review found no callers; real startup and Docker entry points use app.main:app. Generated caches were left to normal tooling.
+- Refactored frontend/lib/client.ts so admin GET and POST share URL construction, owner headers, no-store caching and response/error handling. Existing exported functions and UI behavior remain intact.
+- Verification: baseline and post-edit scripts/verify.sh PASS including MCP; frontend TypeScript and production build PASS before/after; 112 before/after request cases PASS (seven functions, four storage contexts, four success/failure outcomes); evaluator tests 9/9 PASS. Real temporary backend /health and /chat, and frontend /, /chat, /dashboard return HTTP 200. Test servers stopped afterward.
+- Independent checker found no code issues; corrected its minor finding that the paper notes still said in_progress after status changed to blocked.
+- Full backend suite: 122/122 PASS in 425.072 seconds, including the first-time Chroma model download. Logs include dependency deprecations, fallback from a fixture embedding-dimension mismatch and an aiosqlite ResourceWarning; none failed a test. Existing tests were not edited. Scope self-test, exact six-file validation, session scope and git diff --check PASS. Feature marked passing.
+- Clean-state checklist reviewed: runtime/API/build checks above verified; no data pipeline rerun or manuscript changes required by this cleanup. Prior paper author/PDF gates and historical-data limitations remain outside this feature. No commit or push.
+
+### Session 046 — shared backend serving setup
+
+- Date: 2026-10-03. Owner asked for a broader cleanup after the initial scaffolding pass. Reviewed backend graph, offline/fast routes, recommendation, memory, and frontend chat/dashboard responsibilities.
+- Feature refactor-serving-setup-001: shared the memory/early-route/graph preparation used by batch and streaming; replaced repeated prompt context-message insertion with one helper; removed two unused lookback constants. Extracted unchanged recommendation/comparison formatting into responses.py so fast_path no longer depends on the offline executor. Offline-only welcome remains at its established import boundary.
+- Verification: all 126 backend tests PASS (four new serving regression methods, including batch/stream subcases); offline/MCP smoke PASS; formatter output comparisons PASS; independent checker found no issues; exact-file scope, session scope and whitespace PASS. Existing tests unchanged. Test fixture/result and an initial log-path setup error were corrected before passing checks; no verification requirement changed.
+- Feature passing. Prior uncommitted cleanup preserved; no protected files, ranking policy, manuscript or data changes. Frontend extraction is the next active feature.
+
+### Session 047 — separate frontend state and rendering
+
+- Date: 2026-10-03–04. Feature refactor-frontend-state-001 is passing. Chat page 352 → 134 lines: session/storage/stream/fallback state in useChatSession, evidence rendering in ChatEvidence, scroll behavior in the page. Dashboard page 261 → 167 lines: data/loading/auth/refresh/actions in useDashboard. Stable load callback gives effects explicit dependencies and removes the redundant async wrapper/suppression.
+- Browser regression script frontend/tests/conversation-ui.cjs uses installed Playwright/Chrome and mocked APIs without new dependencies. Eight scenarios passed on the original production build; nine passed after extraction: streamed response/evidence/storage, batch fallback, partial failure without replay, done-only/new session, older evidence selection, dashboard partial failure, takeover/resolve, automatic refresh disabling, unauthorized token removal. Browser contexts and production server close after tests.
+- TypeScript and production build PASS; independent checker found no regressions; scope self-test, exact paths, session scope and whitespace PASS. Vietnamese strings and rendered DOM preserved. Prior backend suite remains 126/126; no backend source changed in this slice. No commit/push.
+- Clean-state checklist reviewed: backend smoke from Session 046 and frontend startup/browser/build checks above cover this slice. Paper author/PDF gates and external catalog/research artifacts remain separate, unchanged.
+
+### Session 048 — separate ranking stages
+
+- Date: 2026-10-04. Continued the broader cleanup at the owner's request. Feature refactor-ranking-stages-001 is passing.
+- Isolated range/min/max/proximity contributions and rejection decisions in _slot_score, merging the duplicated min/max missing-data branch. _score is 52 lines (was 89). Isolated the existing diversity-first/model-deduplicating selection passes in _select_top3; recommend_top3 is 70 lines (was 102). Removed unused private parameters and one unused local binding. Scoring coefficients, arithmetic ordering, ranking policy, response shape and Vietnamese explanations are unchanged.
+- Verification: seven new public selection regression tests pass both before/after; 18 focused ranking/decision tests PASS. Deterministic original-versus-refactored check against HEAD: 660 complete recommendation outputs across workbook/crawl registries match exactly; 1,512 slot-score/error cases match for all four slot kinds, hard/soft policies, unknown-data rules, boundaries and malformed numeric values. Full backend suite 133/133 PASS in 15.835 seconds; evaluator suite 9/9 PASS; offline/MCP smoke PASS.
+- Independent checker found no issues. Exact four-path check (two source/test files plus lifecycle records), session scope and whitespace PASS. Existing unrelated dependency/fallback/resource warnings noted in prior sessions remain; no tests weakened or removed.
+- All three deeper refactor features and the initial cleanup are passing, with no active feature. Prior uncommitted changes preserved. No protected files, dependencies, catalog/research artifacts or manuscript edited; no commit or push.
+- Clean-state checklist reviewed: backend API/startup coverage and offline smoke pass; frontend build/startup and nine browser flows passed in Session 047. Data pipeline reruns and paper author/PDF gates are outside this maintenance scope. Paper's recorded source hashes refer to its historical inspected version; they were not rewritten to pretend the manuscript audit covers this refactor.
