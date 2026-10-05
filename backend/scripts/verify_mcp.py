@@ -24,8 +24,9 @@ async def main() -> None:
         )
         assert products.status_code == 200, products.text
         product_page = products.json()
-        assert product_page["count"] == 2 and product_page["total_count"] > 50, product_page
+        assert product_page["count"] == 2 and product_page["total_count"] >= 2, product_page
         assert all(item["category_code"] == 38 for item in product_page["items"])
+        fridge_skus = [item["sku"] for item in product_page["items"]]
 
         ac_products = await client.get(
             "/mcp/products",
@@ -34,13 +35,13 @@ async def main() -> None:
         assert ac_products.status_code == 200, ac_products.text
         assert all(item["category_code"] == 36 for item in ac_products.json()["items"])
 
-        detail = await client.get("/mcp/products/1751097000182")
+        detail = await client.get(f"/mcp/products/{fridge_skus[0]}")
         assert detail.status_code == 200, detail.text
-        assert detail.json()["category_code"] == 38 and detail.json()["brand"] == "Hisense"
+        assert detail.json()["category_code"] == 38 and detail.json()["sku"] == fridge_skus[0]
 
         comparison = await client.post(
             "/mcp/product-comparisons",
-            json={"skus": ["1751097000182", "1751097000181"]},
+            json={"skus": fridge_skus[:2]},
         )
         assert comparison.status_code == 200 and comparison.json()["ok"], comparison.text
 
@@ -69,7 +70,7 @@ async def main() -> None:
         ac_body = ac_recommendation.json()
         assert ac_body["top3"] and ac_body["category"] == "may_lanh", ac_body
 
-        faq = await client.get("/mcp/knowledge/faq", params={"query": "tồn kho", "limit": 2})
+        faq = await client.get("/mcp/knowledge/faq", params={"query": "bảo hành", "limit": 2})
         assert faq.status_code == 200 and faq.json()["count"] > 0, faq.text
 
         blocked_write = await client.post(

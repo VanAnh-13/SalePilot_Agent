@@ -6,15 +6,13 @@ from app.agent.catalog_domain import (
     compare,
     get_by_sku,
     recommendation_need,
-    recommend_top3 as rank_top3,
+    recommend_top3 as recommend_top3_engine,  # aliased: the @tool below owns the name
     search,
 )
+from app.agent.decision import build_decision
+from app.agent.run_bag import get_run_bag
 from app.agent.tools.runtime import note_tool
-from app.catalog.categories import CATEGORIES
 from app.catalog import repository
-
-_CATEGORY_HELP = ", ".join(f"{c.slug} ({c.display})" for c in CATEGORIES)
-
 
 @tool
 async def list_categories() -> str:
@@ -22,7 +20,7 @@ async def list_categories() -> str:
     note_tool("list_categories")
     counts = repository.category_counts()
     return json.dumps(
-        {"categories": list(counts.values()), "source": "mongodb:catalog"},
+        {"categories": list(counts.values()), "source": f"{repository.source()}:catalog"},
         ensure_ascii=False,
     )
 
@@ -65,7 +63,7 @@ async def search_products(
         limit=limit,
     )
     return json.dumps(
-        {"results": results, "source": "mongodb:catalog"},
+        {"results": results, "source": f"{repository.source()}:catalog"},
         ensure_ascii=False,
     )
 
@@ -127,4 +125,15 @@ async def recommend_top3(
         force=force,
         free_text=free_text,
     )
-    return json.dumps(rank_top3(need), ensure_ascii=False)
+    recommendation = recommend_top3_engine(need)
+    try:
+        decision = build_decision(need, recommendation)
+        get_run_bag()["decision"] = decision
+    except Exception:
+        # The recommendation itself remains usable if provenance enrichment
+        # encounters malformed third-party/catalog data.
+        decision = None
+    payload = dict(recommendation)
+    if decision is not None:
+        payload["decision"] = decision
+    return json.dumps(payload, ensure_ascii=False)

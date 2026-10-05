@@ -1,0 +1,6 @@
+{
+  "conditions": [
+    "B2_llm_single_agent"
+  ],
+  "notes": "Score file for optional LLM baseline only."
+}

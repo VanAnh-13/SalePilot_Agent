@@ -1,0 +1,42 @@
+{
+  "conditions": [
+    "B0_price_popularity",
+    "B1_lexical_filter",
+    "S_hybrid_constraint"
+  ],
+  "optional_conditions": [
+    "B2_llm_single_agent"
+  ],
+  "catalog": {
+    "path": "experiments/fixtures/catalog_dev_fixture.json",
+    "sha256": "8280afaee0affa8ddeb6066a87b4883a0eeca1cfb5e09e13e3ed28efc84dcb13",
+    "role": "engineering_fixture_benchmark"
+  },
+  "llm_baseline": {
+    "provider": "meta_ai",
+    "api_base": "https://api.meta.ai/v1",
+    "model": "muse-spark-1.1",
+    "condition_id": "B2_llm_single_agent",
+    "script": "scripts/run_llm_baseline.py",
+    "status": "verified",
+    "results_path": "experiments/results/llm_baseline_dev.jsonl",
+    "scores_path": "experiments/results/llm_baseline_dev_scores.json",
+    "pin_path": "experiments/results/b2_pin_dev.json",
+    "status_note": "Re-run 2026-08-01 with owner-supplied real credentials for meta_ai/muse-spark-1.1 (repeat=1; the formal spec's >=3-repeats bar for a *sealed* result is not claimed to be met here — this is a dev-split pipeline/custody verification, not a new sealed artifact, and B2 remains excluded from the paper's primary comparison regardless, per main.tex IV-C). This replaces the entry that carried this same status_note key while marked 'unverifiable_pin_corrupted': the prior pin_path had been silently overwritten by a test-isolation bug in backend/tests/test_llm_baseline_config.py (root cause fixed 2026-08-01, see claude-progress.md Session 022). The verified_scores below are freshly computed from this run's actual predictions via experiments/evaluate/runner.py, not carried over from the pre-corruption numbers, and differ from them (notably: 0 hard-constraint violations here vs. 0.2308 previously, and a real non-degenerate slot F1 vs. the previous 0.0) — confirming the old numbers should not have been trusted either.",
+    "verified_scores": {
+      "episodes": 20,
+      "category_accuracy": 0.95,
+      "action_accuracy": 0.65,
+      "slot_micro_f1": 0.9836,
+      "slot_tp": 30,
+      "slot_fp": 1,
+      "slot_fn": 0,
+      "hard_constraints_checked": 42,
+      "hard_constraint_violations": 0,
+      "hard_constraint_violation_rate": 0.0,
+      "note": "Computed 2026-08-01 via experiments/evaluate/runner.score_conditions against experiments/benchmark/dev.jsonl labels, expected_conditions=['B2_llm_single_agent']. Every prediction row embeds its own llm_pin (provider/model/key fingerprint) for independent per-row traceability, not just the external pin_path file."
+    },
+    "notes": "muse-spark-1.1 is a reasoning model (uses most tokens internally). Requires max_tokens>=4096."
+  },
+  "notes": "B0=price/popularity, no constraints; B1=lexical keyword filter; S_hybrid=typed state+constraint-first ranker; B2=single-agent LLM (Meta muse-spark-1.1, requires META_API_KEY)"
+}

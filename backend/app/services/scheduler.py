@@ -7,7 +7,7 @@ import json
 import logging
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.config import get_settings
 from app.db.session import async_session
@@ -48,14 +48,27 @@ async def process_due_jobs(limit: int = 20) -> int:
     async with async_session() as session:
         rows = (
             await session.execute(
-                select(ScheduledJob)
+                select(ScheduledJob.id)
                 .where(ScheduledJob.status == "pending", ScheduledJob.run_at <= now)
                 .order_by(ScheduledJob.run_at.asc())
                 .limit(limit)
             )
         ).scalars().all()
         count = 0
-        for job in rows:
+        for job_id in rows:
+            # Atomic claim: only one worker can flip pending -> claimed; a
+            # second concurrent worker gets rowcount 0 and skips the job, so
+            # follow-ups are never double-sent under multiple processes.
+            claim = await session.execute(
+                update(ScheduledJob)
+                .where(ScheduledJob.id == job_id, ScheduledJob.status == "pending")
+                .values(status="claimed")
+            )
+            if claim.rowcount != 1:
+                continue
+            job = await session.get(ScheduledJob, job_id)
+            if job is None:  # pragma: no cover - claimed row vanished mid-tx
+                continue
             note = ""
             try:
                 note = json.loads(job.payload_json or "{}").get("note", "")
@@ -76,7 +89,7 @@ async def process_due_jobs(limit: int = 20) -> int:
                 lead = await session.get(Lead, job.lead_id)
                 if lead:
                     lead.status = "follow_up"
-                    lead.notes = (lead.notes + f"\n[Job#{job.id}] {msg}").strip()
+                    lead.notes = ((lead.notes or "") + f"\n[Job#{job.id}] {msg}").strip()
             job.status = "done"
             job.result = msg
             count += 1

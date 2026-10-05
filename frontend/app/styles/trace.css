@@ -1,0 +1,63 @@
+/* ---------------------------- trace panel ------------------------------ */
+
+.trace-panel {
+  position: sticky;
+  top: 92px;
+}
+.panel-intro {
+  margin: 6px 0 0;
+}
+.panel-divider {
+  height: 1px;
+  margin: 20px -20px;
+  background: var(--border);
+}
+.agent-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
+.trace-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.trace-item {
+  position: relative;
+  padding: 11px 13px 11px 15px;
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  font-size: 13.5px;
+}
+.trace-item .meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.trace-item .detail {
+  color: var(--text-soft);
+  word-break: break-word;
+}
+.memory-note {
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--brand-grad-soft);
+  border: 1px solid var(--border-strong);
+  font-size: 13px;
+  color: var(--text-soft);
+}
+.memory-note b {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}

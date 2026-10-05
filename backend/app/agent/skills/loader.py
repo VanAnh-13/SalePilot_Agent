@@ -9,6 +9,13 @@ from pathlib import Path
 
 SKILLS_DIR = Path(__file__).resolve().parent
 
+# Single source of truth for skill-size limits (owner's no-hardcode rule):
+# a skill body is truncated ONCE — at bag insertion — and every later consumer
+# (graph injection, auto-activation) reuses the same cap, so nothing is cut a
+# second time to a smaller size.
+SKILL_BODY_CAP = 8000
+SKILL_CATALOG_CAP = 1200
+
 
 @dataclass(frozen=True)
 class SkillMeta:
@@ -59,7 +66,7 @@ def list_skills() -> tuple[SkillMeta, ...]:
     return tuple(skills)
 
 
-def skills_catalog_prompt(max_chars: int = 1200) -> str:
+def skills_catalog_prompt(max_chars: int = SKILL_CATALOG_CAP) -> str:
     """Compact skill index for Lead system prompt (metadata only)."""
     skills = list_skills()
     if not skills:

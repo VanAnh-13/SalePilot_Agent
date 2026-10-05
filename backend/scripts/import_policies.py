@@ -8,19 +8,23 @@ copies the raw docs into ``data/policies/`` so the knowledge base is
 self-contained inside the repo/container.
 
 Usage (from backend/):
-    python -m scripts.import_policies --src /home/hoang/Downloads/Data
+    python -m scripts.import_policies --src /path/to/dmx_docs
+
+Environment variables (used when --src is not passed):
+    DMX_SRC_DIR  Path to the directory containing policy .md files
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import re
 import shutil
 from pathlib import Path
 
+from app.rag.chunker import SmartChunker
+from scripts.shared import resolve_dmx_src
+
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
-DEFAULT_SRC = Path("/home/hoang/Downloads/Data")
 
 # filename stem -> (human title, kb topic tag). Order controls entry ids.
 POLICY_DOCS: dict[str, tuple[str, str]] = {
@@ -34,21 +38,7 @@ POLICY_DOCS: dict[str, tuple[str, str]] = {
 }
 
 
-def chunk_text(text: str, max_chars: int = 750) -> list[str]:
-    paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
-    chunks: list[str] = []
-    current = ""
-    for para in paragraphs:
-        if not current:
-            current = para
-        elif len(current) + len(para) + 2 <= max_chars:
-            current = f"{current}\n\n{para}"
-        else:
-            chunks.append(current)
-            current = para
-    if current:
-        chunks.append(current)
-    return chunks
+_chunker = SmartChunker(max_chars=800, min_chars=80)
 
 
 def build_entries(src: Path) -> list[dict]:
@@ -61,37 +51,72 @@ def build_entries(src: Path) -> list[dict]:
         if not path.exists():
             print(f"  ! missing {path.name}, skipped")
             continue
-        shutil.copyfile(path, policies_dir / path.name)  # keep raw doc in repo
+        shutil.copyfile(path, policies_dir / path.name)
         text = path.read_text(encoding="utf-8")
-        for i, chunk in enumerate(chunk_text(text), 1):
-            first_line = chunk.splitlines()[0].strip()
-            heading = first_line[:70] + ("…" if len(first_line) > 70 else "")
+        chunks = _chunker.chunk(text)
+        for chunk in chunks:
             entries.append(
                 {
-                    "id": f"{topic}-{i:02d}",
-                    "question": f"{title} — {heading}",
-                    "answer": chunk[:1400],
+                    "id": f"{topic}-{chunk.index + 1:02d}",
+                    "question": f"{title} — {chunk.heading}",
+                    "answer": chunk.text[:1400],
                     "topic": topic,
                     "source": f"policies/{path.name}",
+                    **chunk.metadata.to_dict(),
                 }
             )
-        print(f"  + {title}: {sum(1 for e in entries if e['topic'] == topic)} chunks")
+        print(f"  + {title}: {len(chunks)} chunks")
     return entries
 
 
+def merge_entries(existing: list[dict], policy_entries: list[dict]) -> list[dict]:
+    """Replace policy entries in place, keep every curated (non-policy) entry.
+
+    An entry is a policy entry when its id starts with one of the POLICY_DOCS
+    topics — those ids are generated above, so hand-curated FAQ entries that
+    use any other id survive a re-import.
+    """
+    policy_prefixes = tuple(f"{topic}-" for _, topic in POLICY_DOCS.values())
+    curated = [e for e in existing if not str(e.get("id", "")).startswith(policy_prefixes)]
+    kept = len(curated)
+    if kept:
+        print(f"  = kept {kept} curated (non-policy) entries")
+    return curated + policy_entries
+
+
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--src", type=Path, default=DEFAULT_SRC)
+    parser = argparse.ArgumentParser(
+        description="Ingest DMX policy .md files into the knowledge base.",
+        epilog="Source resolution: --src flag > DMX_SRC_DIR in .env > error",
+    )
+    parser.add_argument(
+        "--src",
+        type=Path,
+        default=None,
+        help="Directory containing policy .md files. Falls back to DMX_SRC_DIR in .env.",
+    )
     parser.add_argument("--out", type=Path, default=DATA_DIR / "faq.json")
+    parser.add_argument(
+        "--replace",
+        action="store_true",
+        help="Overwrite the whole output file (old behavior). Default merges: curated non-policy entries are kept.",
+    )
     args = parser.parse_args()
 
-    if not args.src.exists():
-        raise SystemExit(f"Source folder not found: {args.src}")
+    src = resolve_dmx_src(args.src)
 
-    print(f"Ingesting policies from {args.src} ...")
-    entries = build_entries(args.src)
+    print(f"Ingesting policies from {src} ...")
+    entries = build_entries(src)
     if not entries:
         raise SystemExit("No policy chunks produced.")
+
+    if not args.replace and args.out.exists():
+        try:
+            existing = json.loads(args.out.read_text(encoding="utf-8"))
+            if isinstance(existing, list):
+                entries = merge_entries(existing, entries)
+        except json.JSONDecodeError:
+            print("  ! existing output is not valid JSON, writing fresh file")
 
     args.out.write_text(json.dumps(entries, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"\nWrote {len(entries)} KB entries -> {args.out}")

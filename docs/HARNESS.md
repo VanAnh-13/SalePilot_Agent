@@ -25,7 +25,7 @@ These patterns work with any coding agent that reads the repo:
 | **Portable skills** | `backend/app/agent/skills/*/SKILL.md` + `activate_skill` progressive load |
 | **Isolated + parallel sub-agents** | `delegate` / `delegate_many` → short summaries only |
 | **Customer memory** | SQLite per channel+external_id; inject each turn |
-| **Channel bus** | `gateway.ingest_message` for Web + Zalo |
+| **Channel bus** | `gateway.ingest_message` for Web |
 | **Scheduler** | Follow-up jobs + background loop |
 | **Safe execution** | Sandbox whitelist + web fetch with SSRF guards |
 | **Trajectory** | JSON runs under `data/trajectories/` |

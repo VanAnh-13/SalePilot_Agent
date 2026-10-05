@@ -1,0 +1,29 @@
+{
+  "schema_version": "salepilot-custody-v1",
+  "created_at": "2026-07-25T06:53:31.238049+00:00",
+  "split": "test",
+  "manifest_status": "ready",
+  "catalog_normalized_hash": "e2afdf38ed2df5599611e6f8285643f727e2c06c721b1a055b7baeea797df15c",
+  "deterministic": {
+    "predictions": "experiments/results/exp_test_predictions.jsonl",
+    "predictions_sha256": "3b9074461eed85c81a332fb23d0be7dc47289c608f43c3c47fe56dcddb24b6e0",
+    "scores": "experiments/results/exp_test_scores.json",
+    "scores_sha256": "c7af9f5cb1994886b6cd05a7f503195880e73b2ce35a4e03310703a3742901ff",
+    "bootstrap": "experiments/results/exp_test_bootstrap.json",
+    "bootstrap_sha256": "005641ebe1c9b40fa71f55eda3432a5c60138d503e0256aaa7ce0bc164735d6f",
+    "bootstrap_pooled": "experiments/results/exp_test_bootstrap_pooled.json",
+    "bootstrap_pooled_sha256": "70864ed0de2253abc845b008d590ced710e1010d6c207f144611dea5ef556571",
+    "bootstrap_pooled_note": "Post-hoc inference added 2026-07-26 from the frozen scored episodes above (no new predictions, no label edits): episode-resample bootstrap of the pooled table metrics with paired hard-violation-rate differences; scripts/summarize_results.py --pooled-bootstrap, seed 20260723, n_boot 10000."
+  },
+  "conditions_deterministic": [
+    "B0_price_popularity",
+    "B1_lexical_filter",
+    "S_hybrid_constraint"
+  ],
+  "conditions_removed": [
+    {
+      "id": "B2_llm_single_agent",
+      "reason": "Custody removed 2026-08-01. The sealed prediction file (llm_baseline_test.jsonl) contained Meta/muse-spark-1.1 predictions on dev fixtures (repeat=0), but the custody record falsely claimed FPT/DeepSeek-V4-Flash as provider with a non-matching hash. The spec requires >=3 repeats, which was also unmet. B2 was already excluded from the paper primary comparison (main.tex IV-C). Stale B2 artifacts for the test split have been removed: llm_baseline_test.jsonl (raw predictions, replaced by llm_baseline_test.unavailable.json) and b2_pin_test.json (provider pin record)."
+    }
+  ]
+}

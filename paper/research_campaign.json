@@ -1,0 +1,46 @@
+{
+  "campaign_id": "salepilot-rivf2026-system-protocol-draft-v1",
+  "created_at": "2026-07-21T15:47:58+07:00",
+  "current_research": "anonymous snapshot identified by the file-level SHA-256 digests in artifacts/artifact_manifest.json",
+  "task_family": "Vietnamese multi-turn conversational product decision support",
+  "dataset": {
+    "name": "salepilot-scenarios-v1",
+    "kind": "developer-authored synthetic functional fixture",
+    "scenario_count": 8,
+    "sha256": "2e69892d8e127bc4e73747d545bb973425be950844315f9907f03ef9c8f8dda0"
+  },
+  "benchmark": {
+    "name": "SalePilot functional repeatability protocol v1",
+    "primary_metric": "ndcg_at_3",
+    "metric_goal": "maximize",
+    "evidence_tier": "functional_reproducibility",
+    "evidence_tier_interpretation": "Internal identifier meaning same-team functional repeatability only; not independent reproduction.",
+    "recommendation_efficacy_supported": false
+  },
+  "evaluation_source": {
+    "command": "cd backend && .venv/bin/python -m evaluation.cli --json-out ../paper/artifacts/evaluation_deterministic.json --markdown-out ../paper/artifacts/evaluation_deterministic.md --deterministic-latency",
+    "path": "backend/evaluation/cli.py",
+    "primary_metric": "ndcg_at_3",
+    "metric_goal": "maximize",
+    "artifacts": [
+      "paper/artifacts/evaluation_deterministic.json",
+      "paper/artifacts/evaluation_deterministic.md",
+      "paper/artifacts/evaluation_timed.json",
+      "paper/artifacts/evaluation_timed.md"
+    ]
+  },
+  "sota_reference": [],
+  "sota_reference_status": "No user-provided matched SOTA table exists. Closest peer-reviewed systems are frozen in SOURCE_LEDGER.md, but their datasets and metrics are not comparable; no SOTA gate or superiority claim is permitted.",
+  "compute_budget": {
+    "max_runtime_hours": 0.1,
+    "gpu_hours": 0,
+    "scope": "two local evaluator executions and manuscript checks; no training or sweep"
+  },
+  "execution_policy": {
+    "candidate_only": true,
+    "paper_artifact_lane": "paper/",
+    "implementation_changes_allowed": false,
+    "external_benchmark_execution": false
+  },
+  "isolation_note": "The repository already contained the uncommitted current-research implementation. Creating a worktree from HEAD would omit that state, so no code/model experiment was performed. Only new paper artifacts were written under paper/; this is a documented deviation from branch-level explore isolation."
+}

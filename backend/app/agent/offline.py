@@ -4,30 +4,27 @@ from __future__ import annotations
 
 import asyncio
 import json
-import re
 from typing import Any
 
-from app.agent.catalog_domain import (
-    compare,
-    detect_category,
-    detect_negated_categories,
-    detect_unsupported,
-    extract_need_from_text,
-    merge_needs,
-    recommend_top3,
-)
-from app.catalog.categories import CATEGORIES
+from app.agent.consultation import ConsultationResult, consult
+from app.agent.catalog_domain import compare, extract_need_from_text
+from app.agent.intent import fill_budget_from_profile, format_need_more, merge_turn_need
+from app.agent.offline_routing import read_turn_signals
 from app.agent.memory.store import (
     get_memory_summary,
     load_need,
-    load_profile,
     maybe_extract_from_text,
     save_need,
 )
 from app.agent.run_bag import get_run_bag, reset_run_bag
 from app.agent.tools.crm import create_lead, escalate_to_human
 from app.agent.tools.knowledge import search_knowledge
-from app.agent.tools.runtime import ToolContext, get_ctx, set_ctx
+from app.agent.tools.runtime import ToolContext, get_ctx, note_tool, set_ctx
+from app.catalog.registry import (
+    CATEGORIES,
+    detect_category,
+    detect_negated_categories,
+)
 
 
 def _trace(agent: str, event: str, detail: str = "") -> None:
@@ -37,11 +34,7 @@ def _trace(agent: str, event: str, detail: str = "") -> None:
 def _format_top3(rec: dict[str, Any]) -> str:
     display = rec.get("category_display") or "sản phẩm"
     if rec.get("need_more"):
-        asks = rec.get("ask") or []
-        return (
-            f"Để gợi ý {display.lower()} sát nhu cầu, em cần thêm:\n"
-            + "\n".join(f"- {a}" for a in asks)
-        )
+        return format_need_more(rec)
     if not rec.get("ok"):
         return (
             str(rec.get("message") or "Không tìm thấy mẫu phù hợp với các giới hạn đã chọn.")
@@ -90,13 +83,17 @@ def _format_compare(cmp: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def _has_need_signal(need: dict[str, Any]) -> bool:
-    """True when the need profile carries any slot beyond the raw text."""
-    return any(
-        value not in (None, "", [])
-        for key, value in need.items()
-        if key not in {"raw", "category", "priority"}
-    ) or bool(need.get("priority"))
+def _catalog_welcome() -> str:
+    categories = ", ".join(category.display.lower() for category in CATEGORIES)
+    return (
+        "Xin chào! Em là SalePilot — trợ lý AI tư vấn **điện máy & công nghệ** "
+        "theo nhu cầu thật, dựa trên dữ liệu catalog hiện có "
+        "(giá, khuyến mãi, đánh giá, lượt bán):\n"
+        f"{categories}.\n"
+        "Anh/chị đang cần sản phẩm gì, **ngân sách khoảng bao nhiêu** ạ? "
+        "Em sẽ hỏi thêm vài ý (dùng cho ai / diện tích phòng / ưu tiên gì...) "
+        "để gợi ý top 3 phù hợp nhất."
+    )
 
 
 async def run_offline_multi_agent(
@@ -119,7 +116,6 @@ async def run_offline_multi_agent(
         )
     )
     bag = get_run_bag()
-    t = user_text.lower()
     parts: list[str] = []
     agents: list[str] = []
 
@@ -130,32 +126,8 @@ async def run_offline_multi_agent(
 
     _trace("lead", "start", "offline multi-category advisor")
 
-    stock_question = any(
-        k in t for k in ("còn hàng", "con hang", "tồn kho", "ton kho", "khả năng giao hàng")
-    )
-    need_faq = stock_question or any(
-        k in t
-        for k in (
-            "bảo hành",
-            "bao hanh",
-            "lắp",
-            "giao",
-            "ship",
-            "trả góp",
-            "đổi",
-            "trả",
-            "vệ sinh",
-            "đổi cũ",
-        )
-    )
-    need_escalate = any(k in t for k in ("gặp người", "tư vấn viên", "nhân viên", "khiếu nại"))
-    phone_m = re.search(r"0\d{8,10}", user_text.replace(" ", "").replace(".", ""))
-    need_crm = bool(phone_m) or any(k in t for k in ("gọi lại", "để lại sđt", "liên hệ em"))
-
-    category = detect_category(user_text)
-    extracted_need = extract_need_from_text(user_text)
-    # Multi-turn: merge this turn's extraction onto the accumulated need so a
-    # follow-up like "giá khoảng 10tr" keeps the earlier "tôi muốn mua PC".
+    # Multi-turn: load accumulated need first so a follow-up like "RAM 16 GB"
+    # can extract category-specific slots without re-naming the product family.
     stored_need = await load_need(channel, external_id)
     # "ko phải tủ lạnh" — drop a stored category the user just rejected.
     negated = detect_negated_categories(user_text)
@@ -164,51 +136,29 @@ async def run_offline_multi_agent(
             k: v for k, v in stored_need.items() if k in {"budget_vnd", "brand"}
         }
         await save_need(channel, external_id, stored_need)
-    merged_need = merge_needs(stored_need, extracted_need)
-    # Budget mentioned in an earlier turn lives in the memory profile — reuse it.
-    if merged_need.get("budget_vnd") is None:
-        profile = await load_profile(channel, external_id)
-        if profile.get("budget_vnd"):
-            merged_need["budget_vnd"] = int(profile["budget_vnd"])
-
-    # Honest guardrail: the sheet does not cover every product people ask for.
-    unsupported = None
-    if not category and not merged_need.get("category"):
-        unsupported = detect_unsupported(user_text)
-
-    # Compare intent: "so sánh 358683 với 360309" or "so sánh 2 mẫu vừa gợi ý".
-    compare_intent = any(k in t for k in ("so sánh", "so sanh", "compare", "đối chiếu", "so kèo"))
-    skus_in_text = re.findall(r"\b\d{4,7}\b", user_text)
-
-    generic_intent = any(
-        k in t
-        for k in ("gợi ý", "so sánh", "nên mua", "tư vấn", "top", "rẻ", "tiết kiệm", "triệu", "mua")
+    category = detect_category(user_text)
+    merged_need, _ = await merge_turn_need(
+        user_text, stored_need, resolve_followup=True
     )
-    follow_up = bool(stored_need.get("category")) and _has_need_signal(extracted_need)
-    need_product = (
-        bool(category)
-        or follow_up
-        or (_has_need_signal(extracted_need) and generic_intent)
+    await fill_budget_from_profile(merged_need, channel=channel, external_id=external_id)
+    # The turn's fresh extraction feeds the routing policy below.
+    extract_category = category.slug if category else stored_need.get("category")
+    extracted_need = extract_need_from_text(user_text, category=extract_category)
+
+    # Pure routing policy: intent flags, product/compare routing, guardrails.
+    signals = read_turn_signals(
+        user_text,
+        stored_need=stored_need,
+        extracted_need=extracted_need,
+        merged_need=merged_need,
+        detected=category,
     )
-    if stock_question and not _has_need_signal(extracted_need):
-        need_product = False
-    if unsupported:
-        need_product = False
 
-    # Resolve a compare request to concrete SKUs (from the message, else the
-    # last top-3 we recommended to this customer). Compare replaces recommend.
-    compare_skus = skus_in_text[:5] if compare_intent else []
-    if compare_intent and len(compare_skus) < 2:
-        compare_skus = list(stored_need.get("last_skus") or [])[:5]
-    do_compare_now = compare_intent and len(compare_skus) >= 2
-    if do_compare_now:
-        need_product = False
-
-    if need_product and merged_need.get("category"):
+    if signals.need_product and merged_need.get("category"):
         await save_need(channel, external_id, merged_need)
 
-    if unsupported:
-        term, suggestion = unsupported
+    if signals.unsupported:
+        term, suggestion = signals.unsupported
         supported_list = ", ".join(c.display for c in CATEGORIES)
         lines = [
             f"Em xin lỗi, hiện bảng dữ liệu của em **chưa có ngành hàng {term}** "
@@ -222,9 +172,29 @@ async def run_offline_multi_agent(
         _trace("lead", "guardrail", f"unsupported:{term}")
 
     async def do_knowledge() -> str | None:
-        if not need_faq:
+        if not signals.need_faq:
             return None
         _trace("lead", "delegate", "→ knowledge")
+        if signals.stock_question:
+            # Catalog has no realtime inventory column; answer honestly instead of
+            # ranking an unrelated policy chunk that happened to match keywords.
+            summary = (
+                "Em chưa có dữ liệu tồn kho thời gian thực trong catalog hiện tại, "
+                "nên không thể khẳng định còn hàng theo từng SKU. "
+                "Anh/chị chọn mẫu ưng ý rồi em hỗ trợ kiểm tra khả năng giao hàng "
+                "qua cửa hàng/tư vấn viên ạ."
+            )
+            bag["results"].append(
+                {
+                    "agent": "knowledge",
+                    "summary": summary,
+                    "tools_used": ["stock_guardrail"],
+                    "ok": True,
+                }
+            )
+            _trace("knowledge", "end", summary[:160])
+            agents.append("knowledge")
+            return summary
         raw = await search_knowledge.ainvoke({"query": user_text})
         data = json.loads(raw)
         hits = data.get("results") or []
@@ -242,13 +212,11 @@ async def run_offline_multi_agent(
         return summary
 
     async def do_compare() -> str | None:
-        if not do_compare_now:
+        if not signals.do_compare_now:
             return None
         _trace("lead", "delegate", "→ catalog (compare)")
-        from app.agent.tools.runtime import note_tool
-
         note_tool("compare_products")
-        cmp = compare(compare_skus)
+        cmp = compare(signals.compare_skus)
         bag["results"].append(
             {
                 "agent": "catalog",
@@ -261,14 +229,16 @@ async def run_offline_multi_agent(
         agents.append("catalog")
         return _format_compare(cmp)
 
+    consultation_result: ConsultationResult | None = None
+
     async def do_catalog() -> str | None:
-        if not need_product:
+        nonlocal consultation_result
+        if not signals.need_product:
             return None
         _trace("lead", "delegate", f"→ catalog ({merged_need.get('category') or 'auto'})")
-        from app.agent.tools.runtime import note_tool
-
         note_tool("recommend_top3")
-        rec = recommend_top3(merged_need)
+        consultation_result = consult(merged_need)
+        rec = consultation_result.recommendation
         # Remember the recommended SKUs so a later "so sánh 2 mẫu đầu" works.
         top_skus = [p["sku"] for p in (rec.get("top3") or [])]
         if top_skus:
@@ -295,8 +265,8 @@ async def run_offline_multi_agent(
     if kn_s:
         parts.append(kn_s)
 
-    if need_crm:
-        phone = phone_m.group(0) if phone_m else ""
+    if signals.need_crm:
+        phone = signals.phone or ""
         _trace("lead", "delegate", "→ crm")
         raw = await create_lead.ainvoke(
             {
@@ -314,7 +284,7 @@ async def run_offline_multi_agent(
         agents.append("crm")
         parts.append("Em đã ghi nhận thông tin liên hệ. Tư vấn viên có thể gọi lại trong giờ hành chính ạ.")
 
-    if need_escalate:
+    if signals.need_escalate:
         raw = await escalate_to_human.ainvoke(
             {"reason": "Khách yêu cầu gặp người", "summary": user_text[:300]}
         )
@@ -325,22 +295,16 @@ async def run_offline_multi_agent(
         parts.append("Em đã chuyển yêu cầu cho tư vấn viên người ạ.")
 
     if not parts:
-        parts.append(
-            "Xin chào! Em là SalePilot — trợ lý AI tư vấn **điện máy & công nghệ** theo nhu cầu thật, "
-            "dựa trên hơn 13.000 sản phẩm dienmayxanh (giá, khuyến mãi, đánh giá, lượt bán):\n"
-            "điện thoại, laptop, tivi, loa & tai nghe, máy lạnh, tủ lạnh, máy giặt, máy hút bụi/robot... "
-            "và hơn 100 ngành hàng khác.\n"
-            "Anh/chị đang cần sản phẩm gì, **ngân sách khoảng bao nhiêu** ạ? "
-            "Em sẽ hỏi thêm vài ý (dùng cho ai / diện tích phòng / ưu tiên gì...) để gợi ý top 3 phù hợp nhất."
-        )
+        parts.append(_catalog_welcome())
 
-    if mem and need_product:
+    if mem and signals.need_product:
         parts.insert(0, f"(Em nhớ: {mem})")
 
     reply = "\n\n".join(parts)
     bag["final"] = reply
     _trace("lead", "finalize", reply[:200])
     ctx = get_ctx()
+    decision = consultation_result.decision if consultation_result else None
     return {
         "reply": reply,
         "used_tools": list(ctx.used_tools),
@@ -350,4 +314,5 @@ async def run_offline_multi_agent(
         "needs_human": ctx.needs_human,
         "lead_id": ctx.lead_id,
         "conversation_id": conversation_id,
+        "decision": decision,
     }

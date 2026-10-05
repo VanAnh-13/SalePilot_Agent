@@ -19,7 +19,6 @@ source .venv/bin/activate   # or: python3 -m venv .venv && pip install -r requir
 python -m scripts.seed_db
 python -m scripts.ingest_kb
 uvicorn app.main:app --reload --port 8000
-python -m scripts.simulate_zalo --text "Gia đình 4 người cần tủ lạnh dưới 15 triệu"
 ```
 
 From repo root: `./scripts/verify.sh`
@@ -34,8 +33,7 @@ From repo root: `./scripts/verify.sh`
 | `app/agent/subagents/` | Isolated specialists |
 | `app/agent/tools/` | Business tools |
 | `app/agent/skills/` | Portable product skills |
-| `app/channels/zalo/` | Webhook + Mock OA client |
-| `app/api/` | chat, leads, products, outbox |
+| `app/api/` | chat, leads, products |
 | `data/products.json`, `data/faq.json` | Refrigerator snapshot + guidance |
 | `scripts/import_refrigerators.py` | Refresh category-code-38 snapshot from Google Sheet |
 

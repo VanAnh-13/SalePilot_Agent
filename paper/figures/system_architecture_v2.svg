@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="560" viewBox="0 0 1500 560">
+  <defs>
+    <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 Z" fill="#2d3748" filter="url(#rough)"/>
+    </marker>
+    <style>
+      text { font-family: 'Segoe Print', 'Comic Sans MS', cursive, sans-serif; }
+      .title { font-size: 34px; font-weight: 700; fill: #1a202c; }
+      .subtitle { font-size: 21px; fill: #4a5568; }
+      .lane { font-size: 22px; font-weight: 700; fill: #2d3748; letter-spacing: 1.5px; }
+      .boxTitle { font-size: 23px; font-weight: 700; fill: #1a202c; }
+      .body { font-size: 19px; fill: #2d3748; }
+      .edge { stroke: #2d3748; stroke-width: 3; fill: none; marker-end: url(#arrow); filter: url(#rough); }
+      .edgeDash { stroke: #2d3748; stroke-width: 3; stroke-dasharray: 9 7; fill: none; marker-end: url(#arrow); filter: url(#rough); }
+      .box { filter: url(#rough); stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+  </defs>
+
+  <rect width="1500" height="560" fill="#fcfbf9"/>
+
+  <text class="title" x="50" y="52">SalePilot: Constraint-First Decision-Support Architecture</text>
+  <text class="subtitle" x="50" y="85">Deterministic recommendation separated from optional LLM orchestration</text>
+
+  <!-- Row A: runtime path -->
+  <text class="lane" x="50" y="130">1. RUNTIME PATH</text>
+
+  <rect class="box" x="50" y="148" width="300" height="150" rx="16" fill="#e0f2fe" stroke="#0284c7" stroke-width="3"/>
+  <text class="boxTitle" x="72" y="188">Channels</text>
+  <text class="body" x="72" y="226">&#8226; Web chat client</text>
+  <text class="body" x="72" y="260">&#8226; Zalo webhook stub</text>
+
+  <rect class="box" x="410" y="148" width="300" height="150" rx="16" fill="#e0f2fe" stroke="#0284c7" stroke-width="3"/>
+  <text class="boxTitle" x="432" y="188">FastAPI Gateway</text>
+  <text class="body" x="432" y="226">&#8226; /chat turn handling</text>
+  <text class="body" x="432" y="260">&#8226; Channel-scoped identity</text>
+
+  <rect class="box" x="770" y="148" width="320" height="150" rx="16" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+  <text class="boxTitle" x="792" y="188">Deterministic Fast Path</text>
+  <text class="body" x="792" y="226">&#8226; Category detect + need merge</text>
+  <text class="body" x="792" y="260">&#8226; Clarify or rank (fail-closed)</text>
+
+  <rect class="box" x="1150" y="148" width="300" height="150" rx="16" fill="#faf5ff" stroke="#a855f7" stroke-width="3"/>
+  <text class="boxTitle" x="1172" y="188">Optional LLM Lead Loop</text>
+  <text class="body" x="1172" y="226">&#8226; Ambiguous / policy queries</text>
+  <text class="body" x="1172" y="260">&#8226; Rule-based offline fallback</text>
+
+  <path class="edge" d="M 350 223 L 405 223"/>
+  <path class="edge" d="M 710 223 L 765 223"/>
+  <path class="edgeDash" d="M 1090 223 L 1145 223"/>
+
+  <!-- Row B: decision data -->
+  <text class="lane" x="50" y="350">2. DETERMINISTIC DECISION DATA</text>
+
+  <rect class="box" x="50" y="368" width="300" height="160" rx="16" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+  <text class="boxTitle" x="72" y="408">Typed Need State</text>
+  <text class="body" x="72" y="446">&#8226; Category, budget, slots</text>
+  <text class="body" x="72" y="480">&#8226; Multi-turn state merge</text>
+
+  <rect class="box" x="410" y="368" width="300" height="160" rx="16" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+  <text class="boxTitle" x="432" y="408">Constraint Semantics</text>
+  <text class="body" x="432" y="446">&#8226; Hard limits reject on violation</text>
+  <text class="body" x="432" y="480">&#8226; Missing facts reject by default</text>
+
+  <rect class="box" x="770" y="368" width="320" height="160" rx="16" fill="#fef9c3" stroke="#ca8a04" stroke-width="3"/>
+  <text class="boxTitle" x="792" y="408">Decision Evidence</text>
+  <text class="body" x="792" y="446">&#8226; Top-3 SKUs + score, provenance</text>
+  <text class="body" x="792" y="480">&#8226; matched / violated / unknown</text>
+
+  <rect class="box" x="1140" y="368" width="320" height="160" rx="16" fill="#ffedd5" stroke="#ea580c" stroke-width="3"/>
+  <text class="boxTitle" x="1162" y="408">Catalog Identity</text>
+  <text class="body" x="1162" y="446">&#8226; 13,716 SKUs, 118 categories</text>
+  <text class="body" x="1162" y="480">&#8226; Normalized SHA-256 pin</text>
+
+  <path class="edge" d="M 930 302 L 930 363"/>
+  <path class="edge" d="M 350 448 L 405 448"/>
+  <path class="edge" d="M 710 448 L 765 448"/>
+  <path class="edge" d="M 1090 448 L 1135 448"/>
+</svg>

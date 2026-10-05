@@ -9,6 +9,7 @@ tests keep working without a running database.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import threading
 from pathlib import Path
@@ -21,6 +22,7 @@ _CACHE: list[dict[str, Any]] = []
 _LOADED = False
 _SOURCE = "unloaded"
 _DISTINCT_CATS: list[dict[str, Any]] | None = None
+_CATALOG_HASH: str | None = None
 
 
 def _snapshot_path() -> Path:
@@ -38,20 +40,27 @@ def mongo_client(timeout_ms: int = 2000):
 
     settings = get_settings()
     client = MongoClient(settings.mongodb_uri, serverSelectionTimeoutMS=timeout_ms)
-    client.admin.command("ping")  # fail fast if the server is unreachable
+    try:
+        client.admin.command("ping")  # fail fast if the server is unreachable
+    except Exception:
+        client.close()
+        raise
     return client
 
 
 def _load_from_mongo() -> list[dict[str, Any]] | None:
+    client = None
     try:
         settings = get_settings()
         client = mongo_client()
         coll = client[settings.mongodb_db][settings.mongodb_products_collection]
         docs = list(coll.find({}, {"_id": 0}))
-        client.close()
         return docs or None
     except Exception:
         return None
+    finally:
+        if client is not None:
+            client.close()
 
 
 def _pg_row_to_doc(row: Any) -> dict[str, Any]:
@@ -85,6 +94,7 @@ def _pg_row_to_doc(row: Any) -> dict[str, Any]:
         "norm": row.norm or {},
         "specs": row.specs or {},
         "source": row.source or "postgres",
+        "source_row": getattr(row, "source_row", None),
     }
 
 
@@ -92,9 +102,10 @@ def _load_from_postgres() -> list[dict[str, Any]] | None:
     try:
         from sqlalchemy import select
 
-        from app.db.sync import SyncSession
+        from app.db.sync import SyncSession, ensure_catalog_columns
         from app.models.entities import CatalogProduct
 
+        ensure_catalog_columns()
         with SyncSession() as session:
             rows = session.execute(select(CatalogProduct)).scalars().all()
         return [_pg_row_to_doc(r) for r in rows] or None
@@ -113,6 +124,57 @@ def _load_from_snapshot() -> list[dict[str, Any]]:
         return []
 
 
+def _docs_digest(docs: list[dict[str, Any]]) -> str:
+    semantic_fields = (
+        "sku",
+        "model_code",
+        "product_id_web",
+        "category_code",
+        "category",
+        "category_display",
+        "brand",
+        "name",
+        "description",
+        "price_original_vnd",
+        "price_sale_vnd",
+        "price_vnd",
+        "has_current_price",
+        "gift_promotion",
+        "outstanding",
+        "rating",
+        "sold",
+        "warranty",
+        "accessories",
+        "color",
+        "image_url",
+        "url",
+        "online_only",
+        "norm",
+        "specs",
+        "source_row",
+    )
+    digest = hashlib.sha256()
+    for doc in sorted(
+        docs,
+        key=lambda item: (str(item.get("sku") or ""), int(item.get("category_code") or 0)),
+    ):
+        semantic = {
+            key: doc.get(key)
+            for key in semantic_fields
+            if doc.get(key) not in (None, "", {})
+        }
+        raw = json.dumps(
+            semantic,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+        digest.update(raw)
+        digest.update(b"\n")
+    return digest.hexdigest()
+
+
 _LOADERS = {
     "postgres": _load_from_postgres,
     "mongodb": _load_from_mongo,
@@ -128,7 +190,7 @@ _FALLBACK_ORDER = {
 def load(force: bool = False) -> int:
     """Populate the in-memory cache from PostgreSQL (primary), falling back to
     MongoDB then the JSON snapshot. Returns the number of products loaded."""
-    global _LOADED, _CACHE, _SOURCE, _DISTINCT_CATS
+    global _LOADED, _CACHE, _SOURCE, _DISTINCT_CATS, _CATALOG_HASH
     with _LOCK:
         if _LOADED and not force:
             return len(_CACHE)
@@ -141,9 +203,15 @@ def load(force: bool = False) -> int:
             if docs:
                 source = name
                 break
-        _CACHE, _SOURCE = (docs or []), source
-        _LOADED = True
-        _DISTINCT_CATS = None
+        if docs:
+            _CACHE, _SOURCE = docs, source
+            _CATALOG_HASH = _docs_digest(_CACHE)
+            _LOADED = True
+            _DISTINCT_CATS = None
+        else:
+            # Transient backend failure: leave _LOADED False so the next access
+            # retries instead of serving an empty catalog until process restart.
+            _CACHE, _SOURCE, _CATALOG_HASH = [], "empty", None
         return len(_CACHE)
 
 
@@ -155,6 +223,17 @@ def source() -> str:
     return _SOURCE
 
 
+def catalog_identity() -> dict[str, Any]:
+    """Return the reproducibility identity of the loaded catalog."""
+    if not _LOADED:
+        load()
+    return {
+        "backend": _SOURCE,
+        "sha256": _CATALOG_HASH,
+        "products": len(_CACHE),
+    }
+
+
 def all_products() -> list[dict[str, Any]]:
     if not _LOADED:
         load()
@@ -162,12 +241,18 @@ def all_products() -> list[dict[str, Any]]:
 
 
 def by_category(ref: str | int) -> list[dict[str, Any]]:
-    from app.catalog.categories import get_category
+    from app.catalog.registry import get_category
 
     cat = get_category(ref)
     if cat is None:
         return []
-    return [p for p in all_products() if int(p.get("category_code") or 0) == cat.code]
+    # Prefer category_code (crawl IDs). Also accept slug so mixed snapshots still resolve.
+    return [
+        p
+        for p in all_products()
+        if int(p.get("category_code") or 0) == cat.code
+        or str(p.get("category") or "") == cat.slug
+    ]
 
 
 def get(sku: str) -> dict[str, Any] | None:
@@ -194,7 +279,7 @@ def category_counts() -> dict[str, dict[str, Any]]:
     catalog is reported — the deeply-configured ones and the long-tail
     generic ones alike (deep families are flagged ``deep=True``).
     """
-    from app.catalog.categories import BY_CODE
+    from app.catalog.registry import BY_CODE, BY_SLUG
 
     out: dict[str, dict[str, Any]] = {}
     for product in all_products():
@@ -208,7 +293,7 @@ def category_counts() -> dict[str, dict[str, Any]]:
                 "code": code,
                 "total": 0,
                 "priced": 0,
-                "deep": code in BY_CODE,
+                "deep": code in BY_CODE or slug in BY_SLUG,
             },
         )
         entry["total"] += 1
@@ -239,7 +324,13 @@ def distinct_categories() -> list[dict[str, Any]]:
 
 
 def save_snapshot(products: list[dict[str, Any]]) -> Path:
+    """Write snapshot with stable ordering for experiment reproducibility."""
+    ordered = sorted(
+        products,
+        key=lambda d: (int(d.get("category_code") or 0), str(d.get("sku") or "")),
+    )
     path = _snapshot_path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(products, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    payload = json.dumps(ordered, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False) + "\n"
+    path.write_text(payload, encoding="utf-8")
     return path

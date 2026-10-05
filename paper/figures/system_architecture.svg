@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="840" viewBox="0 0 1500 840">
+  <defs>
+    <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 Z" fill="#2d3748" filter="url(#rough)"/>
+    </marker>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&amp;display=swap');
+      text { font-family: 'Segoe Print', 'Comic Neue', 'Comic Sans MS', cursive, sans-serif; }
+      .title { font-size: 34px; font-weight: 700; fill: #1a202c; }
+      .subtitle { font-size: 21px; fill: #4a5568; }
+      .lane { font-size: 22px; font-weight: 700; fill: #2d3748; letter-spacing: 1.5px; }
+      .boxTitle { font-size: 25px; font-weight: 700; fill: #1a202c; }
+      .body { font-size: 21px; fill: #2d3748; }
+      .edge { stroke: #2d3748; stroke-width: 3; fill: none; marker-end: url(#arrow); filter: url(#rough); }
+      .control { stroke: #718096; stroke-width: 2.5; stroke-dasharray: 8 6; fill: none; marker-end: url(#arrow); filter: url(#rough); }
+      .box { filter: url(#rough); stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+  </defs>
+
+  <rect width="1500" height="840" fill="#fcfbf9"/>
+
+  <text class="title" x="50" y="52">SalePilot: Auditable Decision-Support Architecture</text>
+  <text class="subtitle" x="50" y="85">✏️ Model-assisted orchestration separated from typed state, catalog retrieval, and operational controls</text>
+
+  <text class="lane" x="50" y="130">1. CHANNEL &amp; ORCHESTRATION PLANE</text>
+  
+  <rect class="box" x="50" y="148" width="260" height="165" rx="18" fill="#e0f2fe" stroke="#0284c7" stroke-width="3"/>
+  <text class="boxTitle" x="75" y="190">Channel Identity</text>
+  <text class="body" x="75" y="232">• Web session token</text>
+  <text class="body" x="75" y="268">• Zalo webhook payload</text>
+
+  <path class="edge" d="M 310 230 L 335 230"/>
+
+  <rect class="box" x="340" y="148" width="280" height="165" rx="18" fill="#e0f2fe" stroke="#0284c7" stroke-width="3"/>
+  <text class="boxTitle" x="365" y="190">Gateway &amp; Lock</text>
+  <text class="body" x="365" y="232">• Resolve conversation</text>
+  <text class="body" x="365" y="268">• Serialize customer turn</text>
+
+  <path class="edge" d="M 620 230 L 655 230"/>
+
+  <rect class="box" x="660" y="148" width="290" height="165" rx="18" fill="#f3e8ff" stroke="#9333ea" stroke-width="3"/>
+  <text class="boxTitle" x="685" y="190">Lead Orchestrator</text>
+  <text class="body" x="685" y="232">• Online: tool / finalize</text>
+  <text class="body" x="685" y="268">• Offline: fixed fallback</text>
+
+  <path class="edge" d="M 950 230 L 985 230"/>
+
+  <rect class="box" x="990" y="148" width="460" height="165" rx="18" fill="#faf5ff" stroke="#a855f7" stroke-width="3"/>
+  <text class="boxTitle" x="1015" y="190">Role-Scoped Capabilities</text>
+  <text class="body" x="1015" y="232">• Direct: Catalog &amp; Knowledge sub-agents</text>
+  <text class="body" x="1015" y="268">• Delegated: CRM, Order, Human Handoff</text>
+
+  <text class="lane" x="50" y="365">2. DETERMINISTIC DECISION DATA</text>
+
+  <rect class="box" x="50" y="385" width="370" height="200" rx="18" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+  <text class="boxTitle" x="75" y="430">Typed Need State</text>
+  <text class="body" x="75" y="472">• Category • Budget • Slots</text>
+  <text class="body" x="75" y="510">• Multi-turn state merge</text>
+  <text class="body" x="75" y="548">• Customer-memory store</text>
+
+  <path class="edge" d="M 420 485 L 455 485"/>
+
+  <rect class="box" x="460" y="385" width="300" height="200" rx="18" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+  <text class="boxTitle" x="485" y="430">Fail-Closed Parser</text>
+  <text class="body" x="485" y="472">• Regex slot extraction</text>
+  <text class="body" x="485" y="510">• Category detector</text>
+  <text class="body" x="485" y="548">• Hard-budget filter</text>
+
+  <path class="edge" d="M 760 485 L 795 485"/>
+
+  <rect class="box" x="800" y="385" width="310" height="200" rx="18" fill="#fef9c3" stroke="#ca8a04" stroke-width="3"/>
+  <text class="boxTitle" x="825" y="430">Decision Contract</text>
+  <text class="body" x="825" y="472">• Grounded top-3 ranker</text>
+  <text class="body" x="825" y="510">• Hard-constraint verification</text>
+  <text class="body" x="825" y="548">• Provenance audit payload</text>
+
+  <path class="edge" d="M 1110 485 L 1145 485"/>
+
+  <rect class="box" x="1150" y="385" width="300" height="200" rx="18" fill="#ffedd5" stroke="#ea580c" stroke-width="3"/>
+  <text class="boxTitle" x="1175" y="430">Catalog Grounding</text>
+  <text class="body" x="1175" y="472">• DMX product snapshot</text>
+  <text class="body" x="1175" y="510">• Manifest SHA-256 hash</text>
+  <text class="body" x="1175" y="548">• No inventory fabrication</text>
+
+  <path class="control" d="M 800 313 L 800 345 L 235 345 L 235 385"/>
+
+  <text class="lane" x="50" y="635">3. OPERATIONAL &amp; SECURITY CONTROLS</text>
+
+  <rect class="box" x="50" y="655" width="320" height="145" rx="18" fill="#f1f5f9" stroke="#475569" stroke-width="3"/>
+  <text class="boxTitle" x="75" y="700">Privacy &amp; Telemetry</text>
+  <text class="body" x="75" y="742">• HMAC identity pseudonyms</text>
+  <text class="body" x="75" y="776">• Data-minimized logging</text>
+
+  <rect class="box" x="400" y="655" width="330" height="145" rx="18" fill="#f1f5f9" stroke="#475569" stroke-width="3"/>
+  <text class="boxTitle" x="425" y="700">File Sandbox Jail</text>
+  <text class="body" x="425" y="742">• Path canonicalization</text>
+  <text class="body" x="425" y="776">• Traversal &amp; symlink block</text>
+
+  <rect class="box" x="760" y="655" width="340" height="145" rx="18" fill="#f1f5f9" stroke="#475569" stroke-width="3"/>
+  <text class="boxTitle" x="785" y="700">Egress &amp; SSRF Filter</text>
+  <text class="body" x="785" y="742">• Exact-host allowlist</text>
+  <text class="body" x="785" y="776">• IP resolution &amp; redirect check</text>
+
+  <rect class="box" x="1130" y="655" width="320" height="145" rx="18" fill="#f1f5f9" stroke="#475569" stroke-width="3"/>
+  <text class="boxTitle" x="1155" y="700">Audit &amp; Evidence</text>
+  <text class="body" x="1155" y="742">• Decision evidence stream</text>
+  <text class="body" x="1155" y="776">• Real-time frontend trace</text>
+</svg>

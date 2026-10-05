@@ -4,6 +4,7 @@ from typing import Any
 
 from langchain_core.tools import tool
 
+from app.agent.constants import DELEGATE_TASK_CAP, LEAD_SUBAGENTS, TRACE_DETAIL_CAP
 from app.agent.memory.tools import recall_customer, remember_customer
 from app.agent.run_bag import bag_trace, get_run_bag, reset_run_bag
 from app.agent.sandbox.tools import run_sandbox
@@ -17,6 +18,13 @@ from app.agent.tools.catalog import (
     search_products,
 )
 from app.agent.tools.knowledge import search_knowledge
+from app.agent.tools.crm import (
+    create_lead,
+    escalate_to_human,
+    schedule_followup,
+    update_lead_status,
+)
+from app.agent.tools.order import check_order_status, create_order_draft
 from app.agent.tools.runtime import get_ctx
 from app.agent.web.tools import fetch_page
 from app.config import get_settings
@@ -39,17 +47,17 @@ async def _run_one(agent: str, task: str, context: str = "") -> dict[str, Any]:
         return {
             "agent": agent,
             "ok": False,
-            "summary": f"Invalid agent. Valid: {list(SUBAGENTS)}",
+            "summary": f"Invalid agent. Valid: {list(LEAD_SUBAGENTS)}",
             "tools_used": [],
         }
     bag["delegates"] += 1
-    bag_trace("lead", "delegate", f"→ {agent}: {task[:120]}")
-    bag_trace(agent, "start", task[:200])
+    bag_trace("lead", "delegate", f"→ {agent}: {task[:DELEGATE_TASK_CAP]}")
+    bag_trace(agent, "start", task[:TRACE_DETAIL_CAP])
     result = await run_subagent(agent, task, context)
     bag["results"].append(result)
     tools = ", ".join(result.get("tools_used") or []) or "none"
     bag_trace(agent, "tool", tools)
-    bag_trace(agent, "end", (result.get("summary") or "")[:200])
+    bag_trace(agent, "end", (result.get("summary") or "")[:TRACE_DETAIL_CAP])
     return {
         "agent": result["agent"],
         "ok": result["ok"],
@@ -67,7 +75,7 @@ async def delegate(agent: str, task: str, context: str = "") -> str:
 
 @tool
 async def delegate_many(tasks_json: str) -> str:
-    """Chạy song song nhiều sub-agent. tasks_json: [{"agent":"catalog","task":"..."}]. Max 3."""
+    """Chạy song song nhiều sub-agent. tasks_json: [{"agent":"catalog","task":"..."}]. Số lượng tối đa theo cấu hình `max_subagents_per_turn`."""
     try:
         tasks = json.loads(tasks_json) if isinstance(tasks_json, str) else tasks_json
     except json.JSONDecodeError:
@@ -99,7 +107,7 @@ async def finalize(reply: str) -> str:
     bag = get_run_bag()
     bag["final"] = reply
     ctx = get_ctx()
-    bag_trace("lead", "finalize", reply[:200])
+    bag_trace("lead", "finalize", reply[:TRACE_DETAIL_CAP])
     return json.dumps(
         {
             "ok": True,
@@ -112,16 +120,26 @@ async def finalize(reply: str) -> str:
 
 
 LEAD_TOOLS = [
-    # Catalog/knowledge called DIRECTLY (deterministic, in-memory) — no nested
-    # sub-agent ReAct loop. This is the hot path and the main latency win.
+    # Deterministic tools are called DIRECTLY — no nested sub-agent ReAct loop.
+    # This is the hot path and the main latency win. The same applies to the
+    # CRM/order writes below: saving a phone number must not cost a full extra
+    # LLM round-trip through a sub-agent.
     recommend_top3,
     search_products,
     compare_products,
     get_product_detail,
     list_categories,
     search_knowledge,
-    # delegate kept only for the rarer crm/order/escalation sub-agents.
+    create_lead,
+    update_lead_status,
+    schedule_followup,
+    create_order_draft,
+    check_order_status,
+    escalate_to_human,
+    # delegate/delegate_many stay for genuinely multi-step sub-agent work
+    # (research-style tasks), and every tool advertised to the model is bound.
     delegate,
+    delegate_many,
     finalize,
     recall_customer,
     remember_customer,

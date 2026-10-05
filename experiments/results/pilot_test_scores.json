@@ -1,0 +1,2735 @@
+{
+  "aggregates": {
+    "B0_price_popularity": {
+      "episodes": 40,
+      "category_accuracy": 0.95,
+      "action_accuracy": 0.55,
+      "slot_micro_f1": 0.9608,
+      "slot_tp": 49,
+      "slot_fp": 1,
+      "slot_fn": 3,
+      "hard_constraints_checked": 62,
+      "hard_constraint_violations": 11,
+      "hard_constraint_violation_rate": 0.1774
+    },
+    "B1_lexical_filter": {
+      "episodes": 40,
+      "category_accuracy": 0.95,
+      "action_accuracy": 0.475,
+      "slot_micro_f1": 0.9608,
+      "slot_tp": 49,
+      "slot_fp": 1,
+      "slot_fn": 3,
+      "hard_constraints_checked": 37,
+      "hard_constraint_violations": 0,
+      "hard_constraint_violation_rate": 0.0
+    },
+    "S_hybrid_constraint": {
+      "episodes": 40,
+      "category_accuracy": 0.95,
+      "action_accuracy": 0.475,
+      "slot_micro_f1": 0.9608,
+      "slot_tp": 49,
+      "slot_fp": 1,
+      "slot_fn": 3,
+      "hard_constraints_checked": 37,
+      "hard_constraint_violations": 0,
+      "hard_constraint_violation_rate": 0.0
+    }
+  },
+  "episodes": [
+    {
+      "episode_id": "test-001",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "tu_lanh",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-002",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "tu_lanh",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-003",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 6,
+        "violations": 3,
+        "unknown": 0,
+        "rate": 0.5
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "tu_lanh",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-004",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tu_lanh",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-005",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 6,
+        "violations": 3,
+        "unknown": 0,
+        "rate": 0.5
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_lanh",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-006",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_lanh",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-007",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 6,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_lanh",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-008",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 6,
+        "violations": 2,
+        "unknown": 0,
+        "rate": 0.3333333333333333
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_lanh",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-009",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_giat",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-010",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 3,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_giat",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-011",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_giat",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-012",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "laptop",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-013",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "laptop",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-014",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "laptop",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-015",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "dien_thoai",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-016",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "dien_thoai",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-017",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "dien_thoai",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-018",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tivi",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-019",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tivi",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-020",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tivi",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-021",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tai_nghe",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-022",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tai_nghe",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-023",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tai_nghe",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-024",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "may_hut_bui",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-025",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "may_hut_bui",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-026",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 1,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "dong_ho_thong_minh",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-027",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_tinh_bang",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-028",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 1,
+        "fn": 1
+      },
+      "hard_constraints": {
+        "checked": 1,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_nuoc_nong",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-029",
+      "category_correct": false,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "faq",
+      "predicted_category": "may_giat",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-030",
+      "category_correct": false,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "faq",
+      "predicted_category": "tu_lanh",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-031",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "abstain",
+      "predicted_category": null,
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-032",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "abstain",
+      "predicted_category": null,
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-033",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "tu_lanh",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-034",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_giat",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-035",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "dien_thoai",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-036",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tivi",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-037",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 1
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "clarify",
+      "predicted_category": "laptop",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-038",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 6,
+        "violations": 3,
+        "unknown": 0,
+        "rate": 0.5
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_lanh",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-039",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "tu_lanh",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-040",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 1
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "clarify",
+      "predicted_category": "tai_nghe",
+      "condition": "B0_price_popularity"
+    },
+    {
+      "episode_id": "test-001",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "tu_lanh",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-002",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "clarify",
+      "predicted_category": "tu_lanh",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-003",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tu_lanh",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-004",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "clarify",
+      "predicted_category": "tu_lanh",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-005",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 4,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_lanh",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-006",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "clarify",
+      "predicted_category": "may_lanh",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-007",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 6,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_lanh",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-008",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 2,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_lanh",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-009",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_giat",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-010",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 3,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_giat",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-011",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "clarify",
+      "predicted_category": "may_giat",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-012",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "laptop",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-013",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "laptop",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-014",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "laptop",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-015",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "dien_thoai",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-016",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "dien_thoai",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-017",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "dien_thoai",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-018",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tivi",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-019",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tivi",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-020",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "clarify",
+      "predicted_category": "tivi",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-021",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tai_nghe",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-022",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tai_nghe",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-023",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tai_nghe",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-024",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "may_hut_bui",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-025",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "may_hut_bui",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-026",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 1,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "dong_ho_thong_minh",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-027",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_tinh_bang",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-028",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 1,
+        "fn": 1
+      },
+      "hard_constraints": {
+        "checked": 1,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_nuoc_nong",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-029",
+      "category_correct": false,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "faq",
+      "predicted_category": "may_giat",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-030",
+      "category_correct": false,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "faq",
+      "predicted_category": "tu_lanh",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-031",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "abstain",
+      "predicted_category": null,
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-032",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "abstain",
+      "predicted_category": null,
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-033",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "tu_lanh",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-034",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_giat",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-035",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "dien_thoai",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-036",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tivi",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-037",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 1
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "clarify",
+      "predicted_category": "laptop",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-038",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 2,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_lanh",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-039",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "tu_lanh",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-040",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 1
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "clarify",
+      "predicted_category": "tai_nghe",
+      "condition": "B1_lexical_filter"
+    },
+    {
+      "episode_id": "test-001",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "tu_lanh",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-002",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "clarify",
+      "predicted_category": "tu_lanh",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-003",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tu_lanh",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-004",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "clarify",
+      "predicted_category": "tu_lanh",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-005",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 4,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_lanh",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-006",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "clarify",
+      "predicted_category": "may_lanh",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-007",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 6,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_lanh",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-008",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 2,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_lanh",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-009",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_giat",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-010",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 3,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_giat",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-011",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "clarify",
+      "predicted_category": "may_giat",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-012",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "laptop",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-013",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "laptop",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-014",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "laptop",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-015",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "dien_thoai",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-016",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "dien_thoai",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-017",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "dien_thoai",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-018",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tivi",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-019",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tivi",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-020",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "clarify",
+      "predicted_category": "tivi",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-021",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tai_nghe",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-022",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tai_nghe",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-023",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tai_nghe",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-024",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "may_hut_bui",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-025",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "may_hut_bui",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-026",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 1,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "dong_ho_thong_minh",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-027",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_tinh_bang",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-028",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 1,
+        "fn": 1
+      },
+      "hard_constraints": {
+        "checked": 1,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_nuoc_nong",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-029",
+      "category_correct": false,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "faq",
+      "predicted_category": "may_giat",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-030",
+      "category_correct": false,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "faq",
+      "predicted_category": "tu_lanh",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-031",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "abstain",
+      "predicted_category": null,
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-032",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "abstain",
+      "predicted_category": null,
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-033",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "tu_lanh",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-034",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_giat",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-035",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "dien_thoai",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-036",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "abstain",
+      "predicted_category": "tivi",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-037",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 1
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "clarify",
+      "predicted_category": "laptop",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-038",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 2,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "may_lanh",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-039",
+      "category_correct": true,
+      "action_correct": true,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "hard_constraints": {
+        "checked": 3,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0
+      },
+      "predicted_action": "recommend",
+      "predicted_category": "tu_lanh",
+      "condition": "S_hybrid_constraint"
+    },
+    {
+      "episode_id": "test-040",
+      "category_correct": true,
+      "action_correct": false,
+      "slot_f1": {
+        "precision": 1.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 1
+      },
+      "hard_constraints": {
+        "checked": 0,
+        "violations": 0,
+        "unknown": 0,
+        "rate": 0.0,
+        "no_items": true
+      },
+      "predicted_action": "clarify",
+      "predicted_category": "tai_nghe",
+      "condition": "S_hybrid_constraint"
+    }
+  ]
+}
