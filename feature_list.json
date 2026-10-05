@@ -51,6 +51,64 @@
   },
   "features": [
     {
+      "id": "memory-unique-index-001",
+      "priority": -9,
+      "area": "data-integrity",
+      "title": "Backfill duplicate customer memories and add the unique index on upgraded databases",
+      "user_visible_behavior": "Startup (async init_db and sync create_all) merges legacy duplicate customer_memories rows per (channel, external_id) and creates a unique index when none exists, so upgraded deployments enforce the constraint that _write_profile's IntegrityError retry relies on.",
+      "status": "passing",
+      "allowed_files": [
+        "backend/app/services/memory_schema.py",
+        "backend/app/db/session.py",
+        "backend/app/db/sync.py",
+        "backend/tests/test_memory_schema_migration.py",
+        "scripts/validate_agent_scope.py",
+        "feature_list.json",
+        "claude-progress.md"
+      ],
+      "approved_protected_files": [
+        "backend/app/db/session.py",
+        "backend/app/db/sync.py",
+        "scripts/validate_agent_scope.py"
+      ],
+      "verification": [
+        "Migration regression tests: legacy duplicates are merged (newest wins) and the unique index is created; a later duplicate insert raises IntegrityError; a second run is a no-op; fresh databases get no extra index.",
+        "Both startup paths (async init_db and sync create_all) run the migration against a legacy database.",
+        "Backend unittest discovery and scripts/verify.sh pass.",
+        "Scope guard self-test, exact-file validation, and session checks pass."
+      ],
+      "evidence": [
+        "2026-10-05: confirmed the gap in code: create_all skips existing tables and init_db/create_all only added products.source_row, so upgraded customer_memories had no uniqueness and _write_profile's IntegrityError retry could never fire.",
+        "2026-10-05: new backend/app/services/memory_schema.py ensure_customer_memory_unique(conn): no-op if a unique constraint/index already covers (channel, external_id); PostgreSQL table lock; double-checked; merges duplicates keeping the newest row; CREATE UNIQUE INDEX IF NOT EXISTS with the model's constraint name; post-check raises if that name covers other columns. Wired into async init_db (run_sync) and sync create_all.",
+        "2026-10-05: independent review found the first merge (shallow overwrite) let a newer row's empty default keys erase older real data, because stored profiles always contain every default key. Fixed: empty newer values never overwrite real older ones, lists are unioned, booleans take the newest value (consent is never resurrected); also guarded NULL-key groups. Both pinned by tests using full default-shaped profiles.",
+        "2026-10-05: 15 migration tests pass on SQLite; full backend suite 143/143; scripts/verify.sh incl. MCP passes; scope self-test, exact-file and session checks pass.",
+        "Limitation: the PostgreSQL path (LOCK TABLE, constraint detection on a create_all database) was reasoned about and unit-tested with a mock for the lock statement, but not executed against a real PostgreSQL server."
+      ],
+      "test_evidence": [
+        {
+          "command": "PYTHONUTF8=1 ../../../backend/.venv/Scripts/python.exe -B -m unittest tests.test_memory_schema_migration (target worktree backend; 15 tests)",
+          "result": "passed",
+          "date": "2026-10-05"
+        },
+        {
+          "command": "TEMP/TMP=canonical Windows temp; PYTHONUTF8=1 ../../../backend/.venv/Scripts/python.exe -B -m unittest discover -s tests (target worktree backend; 143 tests)",
+          "result": "passed",
+          "date": "2026-10-05"
+        },
+        {
+          "command": "PYTHONUTF8=1 PATH=/d/Homeworks/SalePilot_Agent/backend/.venv/Scripts:/usr/bin:/bin bash scripts/verify.sh (target worktree; includes MCP)",
+          "result": "passed",
+          "date": "2026-10-05"
+        },
+        {
+          "command": "../../backend/.venv/Scripts/python.exe -B scripts/validate_agent_scope.py --self-test; --check-session; --feature-id memory-unique-index-001 --check-files (7 paths); git diff --check",
+          "result": "passed",
+          "date": "2026-10-05"
+        }
+      ],
+      "notes": "Owner approved the three protected paths and the merge-then-keep-newest backfill (2026-10-05, 'ok fix it' after the exact-path proposal). Worked in linked worktree tmp/readme-cleanup-dev on feature/readme-cleanup-dev. The previous sandbox-command-path-001 baseline was reset with the sanctioned remove-baseline-and-sentinel-together procedure after confirming every change since it was either committed in b6c1515 or part of this feature. Uncommitted: owner has not asked to commit or push this change."
+    },
+    {
       "id": "sandbox-command-path-001",
       "priority": -8,
       "area": "security",

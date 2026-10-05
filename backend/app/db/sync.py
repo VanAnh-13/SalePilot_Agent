@@ -31,5 +31,9 @@ def create_all() -> None:
     from app.models.base import Base
     import app.models.entities  # noqa: F401 — ensure models are registered
 
+    from app.services.memory_schema import ensure_customer_memory_unique
+
     Base.metadata.create_all(sync_engine)
     ensure_catalog_columns()
+    with sync_engine.begin() as conn:
+        ensure_customer_memory_unique(conn)

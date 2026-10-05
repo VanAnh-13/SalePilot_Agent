@@ -143,6 +143,16 @@ RECORDED_PROTECTED_APPROVALS = {
         "frontend/AGENTS.md",
         "scripts/validate_agent_scope.py",
     },
+    # 2026-10-05: owner approved ("ok fix it", after an exact-path proposal)
+    # adding a customer_memories backfill + unique-index migration to the
+    # startup paths in backend/app/db/session.py and backend/app/db/sync.py.
+    # This script is listed because recording the approval requires editing
+    # this dict.
+    "memory-unique-index-001": {
+        "backend/app/db/session.py",
+        "backend/app/db/sync.py",
+        "scripts/validate_agent_scope.py",
+    },
 }
 
 

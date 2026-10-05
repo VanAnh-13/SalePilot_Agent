@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from app.config import get_settings
 from app.models.base import Base
+from app.services.memory_schema import ensure_customer_memory_unique
 
 settings = get_settings()
 
@@ -51,6 +52,9 @@ async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         await conn.run_sync(_ensure_catalog_columns)
+        # create_all never alters an existing table, so upgraded databases need
+        # an explicit backfill + unique index for customer_memories.
+        await conn.run_sync(ensure_customer_memory_unique)
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
