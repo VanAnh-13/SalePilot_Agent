@@ -29,16 +29,18 @@ async def run_sandbox_command(cmd: str, timeout: float = 5.0) -> dict:
     if not parts:
         return {"ok": False, "error": "empty"}
 
-    binary = Path(parts[0]).name
+    # Check the entire command token: basename-only validation would allow
+    # caller-selected executable paths to bypass the PATH lookup below.
+    binary = parts[0]
     if binary not in ALLOW_BIN:
         return {"ok": False, "error": f"denied binary '{binary}'. allow: {sorted(ALLOW_BIN)}"}
 
     # Resolve through PATH so the OS cannot shadow an allowlisted name with a
     # planted executable inside the jail (Windows CreateProcess searches the
     # cwd before PATH; passing an absolute path removes cwd from the hunt).
-    resolved_bin = shutil.which(parts[0])
+    resolved_bin = shutil.which(binary)
     if resolved_bin is None:
-        return {"ok": False, "error": f"binary not found on PATH: {parts[0]}"}
+        return {"ok": False, "error": f"binary not found on PATH: {binary}"}
 
     # Jail file args under data/: resolve the ACTUAL arg against DATA_ROOT (the
     # cwd we run in) and require it to stay inside. Reject absolute paths on any

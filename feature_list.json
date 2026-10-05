@@ -1,6 +1,6 @@
 {
   "project": "salepilot",
-  "last_updated": "2026-09-30",
+  "last_updated": "2026-10-05",
   "rules": {
     "single_active_feature": true,
     "wip_limit": 1,
@@ -50,6 +50,59 @@
     "passing": "Required verification has passed and evidence is recorded."
   },
   "features": [
+    {
+      "id": "sandbox-command-path-001",
+      "priority": -8,
+      "area": "security",
+      "title": "Reject path-qualified sandbox command names",
+      "user_visible_behavior": "Enabled sandbox commands must use an exact allowlisted basename, resolved through PATH; absolute and relative executable paths are denied before lookup or execution.",
+      "status": "passing",
+      "allowed_files": [
+        "backend/app/agent/sandbox/shell.py",
+        "backend/tests/test_sandbox_shell.py"
+      ],
+      "approved_protected_files": [],
+      "verification": [
+        "Sandbox regression tests reject POSIX and Windows path-qualified commands before executable lookup or spawning.",
+        "All allowlisted basenames resolve through PATH and execute the resolved executable with unchanged arguments.",
+        "Backend unittest discovery and scripts/verify.sh pass.",
+        "Scope guard self-test, exact-file validation, and session checks pass."
+      ],
+      "evidence": [
+        "2026-10-05: reproduced the basename-only bypass before the fix: all 91 POSIX/Windows path-qualified command subcases failed the rejection test.",
+        "2026-10-05: validate the entire command token against ALLOW_BIN and resolve only that allowlisted basename through shutil.which; execution still uses the resolved executable and unchanged arguments.",
+        "2026-10-05: six sandbox tests pass, including 91 path-qualified variants and all seven allowlisted basenames; full backend suite passes 128/128; official smoke including MCP passes.",
+        "2026-10-05: independent checker found no scoped source/test issues; scope self-test, exact-file validation, session check and diff whitespace checks pass."
+      ],
+      "test_evidence": [
+        {
+          "command": "PYTHONUTF8=1 ../../../backend/.venv/Scripts/python.exe -B -m unittest tests.test_sandbox_shell -v (target worktree backend; 6 tests)",
+          "result": "passed",
+          "date": "2026-10-05"
+        },
+        {
+          "command": "TEMP/TMP=canonical Windows temp; PYTHONUTF8=1 ../../../backend/.venv/Scripts/python.exe -B -m unittest discover -s tests (target worktree backend; 128 tests)",
+          "result": "passed",
+          "date": "2026-10-05"
+        },
+        {
+          "command": "PYTHONUTF8=1 PATH=/d/Homeworks/SalePilot_Agent/backend/.venv/Scripts:/usr/bin:/bin bash scripts/verify.sh (target worktree; includes MCP)",
+          "result": "passed",
+          "date": "2026-10-05"
+        },
+        {
+          "command": "../../backend/.venv/Scripts/python.exe -B scripts/validate_agent_scope.py --self-test; --check-session; --feature-id sandbox-command-path-001 --check-files backend/app/agent/sandbox/shell.py backend/tests/test_sandbox_shell.py feature_list.json claude-progress.md",
+          "result": "passed",
+          "date": "2026-10-05"
+        },
+        {
+          "command": "git diff --check (target worktree)",
+          "result": "passed",
+          "date": "2026-10-05"
+        }
+      ],
+      "notes": "Completed in linked worktree tmp/readme-cleanup-dev on the requested local feature/readme-cleanup-dev branch, based on origin/codex/readme-cleanup-dev. Parent checkout source and pre-existing uncommitted work preserved. Shared existing backend venv for verification; no dependency or secret copies. Owner subsequently approved committing and pushing this fix solely to origin/feature/readme-cleanup-dev."
+    },
     {
       "id": "readme-cleanup-001",
       "priority": -3,

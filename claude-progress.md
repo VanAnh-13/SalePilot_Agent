@@ -2,15 +2,26 @@
 
 ## Current Verified State
 
-- Date: 2026-09-30.
-- Branch: `codex/readme-cleanup-dev`, based on committed `feat/zalo-removal-fe-redesign` at `4b5dab4`, integrating `origin/dev` at `de627b3`. Target PR base is **dev** (owner instruction); do not push this work to main.
-- Active feature: **none** — `readme-cleanup-001` is passing. Existing research blockers remain recorded in feature_list.json. Original-checkout uncommitted PaperDraf work is outside this branch and preserved.
+- Date: 2026-10-05.
+- Branch: local `feature/readme-cleanup-dev` (owner-requested name), based on `origin/codex/readme-cleanup-dev` at `0ac62b8`, in linked worktree `tmp/readme-cleanup-dev`. Owner approved committing and pushing this security fix solely to `origin/feature/readme-cleanup-dev`. Existing `codex/readme-cleanup-dev` and PR #2 are retained; do not push to main or dev.
+- Active feature: **none** — `sandbox-command-path-001` and `readme-cleanup-001` are passing. Existing research blockers remain recorded in feature_list.json. Original checkout and its uncommitted work are preserved.
 - Channel: **Web only**. README reflects current product behavior, fixture setup, admin configuration and research limitations.
-- Verification: backend **122/122 PASS**, evaluator **9/9 PASS**, official `scripts/verify.sh` including MCP **PASS**, TypeScript **PASS**, frontend production build **PASS** (Next.js 14.2.35). This supersedes the Session 037 build-environment limitation for this branch.
+- Verification: backend **128/128 PASS**, including six new sandbox tests, and official `scripts/verify.sh` including MCP **PASS** on 2026-10-05. Historical 2026-09-30 verification: evaluator **9/9 PASS**, TypeScript **PASS**, frontend production build **PASS** (Next.js 14.2.35), superseding the Session 037 build-environment limitation for this branch.
 - Live checks: seed, `/health` (ready, 70 fixture products), `/chat`, frontend `/chat` and `/dashboard` PASS; admin authentication 401 and retired `/outbox` rejection 403 verified. Fixture is engineering test data.
 - Scope/self-test/README links/whitespace and independent checker PASS. Merge conflicts resolved by preserving the tested source after confirming all dev behavior is already incorporated; resolved tree byte-identical to pre-merge source.
 - Full catalog, public deployment and paper compilation were not reverified here; stored research results are historical evidence only. Do not commit `.env` or customer data.
 - Pushed `codex/readme-cleanup-dev`; PR **#2** is open into **dev**: https://github.com/VanAnh-13/SalePilot_Agent/pull/2. Next step: review the broad integration diff and merge when approved.
+
+### Session 040 — reject path-qualified sandbox executables
+
+- Date: 2026-10-05. Owner reported an allowlist bypass and confirmed the target branch; requested local branch name `feature/readme-cleanup-dev`.
+- Isolation: created the requested local branch from `origin/codex/readme-cleanup-dev` in `tmp/readme-cleanup-dev`, preserving original-checkout benchmark/evaluation work. Initial implementation made no commits, pushes, remote deletions, dependency changes or secret copies. Owner subsequently requested commit and push solely to `feature/readme-cleanup-dev`.
+- Root cause and fix: `Path(parts[0]).name` permitted caller-selected paths such as `/tmp/cat` before `shutil.which(parts[0])` returned that exact file. Now validate the complete token against `ALLOW_BIN` and resolve only the validated basename through PATH. Keep file-argument jail and subprocess arguments unchanged.
+- Regression: the new rejection test failed on all 91 path-qualified subcases before the fix. Afterward all six tests pass: 91 POSIX/Windows command-path variants, seven allowlisted basenames, unchanged file arguments, missing binary, disallowed name and disabled sandbox.
+- Verification: backend baseline 122/122 and final 128/128 PASS; actual `scripts/verify.sh` including MCP PASS before/after; guard self-test, exact-file checks, session check and whitespace checks PASS. Reused the original checkout's Python 3.12 venv, canonical Windows TEMP/TMP and explicit Git Bash utility PATH.
+- Review: independent checker found no scoped issues (its test attempt lacked dependencies; passing test evidence above comes from the parent agent's actual venv runs).
+- Clean-state checklist: backend API tests, offline chat/catalog and MCP smoke, backend tests and source scope verified. No frontend changes; frontend builds/live production startup, full private catalog and paper compilation were not rerun for this security-only task.
+- Self-check: accuracy 5 (red-to-green reproduction and 128 passing tests); completeness 4 (requested local branch name is set, remote rename intentionally not performed); clarity 4 (worktree location must be called out); actionability 4 (changes are in the linked worktree, not the editor's original checkout); conciseness 4 (large path matrix test for a three-line logic fix). Overall 4.2/5. Improvements: disclose worktree location and remote-name boundary; keep final summary short. These boundaries should match the owner's expectations without implying a push or remote rename.
 
 ### Session 002
 
